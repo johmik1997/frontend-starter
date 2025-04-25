@@ -42,3 +42,9 @@ export function setQuotation(quotationUuid, amount, type) {
   return api.addAuthenticationHeader().post(`${path}/setQuotation/${quotationUuid}?${type}=${amount}`);
 }
 
+export function updateCarDetails(carUuid, data) {
+  return api.addAuthenticationHeader()
+    .put(`/cars/updateCar/${carUuid}`, data);
+}
+
+

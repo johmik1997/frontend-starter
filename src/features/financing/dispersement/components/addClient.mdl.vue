@@ -524,7 +524,7 @@ const saveDraft = () => {
               v-model="personalDetails.email"
               name="email"
               validation="required|email"
-              label="Last email"
+              label="email"
               :attributes="{ 
                 placeholder: 'Enter email',
                 title: 'Minimum 3 letters, alphabets only'

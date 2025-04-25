@@ -12,7 +12,7 @@ export default [
     type: "Analytics",
   },
   {
-    path: "/",
+    path: "/a",
     icon: icons.report,
     name: "Report and analytics",
     meta: {
@@ -47,9 +47,10 @@ export default [
     name: 'Quotations',
     meta: {
       requiresAuth: true,
-      permissions: []
+      permissions: [],
     },
-    type: "Pages"
+    type: "Pages",
+    privilage: ['create_user'],
   },
   {
     path: '/payment',
@@ -57,10 +58,12 @@ export default [
     name: 'Financing',
     meta: {
       requiresAuth: true,
-      permissions: []
+      permissions: [],
+      
     },
     type: "Pages",
     isOpen: false, // Add this to control dropdown state
+    privilage: ['create_user'],
     children: [
       {
         path: '/payment/deposit',
@@ -68,11 +71,12 @@ export default [
         meta: {
           requiresAuth: true,
           permissions: []
-        }
+        },
+        privilage: ['create_admin'],
       },
       {
         path: '/payment/dispersement',
-        name: 'Dispersement',
+        name: 'Pay For Insurances',
         meta: {
           requiresAuth: true,
           permissions: []
@@ -81,14 +85,6 @@ export default [
       {
         path: '/payment/premium',
         name: 'Premium Payment',
-        meta: {
-          requiresAuth: true,
-          permissions: []
-        }
-      },
-      {
-        path: '/payment/issued-policies',
-        name: 'Issued Policies',
         meta: {
           requiresAuth: true,
           permissions: []
@@ -104,7 +100,8 @@ export default [
       requiresAuth: true,
       permissions: []
     },
-    type: "Pages"
+    type: "Pages",
+    privilage: ['create_users'],
   },
   {
     path: '/Users',

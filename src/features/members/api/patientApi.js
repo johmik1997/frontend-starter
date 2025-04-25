@@ -12,7 +12,10 @@ export function checkEligiblity(query = {}) {
 export function getPatients(config) {
 	return api.addAuthenticationHeader().get(`${path}/allPatients`, config)
 }
-
+export function sendSMS(userUuid, message) {
+  return api.addAuthenticationHeader()
+    .post(`/users/sendSms/${userUuid}?message=${encodeURIComponent(message)}`);
+}
 export function addPatient(data) {
   return api.addAuthenticationHeader().post(`${path}/signUp`, data);
 }

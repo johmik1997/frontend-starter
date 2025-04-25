@@ -83,7 +83,7 @@
             </div>
             
             <div class="flex justify-between items-center">
-              <div class="text-xs sm:text-sm font-normal text-[#2B3674]">Monthly Premium </div>
+              <div class="text-xs sm:text-sm font-normal text-[#2B3674]">Monthly Repayment </div>
               <div class="text-xs sm:text-sm font-bold text-[#494F51]">ETB {{ customerId.customers?.monthlyPayment }} /Month</div>
             </div>
          
@@ -103,13 +103,13 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 text-gray-700 text-sm border-b pb-6">
       <div class="flex  gap-2 pl-2">
         <p class="font-semibold pr-5">Approved by</p>
-        <p class=" font-bold">ETB {{ depositDetails?.amount?.toLocaleString() }}</p>
+        <p class=" font-bold">Mr Birhane Areaya</p>
       </div>
 
       <div class="flex  gap-2">
         <p class="font-semibold pr-5">Approved On</p>
         <p class="flex items-center gap-2 font-medium text-blue-600">
-          {{ depositDetails?.paymentType }}
+          {{ depositDetails?.paymentTypes || "04-04-2025" }}
         </p>
       </div>
 
@@ -200,10 +200,20 @@
     <!-- Disbursement Button -->
     <div class="mt-4">
       <button 
+       v-if="customerId.customers?.quotationStatus === 'DEPOSITED'"
         @click="openConfirmationModal" 
         class="w-full bg-[#3C3C9E] text-white py-3 rounded-lg font-semibold hover:bg-[#3C3C9E]"
+        
       >
-        Authorize Dispersement 
+        Authorize Payment 
+      </button>
+         <button 
+       v-else
+       @click="$router.push(`/premiumDetails/${customerId.customers?.quotationUuid}`)"
+        class="w-full bg-[#3C3C9E] text-white py-3 rounded-lg font-semibold hover:bg-[#3C3C9E]"
+        
+      >
+        Premium Payments
       </button>
     </div>
   </div>
@@ -224,18 +234,19 @@ import {
   authorizeDispersement,
   setQuotation 
 } from '../api/dispersementApi';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useCustomers } from '../store/dispersementStore';
 import Button from '@/components/Button.vue';
 import icons from '@/utils/icons';
 import { ref, onMounted, watch } from 'vue';
 import ApiService from "@/service/ApiService";
 import { useApiRequest } from '@/composables/useApiRequest';
+
 const req = useApiRequest();
 const customerId = useCustomers();
 const route = useRoute();
 const userUuid = route.params?.despersementUuid;
-
+const router = useRouter();
 // State management
 const depositDetails = ref(null);
 const receiptImage = ref(null);
@@ -456,7 +467,7 @@ const sendFinalQuotation = async () => {
 };
 
 const openConfirmationModal = () => {
-  const amount = depositDetails.value?.amount?.toLocaleString() || '0';
+  const amount = depositDetails.value?.amount?.toLocaleString() || customerId.customers?.quotationAmount || '0';
   const quotationUuid = customerId.customers?.quotationUuid;
 
   if (!quotationUuid) {
@@ -467,18 +478,16 @@ const openConfirmationModal = () => {
   openModal('Confirmation', {
     title: 'Authorize Dispersement',
     message: `Are you sure you want to authorize dispersement amount of ETB ${amount} to Lion Insurance?`
-  }, async (res) => {
+  }, async (res, close) => {
     if (res) {
-      try {
-        const response = await authorizeDispersement(quotationUuid);
-        if (response.success) {
-          toasted(true, 'Dispersement authorized successfully');
-        } else {
-          toasted(false, '', response.error || 'Failed to authorize dispersement');
-        }
-      } catch (error) {
-        console.error('Error authorizing dispersement:', error);
-        toasted(false, '', 'An error occurred while authorizing dispersement');
+      const response = await authorizeDispersement(quotationUuid);
+      if (response.success || response.status === 200) {
+        toasted(true, 'Dispersement authorized successfully');
+        close();
+        await router.push('/payment/dispersement');
+      } else {
+        toasted(false, '', response.error || 'Failed to authorize dispersement');
+        
       }
     }
   });

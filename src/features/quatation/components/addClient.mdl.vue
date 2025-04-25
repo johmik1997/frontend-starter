@@ -17,6 +17,9 @@ import { getAllInsurances, getCategoriesByInsurance } from "@/features/roles/Api
 import { CreateClient } from "../api/customersApi";
 import { v4 as uuidv4 } from 'uuid';
 import { getValidators } from '@/components/new_form_builder/util/validators.js';
+import { useQuotation } from '../store/Quotation';
+
+const quotationStore = useQuotation();
 
 // Define props with validation and default value
 const props = defineProps(['data']);
@@ -425,32 +428,48 @@ const deleteVehicle = (event, index) => {
 };
 
 // Form submission
-function submitForm() {
-  if (!isValidBankAccount()) {
-    return;
-  }
-
-  const requestData = {
-    ...personalDetails.value,
-    bankAccount: bankAccount.value,
-    carRequests: carRequests.value.map(vehicle => ({
-      ...vehicle,
-      buyingPrice: parseFloat(vehicle.buyingPrice) || 0
-    }))
-  };
-
-  useApiRequest().send(
-    () => CreateClient(requestData),
-    (res) => {
-      if (res.success) {
-        toasted(true, "Client Created Successfully!");
-        closeModal();
-      } else {
-        toasted(false, "Error", res.error);
-      }
+const submitForm = async () => {
+  try {
+    if (!isValidBankAccount()) {
+      return;
     }
-  );
-}
+
+    const requestData = {
+      ...personalDetails.value,
+      bankAccount: bankAccount.value,
+      carRequests: carRequests.value.map(vehicle => ({
+        ...vehicle,
+        buyingPrice: parseFloat(vehicle.buyingPrice) || 0
+      }))
+    };
+
+    const response = await CreateClient(requestData);
+
+    if (response.success) {
+      // Create a new quotation object with all necessary fields
+      const newQuotation = {
+        ...response.data,
+        customerName: `${personalDetails.value.firstName} ${personalDetails.value.fatherName}`,
+        quotationDate: new Date().toISOString().split('T')[0],
+        quotationStatus: 'PENDING',
+        VehicleDetail: carRequests.value[0]?.carName || '',
+        insurance: personalDetails.value.insuranceUuid,
+        quotationAmount: response.data.quotationAmount || 0
+      };
+
+      // Add to store after successful API call
+      quotationStore.add(newQuotation);
+
+      toasted(true, "Client Created Successfully!");
+      closeModal();
+    } else {
+      toasted(false, "Error", response.error || "Failed to create client");
+    }
+  } catch (error) {
+    console.error('Error creating client:', error);
+    toasted(false, "Error", error.message || "Failed to create client");
+  }
+};
 
 // Add bank account validation
 const isValidBankAccount = () => {
@@ -524,7 +543,7 @@ const saveDraft = () => {
               v-model="personalDetails.email"
               name="email"
               validation="required|email"
-              label="Last email"
+              label="email"
               :attributes="{ 
                 placeholder: 'Enter email',
                 title: 'Minimum 3 letters, alphabets only'

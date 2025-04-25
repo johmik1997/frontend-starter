@@ -12,12 +12,12 @@ import { getCustomers } from '../api/depositsApi'
 import { removeUndefined } from '@/utils/utils'
 import { usePaginationcopy } from '@/composables/usePaginationcopy'
 
-const useQuations = useQuotation()
+const quotationStore = useQuotation()
 const searchKey = ref('')
 
 // Pagination setup for the deposits table
 const pagination = usePaginationcopy({
-  store: useQuations,
+  store: quotationStore,
   cb: (data, config) => getCustomers(
     removeUndefined({
       ...data,
@@ -75,16 +75,19 @@ function openAddDepositModal() {
     <Table
       :pending="pagination.pending.value"
       :headers="{
-        head: ['Customer Namess', 'Deposit Date', 'Account Number', 'Branch', 'Amount', 'Status', 'actions'],
-        row: ['customerName', 'depositDate', 'accountNumber', 'branch', 'status'],
+        head: ['Customer Names', 'Deposit Date', 'Account Number', 'Insurance', 'Amount','Status' ,'actions'],
+        row: ['customerName', 'depositDate', 'accountNumber', 'insurance', 'quotationAmount','quotationStatus'],
       }"
       :rowCom="Status_row"
-      :rows="useQuations.quotations || []"
+      :rows="quotationStore.quotations || []"
       :Fallback="TableRowSkeleton"
     >
     </Table>
   </DefaultPage>
 </template>
+
+
+
 
 
 

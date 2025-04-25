@@ -2,20 +2,48 @@
 import Button from "@/components/Button.vue";
 import NavBar from "@/components/NavBar.vue";
 import navs from "@/config/navs";
-import { provide, ref, watch } from "vue";
-import { RouterLink } from "vue-router";
+import { provide, ref, watch, computed } from "vue";
+import { RouterLink, useRoute } from "vue-router";
+import { useAuth } from "@/stores/auth";
 import icons from "@/utils/icons";
 
+const authStore = useAuth();
+const route = useRoute();
 const inputData = ref("");
-const grouped = Object.groupBy(navs, (el) => el.type);
 const search = ref("");
 const openDropdowns = ref(new Set());
+
+// Filter navs based on privileges
+const filteredNavs = computed(() => {
+  return navs.filter(nav => {
+    const user = authStore.auth?.user;
+    
+    // Allow access if user is Super Admin or has All Privileges
+    if (user?.privileges?.includes("All Privileges") || user?.roleName === 'Super Admin') {
+      return true;
+    }
+
+    // Check privileges for the nav item
+    if (nav.privilage) {
+      const userPrivileges = user?.privileges || [];
+      return nav.privilage.some(priv => userPrivileges.includes(`ROLE_${priv}`));
+    }
+
+    // If no privileges specified, show the nav item
+    return true;
+  });
+});
+
+// Group filtered navs by type
+const grouped = computed(() => {
+  return Object.groupBy(filteredNavs.value, (el) => el.type);
+});
 
 provide("search", search.value);
 watch(
   () => search.value,
   () => {
-    console.log("gggg", search.value);
+    console.log("search updated:", search.value);
   }
 );
 
@@ -28,6 +56,50 @@ const toggleDropdown = (navPath) => {
 };
 
 const isDropdownOpen = (navPath) => openDropdowns.value.has(navPath);
+
+const isRouteActive = (navPath) => {
+  if (navPath === '/') return false;
+  
+  const currentPath = route.path.toLowerCase();
+  const baseNavPath = navPath.toLowerCase();
+
+  if (baseNavPath === '/payment/deposit') {
+    return currentPath === '/payment/deposit' || currentPath.startsWith('/depositdetails/');
+  }
+
+  if (baseNavPath === '/quatation') {
+    return currentPath === '/quatation' || currentPath.includes('/details/');
+  }
+  
+  if (baseNavPath === '/drafts') {
+    return currentPath === '/drafts';
+  }
+
+  return currentPath === baseNavPath;
+};
+
+// Check if a nav item should be visible based on privileges
+const shouldShowNavItem = (nav) => {
+  const user = authStore.auth?.user;
+  
+  // Always show if user is Super Admin or has All Privileges
+  if (user?.privileges?.includes("All Privileges") || user?.roleName === 'Super Admin') {
+    return true;
+  }
+
+  // Check privileges for the nav item and its children
+  if (nav.privilage || (nav.children && nav.children.some(child => child.privilage))) {
+    const userPrivileges = user?.privileges || [];
+    const navPrivileges = nav.privilage || [];
+    const childrenPrivileges = nav.children?.flatMap(child => child.privilage || []) || [];
+    
+    return [...navPrivileges, ...childrenPrivileges].some(priv => 
+      userPrivileges.includes(`ROLE_${priv}`)
+    );
+  }
+
+  return true;
+};
 </script>
 
 <template>
@@ -47,12 +119,17 @@ const isDropdownOpen = (navPath) => openDropdowns.value.has(navPath);
           <!-- Navigation Items -->
           <div v-for="nav in navItems" :key="nav.name" class="flex flex-col">
             <!-- Parent Nav Item -->
-            <div class="flex rounded transition-all duration-200 ease-linear hover:text-[#3C3C9E] hover:bg-white"
-                 :class="{ 'bg-[#FFFFFF4D] text-white': $route.path.startsWith(nav.path) && nav.children }">
+            <div v-if="shouldShowNavItem(nav)" 
+                 class="flex rounded transition-all duration-200 ease-linear hover:text-[#3C3C9E] hover:bg-white"
+                 :class="{ 'bg-[#FFFFFF4D] text-white': isRouteActive(nav.path) && nav.children }">
               <RouterLink
                 v-if="!nav.children"
                 :to="nav.path"
                 class="w-full"
+                :class="{
+                  'bg-white text-[#3C3C9E]': isRouteActive(nav.path),
+                  'router-link-active': isRouteActive(nav.path)
+                }"
               >
                 <Button class="flex-1 max-w-full flex gap-4 !justify-start items-center pl-5">
                   <div class="grid place-items-center rounded">
@@ -66,6 +143,10 @@ const isDropdownOpen = (navPath) => openDropdowns.value.has(navPath);
               <Button
                 v-else
                 class="flex-1 max-w-full flex gap-4 !justify-between items-center pl-5 pr-3"
+                :class="{
+                  'bg-white text-[#3C3C9E]': isRouteActive(nav.path),
+                  'router-link-active': isRouteActive(nav.path)
+                }"
                 @click="toggleDropdown(nav.path)"
               >
                 <div class="flex gap-4 items-center">
@@ -111,7 +192,7 @@ const isDropdownOpen = (navPath) => openDropdowns.value.has(navPath);
       <div class="__scrollable-hidden h-[calc(100%-var(--navbar-height))] bg-base-clr2 w-full overflow-y-scroll">
         <RouterView :search="search" :inputData="inputData" />
       </div>
-    </div>
+    </div> 
   </div>
 </template>
 
@@ -128,20 +209,43 @@ const isDropdownOpen = (navPath) => openDropdowns.value.has(navPath);
 }
 
 /* Active route styling */
-.__scrollable-hidden .router-link-exact-active {
-  background-color: theme("colors.white");
-  color: #3C3C9E;
+.__scrollable-hidden .router-link-active {
+  background-color: theme("colors.white") !important;
+  color: #3C3C9E !important;
 }
 
-.__scrollable-hidden .router-link-exact-active button {
-  background-color: theme("colors.white");
-  color: #3C3C9E;
+.__scrollable-hidden .router-link-active button {
+  background-color: theme("colors.white") !important;
+  color: #3C3C9E !important;
 }
 
-.__scrollable-hidden .router-link-exact-active button span {
+.__scrollable-hidden .router-link-active button span {
   font-weight: 600;
 }
+
+/* Add specific styling for dropdown items */
+.__scrollable-hidden .router-link-active.child-link {
+  background-color: transparent !important;
+  color: inherit !important;
+}
+
+.__scrollable-hidden .router-link-active.child-link button {
+  background-color: transparent !important;
+  color: inherit !important;
+}
 </style>
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

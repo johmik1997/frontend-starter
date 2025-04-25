@@ -39,7 +39,7 @@ export function submitDeposit(userUuid, data, file) {
 
   return api.addAuthenticationHeader()
     .put(
-      `/BankAccountController/saveInitialDeposit/${userUuid}?quotationUuid=${data.quotationUuid}&amount=${data.amount}&paymentType=${data.paymentType}&receiptNumber=${data.receiptNumber}`,
+      `/BankAccountController/saveInitialDeposit/${userUuid}?quotationUuid=${data.quotationUuid}&amount=${data.amount}&paymentMethod=${data.paymentType}&receiptNumber=${data.receiptNumber}`,
       formData,
       {
         headers: {
@@ -66,6 +66,12 @@ export function getLibreImages(carUuid) {
 export function setQuotation(quotationUuid, amount, type) {
   return api.addAuthenticationHeader().post(`${path}/setQuotation/${quotationUuid}?${type}=${amount}`);
 }
+
+export function updateQuotationStatus(quotationUuid, status, remark) {
+  return api.addAuthenticationHeader()
+    .put(`/quotation/updateInitialDepositStatus/${quotationUuid}?initialDepositStatus=${status}&remark=${remark}`);
+}
+
 
 
 

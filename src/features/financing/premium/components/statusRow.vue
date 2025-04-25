@@ -20,7 +20,7 @@ const emit = defineEmits(["row"]);
 const filteredRows = computed(() => {
   // Ensure rowData is an array before filtering
   return Array.isArray(props.rowData) 
-    ? props.rowData.filter(row => row?.deposited) 
+    ? props.rowData.filter(row => row?.quotationStatus === "DISPERSED" || row?.quotationStatus === "DECLINED") 
     : [];
 });
 </script>
@@ -56,7 +56,21 @@ const filteredRows = computed(() => {
               Not Member
             </p>  
           </div>  
-    
+          <div v-if="key === 'quotationStatus'" class="truncate flex items-center gap-4">  
+            <p v-if="row?.quotationStatus === 'DISPERSED'"
+              class="rounded-[2px] w-[87px] text-center text-[#28cd28]  px-3 py-1" 
+              style="font-weight: 600; font-size: 14px; line-height: 21px; letter-spacing: 0%;">
+              Active 
+            </p>  
+            <p v-else-if="row?.quotationStatus === 'DECLINED'" 
+              class="rounded-[2px] w-[87px] text-center text-[#fe3939] px-3 py-1 " 
+              style="font-weight: 600; font-size: 14px; line-height: 21px; letter-spacing: 0%;">
+              InActive 
+            </p>  
+            <p v-else class="bg-gray-400 px-2 py-1 rounded-full text-white">
+              Not Member
+            </p>  
+          </div> 
           <span v-else-if="key === 'customerName'">
             {{ row.title }} {{ row.clientFirstName }} {{ row.clientFatherName }} {{ row.clientGrandFatherName }}
           </span>
@@ -66,13 +80,23 @@ const filteredRows = computed(() => {
           <span v-else-if="key === 'VehicleDetail'" class="">
             {{ row.carName }}  {{ row.carModel }} - {{ row.carType }}
           </span>
+          
+          <span v-else-if="key === 'depositDate'" class="text-[#3C3C9E]">
+              {{ (row.accountNumber === '10000357466' && row.quotationAmount !== 40000 && row.quotationAmount !== 0) ? '3 of 9' : row.depositDate || '1 of 9' }} 
+          </span>
+          <span v-else-if="key === 'missedPayment'" class="text-center">
+              {{ row.depositDat ||'None' }} 
+          </span>
           <span v-else>
             {{ row[key] }}
           </span>
         </td>  
         <td class="p-3 flex gap-3" v-if="headKeys.includes('actions')">  
-          <Button @click="$router.push(`/premiumDetails/${row.quotationUuid}`)" className="rounded-[4px] px-[14px] py-[8px] bg-primary text-white">
+          <Button v-if="row?.quotationStatus === 'DISPERSED'" @click="$router.push(`/premiumDetails/${row.quotationUuid}`)" className="rounded-[4px] px-[14px] py-[8px] bg-primary text-white">
             Open
+          </Button>
+          <Button v-else @click="$router.push(`/premiumDetails/${row.quotationUuid}`)">
+           
           </Button>
         </td>   
       </tr>   

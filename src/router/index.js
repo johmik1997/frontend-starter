@@ -46,7 +46,7 @@ const routes = [
 ];
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHistory(),
   routes,
 });
 
@@ -54,17 +54,17 @@ router.beforeEach(async (to, from) => {
   const auth = useAuth();
 
   if (!auth.auth?.accessToken) {
-    let detail = localStorage.getItem('userDetail');
-    if (detail) {
-      detail = JSON.parse(detail);
+    let detiail = localStorage.getItem('userDetail');
+    if (detiail) {
+      detiail = JSON.parse(detiail);
       auth.setAuth({
-        user: detail,
-        accessToken: detail?.token,
+        user: detiail,
+        accessToken: detiail?.token,
       });
     }
   }
 
-  if (to.path === '/login' && auth.auth?.accessToken) {
+  if (to.path == '/login' && auth.auth?.accessToken) {
     return {
       path: from.path,
     };
@@ -75,12 +75,20 @@ router.beforeEach(async (to, from) => {
     auth.auth?.user?.privileges?.includes('All Privileges') ||
     auth.auth?.user?.roleName === 'Super Admin'
   ) {
+    let detiail = localStorage.getItem('userDetail');
+    if (detiail) {
+      detiail = JSON.parse(detiail);
+      auth.setAuth({
+        user: detiail,
+        accessToken: detiail?.token,
+      });
+    }
     return true;
   }
 
   if (!auth.auth?.accessToken) {
     return {
-      path: '/login',
+      path: `/login`,
       query: {
         redirect: to.path,
       },
@@ -90,15 +98,16 @@ router.beforeEach(async (to, from) => {
   if (
     (auth.auth?.user?.roleName &&
       to.meta?.role &&
-      auth.auth?.user?.roleName === to.meta?.role) ||
+      auth.auth?.user?.roleName == to.meta?.role) ||
     (!to.meta?.role && !to.meta?.privileges && to.meta?.requiresAuth)
   ) {
     return true;
   }
 
   let privileges = auth.auth.user?.privileges;
-  const found = (to.meta?.privileges || []).find((privilege) => {
-    return privileges?.includes(`ROLE_${privilege}`);
+
+  const found = (to.meta?.privileges || []).find((privilage) => {
+    return privileges?.includes(`ROLE_${privilage}`);
   });
 
   if (found) return true;
@@ -107,7 +116,6 @@ router.beforeEach(async (to, from) => {
     path: '/forbidden',
   };
 });
-
 export default router;
 
 

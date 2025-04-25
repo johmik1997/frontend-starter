@@ -65,9 +65,9 @@ function openAddDispersementModal() {
     <!-- Header actions -->
     <template #more>
       <div class="flex gap-2 justify-end items-center">
-        <Button @click="openAddDispersementModal" type="primary" class="flex items-center gap-2">
+        <!-- <Button @click="openAddDispersementModal" type="primary" class="flex items-center gap-2">
           New Dispersement
-        </Button>
+        </Button> -->
       </div>
     </template>
 
@@ -75,8 +75,8 @@ function openAddDispersementModal() {
     <Table
       :pending="pagination.pending.value"
       :headers="{
-        head: ['Customer Name', 'Dispersement Date', 'Account Number', 'Branch', 'Amount', 'Status', 'actions'],
-        row: ['customerName', 'dispersementDate', 'accountNumber', 'branch', 'amount', 'status'],
+        head: ['Customer Name', 'Schedules', 'Missed payment','Account Number', 'Branch', 'Amount', 'Status', 'actions'],
+        row: ['customerName', 'depositDate','missedPayment', 'accountNumber', 'insurance', 'quotationAmount', 'quotationStatus'],
       }"
       :rowCom="Status_row"
       :rows="useQuations.quotations || []"

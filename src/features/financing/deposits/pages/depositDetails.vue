@@ -79,12 +79,12 @@
           <div class="flex flex-col gap-2 pt-2">
             <div class="flex justify-between items-center">
               <div class="text-xs sm:text-sm font-normal text-[#2B3674]">Total Premium</div>
-              <div class="text-xs sm:text-sm">{{ customerId.customers?.carName}}</div>
+              <div class="text-xs sm:text-sm font-bold text-[#494F51]">ETB {{ customerId.customers?.quotationAmount}} /Year</div>
             </div>
             
             <div class="flex justify-between items-center">
-              <div class="text-xs sm:text-sm font-normal text-[#2B3674]">Monthly Premium </div>
-              <div class="text-xs sm:text-sm">{{ customerId.customers?.carModel }}</div>
+              <div class="text-xs sm:text-sm font-normal text-[#2B3674]">Monthly Repayment </div>
+              <div class="text-xs sm:text-sm font-bold text-[#494F51]">ETB {{ customerId.customers?.monthlyPayment }} /Month</div>
             </div>
          
           </div>
@@ -114,7 +114,7 @@
         <span class="font-semibold">Method</span>
         <span class="flex items-center gap-2 font-medium text-blue-600">
           <img src="@/assets/telebirr-icon.svg" alt="Payment" class="w-5 h-5" />
-          {{ depositDetails?.paymentType }}
+          {{ depositDetails?.paymentMethod || 'TeleBirr' }}
         </span>
       </div>
 
@@ -160,8 +160,8 @@
 
     <!-- Disbursement Button -->
     <div class="mt-4">
-      <button class="w-full bg-[#3C3C9E] text-white py-3 rounded-lg font-semibold hover:bg-[#3C3C9E]">
-        Make Disbursement
+      <button @click="$router.push(`/dispersementDetails/${customerId.customers?.quotationUuid}`)" class="w-full bg-[#3C3C9E] text-white py-3 rounded-lg font-semibold hover:bg-[#3C3C9E]">
+        Make Payment for Insurance
       </button>
     </div>
   </div>
@@ -218,7 +218,7 @@ const fetchDepositDetails = async () => {
         if (res?.data) {
           depositDetails.value = {
             amount: res.data.amount,
-            paymentType: res.data.paymentType,
+            paymentMethod: res.data.paymentMethod,
             receiptNumber: res.data.receiptNumber,
             depositDate: res.data.depositDate,
             deposited: res.data.deposited

@@ -232,21 +232,12 @@ onMounted(async () => {
     <!-- Content for "Account Created" tab -->  
     <p>Content for Account Created</p>  
   </div>
-			<div class="flex gap-2 justify-end items-center">
-				<Button type="primary" class="flex items-center gap-2">
-					<!-- <i v-html="icons.plus" /> -->
-					New Inspection
-				</Button>
-				<!--<Button class="border border-priamry text-primary flex items-center gap-2">
-					<i v-html="icons.import" />
-					Import Members
-				</Button>-->
-			</div>
+			
 		</template>
    <Table
 	   :headers="{
 		    head: ['#', 'Client Name', 'Registered date', 'Vehicle Detail', 'Phone Number', 'Policy Status', 'actions'],
-			row: ['id', 'clientName', 'RegisteredDate', 'Vehicle', 'phoneNumber', 'status', 'actions']
+			row: ['id', 'clientName', 'RegisteredDate', 'Vehicle', 'phoneNumber', 'status']
 		}"
 	:rowCom="Status_row"
 		:rows="membersStore.members"

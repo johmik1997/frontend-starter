@@ -84,7 +84,7 @@
               <div class="text-xs sm:text-sm font-bold text-[#494F51]">ETB {{ quotation.amount?.toLocaleString() }}</div>
             </div>
             <div class="flex justify-between items-center">
-              <div class="text-xs sm:text-sm font-normal text-[#2B3674]">Monthly Premium</div>
+              <div class="text-xs sm:text-sm font-normal text-[#2B3674]">Monthly Repayment</div>
               <div class="text-xs sm:text-sm font-bold text-[#494F51]">ETB {{ quotation.premium?.toLocaleString() }}</div>
             </div>
           </div>

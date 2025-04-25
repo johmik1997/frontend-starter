@@ -25,6 +25,15 @@ export default [
 				}
 			},
 			{
+				path: '/depositDetails/:depositUuid',
+				name: 'Details',
+				component: DepositDetails,
+				meta: {
+			  requiresAuth: true,
+			  permissions: []
+			}
+			},
+			{
 				path: '/payment/dispersement',
 				name: 'Dispersement',
 				component: Dispersement,
@@ -42,15 +51,7 @@ export default [
 					permissions: []
 				}
 			},
-			{
-				path: '/depositDetails/:depositUuid',
-				name: 'Details',
-				component: DepositDetails,
-				meta: {
-			  requiresAuth: true,
-			  permissions: []
-			}
-			},
+			
 
 		]
 	

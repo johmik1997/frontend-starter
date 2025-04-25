@@ -62,7 +62,7 @@ function openAddClientModal() {
       :pending="pagination.pending.value"
       :headers="{
         head: ['Customer Name', 'Inspection Date', 'Vehicle Detail', 'Insurance', 'Premium', 'Status', 'actions'],
-        row: ['customerName', 'quotationDate', 'VehicleDetail', 'insurance', 'quotationAmount', 'checked'],
+        row: ['customerName', 'quotationDate', 'VehicleDetail', 'insurance', 'quotationAmount', 'quotationStatus'],
       }"
       :rowCom="Status_row"
       :rows="useQuations.quotations || []"
@@ -71,3 +71,5 @@ function openAddClientModal() {
     </Table>
   </DefaultPage>
 </template>
+
+

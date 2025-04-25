@@ -17,10 +17,11 @@ const props = defineProps({
 const emit = defineEmits(["row"]);  
 
 // Compute filtered rows
+
 const filteredRows = computed(() => {
   // Ensure rowData is an array before filtering
   return Array.isArray(props.rowData) 
-    ? props.rowData.filter(row => row?.deposited) 
+    ? props.rowData.filter(row => row?.quotationStatus === "DISPERSED" || row?.quotationStatus === "DEPOSITED" ) 
     : [];
 });
 </script>
@@ -56,7 +57,21 @@ const filteredRows = computed(() => {
               Not Member
             </p>  
           </div>  
-    
+          <div v-if="key === 'quotationStatus'" class="truncate flex items-center gap-4">  
+            <p v-if="row?.quotationStatus === 'DEPOSITED'"
+              class="rounded-[2px] w-[87px] text-center bg-[#FFF8E7] text-[#B38B35] px-3 py-1" 
+              style="font-weight: 600; font-size: 14px; line-height: 21px; letter-spacing: 0%;">
+              Deposited 
+            </p>  
+            <p v-else-if="row?.quotationStatus === 'DISPERSED'" 
+              class="rounded-[2px] w-[87px] text-center bg-[#EBE7FF] px-3 py-1 text-primary" 
+              style="font-weight: 600; font-size: 14px; line-height: 21px; letter-spacing: 0%;">
+              Dispresed 
+            </p>  
+            <p v-else class="bg-gray-400 px-2 py-1 rounded-full text-white">
+              Not Member
+            </p>  
+          </div>  
           <span v-else-if="key === 'customerName'">
             {{ row.title }} {{ row.clientFirstName }} {{ row.clientFatherName }} {{ row.clientGrandFatherName }}
           </span>
@@ -65,6 +80,9 @@ const filteredRows = computed(() => {
           </span>
           <span v-else-if="key === 'VehicleDetail'" class="">
             {{ row.carName }}  {{ row.carModel }} - {{ row.carType }}
+          </span>
+          <span v-else-if="key === 'depositDate'" class="">
+              {{ row.depositDate ||'Apr 04-2024' }} 
           </span>
           <span v-else>
             {{ row[key] }}

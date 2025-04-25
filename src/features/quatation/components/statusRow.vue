@@ -14,6 +14,7 @@ const props = defineProps({
     required: true,  
   },  
 }); 
+console.log(props.rowKeys);
 const emit = defineEmits(["row"]);  
 </script>
 <template>  
@@ -26,17 +27,17 @@ const emit = defineEmits(["row"]);
       <td class="p-3">{{ idx + 1 }}</td>  
   
       <td class="p-3" v-for="key in rowKeys" :key="key">  
-        <div v-if="key === 'checked'" class="truncate flex items-center gap-4">  
-          <p v-if="row?.checked === false"
+        <div v-if="key === 'quotationStatus'" class="truncate flex items-center gap-4">  
+          <p v-if="row?.quotationStatus === 'PENDING'"
           class=" rounded-[2px] w-[87px] text-center bg-[#FFF8E7] text-[#B38B35] px-3 py-1" 
    style=" font-weight: 600; font-size: 14px; line-height: 21px; letter-spacing: 0%;">Not Checked  
 </p>  
-          <p v-else-if="row?.checked === true" 
+          <p v-else
    class=" rounded-[2px] w-[87px]  text-center bg-[#EBE7FF] px-3 py-1 text-primary" 
    style=" font-weight: 600; font-size: 14px; line-height: 21px; letter-spacing: 0%;">
     Checked  
 </p>  
-<p v-else class="bg-gray-400 px-2 py-1 rounded-full text-white">Not Member</p>  
+
         </div>  
   
         <!-- Custom computation for patientName -->
@@ -59,14 +60,14 @@ const emit = defineEmits(["row"]);
       </td>  
       <td class="p-3 flex gap-3" v-if="headKeys.includes('actions')">  
         <Button 
-          v-if="row?.checked === false" 
+          v-if="row?.quotationStatus === 'PENDING'"
           @click="$router.push(`/details/${row.quotationUuid}`)" 
           class="rounded-[4px]  bg-primary text-white"
         >
           Open
         </Button>
         <Button 
-          v-if="row?.checked === true" 
+           v-else
           @click="$router.push(`/details/${row.quotationUuid}`)" 
           class="rounded-[4px]  bg-[#EBE7FF] text-primary"
         >

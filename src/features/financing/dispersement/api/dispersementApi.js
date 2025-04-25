@@ -51,7 +51,16 @@ export function setQuotation(quotationUuid, amount, type) {
 
 export function authorizeDispersement(quotationUuid) {
   return api.addAuthenticationHeader()
-    .put(`/payment/disperse/${quotationUuid}`);
+    .put(`/payment/transfer/${quotationUuid}`);
 }
+
+export function saveCarLibre(carUuid, formData) {
+  return api.addAuthenticationHeader().post(`/cars/saveCarLibre/${carUuid}`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
+}
+
 
 

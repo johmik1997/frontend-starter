@@ -11,60 +11,62 @@ import { Input } from "@/components/new_form_elements";
 import { useApiRequest } from "@/composables/useApiRequest";
 import { usePaginationcopy } from "@/composables/usePaginationcopy";
 import { closeModal } from "@customizer/modal-x";
-import { searchClientByPhone, submitDeposit } from "../api/depositsApi";
+import { searchClientByPhone, submitDeposit, updateQuotationStatus } from "../api/depositsApi";
+import { useQuotation } from '../store/deposit';
+import { useToast } from '@/toast/store/toast';
 
+const quotationStore = useQuotation();
+const toast = useToast();
 
-const step = ref(1);
-const searchPhone = ref('');
-let searchTimeout = null; // Add debounce timeout
-const selectedClient = ref(null);
+const step = ref(1)
+const searchPhone = ref('')
+let searchTimeout = null // Add debounce timeout
+const selectedClient = ref(null)
 
 // Setup pagination - Fix the callback to properly use searchPhone value
 const pagination = usePaginationcopy({
   cb: () => searchClientByPhone(searchPhone.value),
   auto: false
-});
+})
 
-// Payment details
-const paymentDetails = ref({
-  paymentType: '',
-  amount: '',
-  receiptNumber: '',
-  photo: null
-});
+// Status details
+const statusDetails = ref({
+  quotationStatus: 'DEPOSITED', // Always set to DEPOSITED
+  remark: ''
+})
 
 // Add watch for searchPhone
 watch(searchPhone, (newValue) => {
   // Clear any existing timeout
   if (searchTimeout) {
-    clearTimeout(searchTimeout);
+    clearTimeout(searchTimeout)
   }
 
   // Don't search if empty
   if (!newValue) {
-    return;
+    return
   }
 
   // Debounce the search with 500ms delay
   searchTimeout = setTimeout(() => {
-    pagination.send();
-  }, 500);
-});
+    pagination.send()
+  }, 500)
+})
 
 // Update the clients computed property to filter for non-deposited clients
 const clients = computed(() => {
-  const allClients = pagination.data?.value?.content || [];
-  return allClients.filter(client => client.deposited === false);
-});
+  const allClients = pagination.data?.value?.content || []
+  return allClients.filter(client => client.quotationStatus === "CHECKED")
+})
 
 // Use computed for loading state
-const loading = computed(() => pagination.pending.value);
+const loading = computed(() => pagination.pending.value)
 
 // Select client and move to next step
 const selectClient = (client) => {
   if (client.deposited) {
-    toasted(false, "", "This client has already made a deposit");
-    return;
+    toasted(false, "", "This client has already made a deposit")
+    return
   }
   
   selectedClient.value = {
@@ -79,77 +81,88 @@ const selectClient = (client) => {
     quotationAmount: client.quotationAmount,
     monthlyPayment: client.monthlyPayment,
     accountNumber: client.accountNumber
-  };
-};
+  }
+}
 
 const nextStep = (event) => {
-  event?.preventDefault(); // Prevent form submission
+  event?.preventDefault() // Prevent form submission
   
   if (!selectedClient.value) {
-    toasted(false, "", "Please select a client first");
-    return;
+    toasted(false, "", "Please select a client first")
+    return
   }
-  step.value = 2;
-};
+  step.value = 2
+}
 
 const prevStep = () => {
-  step.value = 1;
-  selectedClient.value = null;
-};
+  step.value = 1
+  selectedClient.value = null
+}
 
 // Handle file upload
 const handleFileUpload = (event) => {
-  const file = event.target.files[0];
+  const file = event.target.files[0]
   if (file) {
     if (file.size > 5 * 1024 * 1024) { // 5MB limit
-      toasted(false, "", "File size should be less than 5MB");
-      event.target.value = ''; // Clear the input
-      return;
+      toasted(false, "", "File size should be less than 5MB")
+      event.target.value = '' // Clear the input
+      return
     }
-    paymentDetails.value.photo = file;
+    paymentDetails.value.photo = file
   }
-};
+}
 
 // Submit form
 const submitForm = async () => {
-  // Validation
-  if (!paymentDetails.value.paymentType || 
-      !paymentDetails.value.amount || 
-      !paymentDetails.value.receiptNumber ||
-      !paymentDetails.value.photo) {
-    toasted(false, "", "Please fill all required fields");
-    return;
-  }
-
-  // Amount validation
-  if (paymentDetails.value.amount <= 0) {
-    toasted(false, "", "Amount must be greater than 0");
-    return;
-  }
-
   try {
-    const response = await submitDeposit(
-      selectedClient.value.userUuid,  // Use userUuid in the path
-      {
-        quotationUuid: selectedClient.value.quotationUuid, // Use quotationUuid in query params
-        paymentType: paymentDetails.value.paymentType,
-        amount: paymentDetails.value.amount,
-        receiptNumber: paymentDetails.value.receiptNumber
-      },
-      paymentDetails.value.photo
+    if (!selectedClient.value) {
+      toast.addToast({
+        type: 'error',
+        message: 'Please select a client'
+      })
+      return
+    }
+
+    const newDeposit = {
+      ...selectedClient.value,
+      quotationStatus: 'DEPOSITED',
+      remark: statusDetails.value.remark || '', // Make remark optional
+      depositDate: new Date().toISOString().split('T')[0],
+      initialDepositStatus: 'DEPOSITED',
+      initialDepositAprovalDAte: new Date().toISOString().split('T')[0]
+    }
+
+    // Send to backend
+    const response = await updateQuotationStatus(
+      selectedClient.value.quotationUuid,
+      'DEPOSITED',
+      statusDetails.value.remark || ''
     );
 
     if (response.success) {
-      toasted(true, "Deposit submitted successfully!");
-      closeModal();
+      // Add to store after successful API call
+      quotationStore.add(newDeposit)
+
+      toast.addToast({
+        type: 'success',
+        message: 'Deposit added successfully'
+      })
+
+      closeModal()
     } else {
-      toasted(false, "", response.error || "Failed to submit deposit");
+      toast.addToast({
+        type: 'error',
+        message: response.error || 'Failed to add deposit'
+      })
     }
   } catch (error) {
-    console.error('Deposit submission error:', error);
-    toasted(false, "", error.response?.data?.message || "Error submitting deposit");
+    console.error('Error adding deposit:', error)
+    toast.addToast({
+      type: 'error',
+      message: error.message || 'Failed to add deposit'
+    })
   }
-};
+}
 </script>
 
 <template>
@@ -240,7 +253,7 @@ const submitForm = async () => {
             </div>
           </div>
 
-          <!-- Step 2: Client Details and Payment -->
+          <!-- Step 2: Client Details and Status Update -->
           <div v-if="step === 2" class="space-y-6">
             <div class="grid grid-cols-2 ">
               <!-- Client Info Card -->
@@ -297,55 +310,26 @@ const submitForm = async () => {
               </div>
             </div>
 
-            <!-- Payment Form -->
+            <!-- Status Update Form -->
             <div class="mt-6">
-              <h3 class="text-lg font-semibold mb-4">Payment Details</h3>
-              <div class="grid grid-cols-2 gap-4">
-                <Select
-                  v-model="paymentDetails.paymentType"
-                  label="Payment Type"
-                  validation="required"
-                  :options="[
-                    'ONLINE',
-                    'Cash',
-                    'DIRECT_pAY',
-                    'DISPERSE'
-                  ]"
-                  :attributes="{ 
-                    placeholder: 'Select Payment Type',
-                    required: true 
-                  }"
-                />
-                <Input
-                  v-model="paymentDetails.amount"
-                  label="Amount"
-                  type="number"
-                  validation="required|num_min-1"
-                  :attributes="{ 
-                    placeholder: 'Enter amount',
-                    required: true
-                  }"
-                />
-                <Input
-                  v-model="paymentDetails.receiptNumber"
-                  label="Receipt Number"
-                  validation="required"
-                  :attributes="{ 
-                    placeholder: 'Enter receipt number',
-                    required: true
-                  }"
+              <h3 class="text-lg font-semibold mb-4">Status Update</h3>
+              <div class="grid grid-cols-1 gap-4">
+                <input 
+                  type="hidden" 
+                  v-model="statusDetails.quotationStatus" 
+                  value="DEPOSITED"
                 />
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">
-                    Upload Receipt <span class="text-red-500">*</span>
+                    Remark <span class="text-red-500">*</span>
                   </label>
-                  <input
-                    type="file"
-                    @change="handleFileUpload"
-                    accept="image/*"
-                    required
+                  <textarea
+                    v-model="statusDetails.remark"
+                    rows="4"
                     class="w-full p-2 border rounded-md"
-                  />
+                    placeholder="Enter remark"
+                    required
+                  ></textarea>
                 </div>
               </div>
             </div>
