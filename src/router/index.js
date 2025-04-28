@@ -1,5 +1,6 @@
 import MainLayout from '@/layouts/MainLayout.vue'
 import quatationRoutes from './quatation.routes'
+import insuranceRoutes from './insurance.routes'
 import paymentRoutes from './payment.routes'
 import subcitiesRoutes from './subcities.routes'
 import ketenaRoutes from './ketena.routes'
@@ -37,7 +38,8 @@ const routes = [
       ...quatationRoutes,
       ...paymentRoutes,
       ...subcitiesRoutes,
-      ...ketenaRoutes
+      ...ketenaRoutes,
+      ...insuranceRoutes
     ],
   },
   { path: "/login", name: "Login", component: Login },

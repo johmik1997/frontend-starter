@@ -14,7 +14,7 @@ import { closeModal } from "@customizer/modal-x";
 import InputEmail from "@/components/new_form_elements/inputEmail.vue";
 import icons from "@/utils/icons";
 import { getAllInsurances, getCategoriesByInsurance } from "@/features/roles/Api/RoleApi";
-import { CreateClient } from "../api/customersApi";
+import { CreateClient, getAllcar } from "../api/customersApi";
 import { v4 as uuidv4 } from 'uuid';
 import { getValidators } from '@/components/new_form_builder/util/validators.js';
 import { useQuotation } from '../store/Quotation';
@@ -84,7 +84,9 @@ const newVehicle = ref({
     category4: '',
   },
   carName: '',
+  carType: '',
   carModel: '',
+  engine_No: '',
   plateNumber: '',
   makeYear: '',
   buyingPrice: 0
@@ -185,25 +187,31 @@ const handleCategorySelection = () => {
   console.log('Updated rateRequest:', newVehicle.value.rateRequest);
 };
 
-// Validation
+// Validation functions
 const isValidPersonalDetails = () => {
-  const validators = getValidators();
-  const details = personalDetails.value;
+  const missingFields = [];
+  
+  if (!personalDetails.value.firstName?.trim()) missingFields.push('First Name');
+  if (!personalDetails.value.fatherName?.trim()) missingFields.push('Last Name');
+  if (!personalDetails.value.email?.trim()) missingFields.push('Email');
+  if (!personalDetails.value.mobilePhone?.trim()) missingFields.push('Mobile Phone');
 
-  const validations = {
-    firstName: validators.text.alpha(details.firstName, [3], null, "First Name must be at least 3 letters and contain only alphabets"),
-    fatherName: validators.text.alpha(details.fatherName, [3], null, "Last Name must be at least 3 letters and contain only alphabets"),
-    email: validators.text.email(details.email, null, null, "Please enter a valid email address"),
-    mobilePhone: validators.text.phone(details.mobilePhone, null, null, "Please enter a valid phone number"),
-    insuranceUuid: validators.select.required(details.insuranceUuid, null, null, "Insurance selection is required")
-  };
+  if (missingFields.length > 0) {
+    toasted(false, "", `Please fill in all required fields: ${missingFields.join(', ')}`);
+    return false;
+  }
 
-  const errors = Object.entries(validations)
-    .filter(([_, [isValid]]) => !isValid)
-    .map(([_, [__, message]]) => message);
+  // Basic email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(personalDetails.value.email)) {
+    toasted(false, "", "Please enter a valid email address");
+    return false;
+  }
 
-  if (errors.length > 0) {
-    toasted(false, "", errors.join('\n'));
+  // Phone number validation (Ethiopian format)
+  const phoneRegex = /^(\+251|0)[9][0-9]{8}$/;
+  if (!phoneRegex.test(personalDetails.value.mobilePhone)) {
+    toasted(false, "", "Please enter a valid Ethiopian phone number");
     return false;
   }
 
@@ -264,16 +272,27 @@ const nextStep = (event) => {
     }
     step.value = 2;
   } else if (step.value === 2) {
+    if (!personalDetails.value.insuranceUuid) {
+      toasted(false, "", "Please select an insurance provider!");
+      return;
+    }
+    step.value = 3;
+  } else if (step.value === 3) {
     if (carRequests.value.length === 0) {
       toasted(false, "", "Please add at least one vehicle before continuing!");
       return;
     }
-    step.value = 3;
+    step.value = 4;
+  } else if (step.value === 4) {
+    // For now, just proceed to next step since quotation details will be integrated later
+    step.value = 5;
   }
 };
 
 const prevStep = () => {
-  step.value = 1; // Explicitly set to 1
+  if (step.value > 1) {
+    step.value--;
+  }
 };
 
 
@@ -343,6 +362,7 @@ const clearNewVehicle = () => {
     },
     carName: '',
     carModel: '',
+    engine_No: '',
     plateNumber: '',
     makeYear: '',
     buyingPrice: ''
@@ -505,6 +525,92 @@ const saveDraft = () => {
     toasted(false, "Error saving draft");
   }
 };
+
+// Add these refs
+const carMakes = ref([]);
+const carTypes = ref([]);
+const carModels = ref([]);
+const engineNumbers = ref([]); // New ref for engine numbers
+
+// Add these methods
+const loadCarMakes = async () => {
+  try {
+    const response = await getAllcar();
+    if (response.data) {
+      carMakes.value = response.data;
+    }
+  } catch (error) {
+    console.error('Error fetching car makes:', error);
+  }
+};
+
+const loadCarTypes = async (carName) => {
+  try {
+    const response = await getAllcar({ carName });
+    if (response.data) {
+      carTypes.value = response.data;
+      // Reset dependent fields
+      newVehicle.value.carType = '';
+      newVehicle.value.carModel = '';
+      newVehicle.value.engine_No = '';
+      carModels.value = [];
+      engineNumbers.value = [];
+    }
+  } catch (error) {
+    console.error('Error fetching car types:', error);
+  }
+};
+
+const loadCarModels = async (carType) => {
+  try {
+    const response = await getAllcar({ carType });
+    if (response.data) {
+      carModels.value = response.data;
+      // Reset dependent fields
+      newVehicle.value.carModel = '';
+      newVehicle.value.engine_No = '';
+      engineNumbers.value = [];
+    }
+  } catch (error) {
+    console.error('Error fetching car models:', error);
+  }
+};
+
+const loadEngineNumbers = async (carModel) => {
+  try {
+    const response = await getAllcar({ carModel });
+    if (response.data) {
+      engineNumbers.value = response.data;
+      newVehicle.value.engine_No = '';
+    }
+  } catch (error) {
+    console.error('Error fetching engine numbers:', error);
+  }
+};
+
+// Add watchers for cascading dropdowns
+watch(() => newVehicle.value.carName, (newValue) => {
+  if (newValue) {
+    loadCarTypes(newValue);
+  }
+});
+
+watch(() => newVehicle.value.carType, (newValue) => {
+  if (newValue) {
+    loadCarModels(newValue);
+  }
+});
+
+watch(() => newVehicle.value.carModel, (newValue) => {
+  if (newValue) {
+    loadEngineNumbers(newValue);
+  }
+});
+
+// Load car makes on component mount
+onMounted(() => {
+  loadCarMakes();
+});
 </script>
 
 <template>
@@ -578,146 +684,227 @@ const saveDraft = () => {
               }"
             />
           </div>
-          <div v-if="step === 1" class=" w-full mt-5 gap-4">
-            <Select
-              :obj="true"
-              v-model="personalDetails.insuranceUuid"
-              name="insuranceUuid"
-              label="Insurance"
-              validation="required"
-              :options="
-                (insurereq.response.value?.insurances || []).map((insurance) => ({
-                  label: insurance.insuranceName,
-                  value: insurance.insuranceUuid,
-                }))
-              "
-              :attributes="{ placeholder: 'Select Insurance' }"
-            />
-           {{  console.log('insurances', insurereq.response.value?.insurances)}}   
+
+          <!-- Step 2: Insurance Selection -->
+          <div v-if="step === 2" class="w-full mt-5">
+            <h3 class="text-lg font-semibold mb-2">Select Your Preferred Insurance Company.</h3>
+            <p class="text-gray-600 mb-6">Select the insurance company that you trust the most and feel offers the best fit for your needs and preferences.</p>
+
+            <div class="grid grid-cols-3 gap-6">
+              <div 
+                v-for="insurance in (insurereq.response.value?.insurances || [])" 
+                :key="insurance.insuranceUuid"
+                @click="personalDetails.insuranceUuid = insurance.insuranceUuid"
+                class="flex flex-col items-center p-4 border rounded-lg cursor-pointer transition-all duration-200"
+                :class="{'border-blue-500 bg-blue-50': personalDetails.insuranceUuid === insurance.insuranceUuid}"
+              >
+                <!-- Insurance Logo -->
+                <div class="w-32 h-32 mb-3 flex items-center justify-center bg-white rounded-lg p-2">
+                  <img 
+                    :src="insurance.profile ? `data:image/jpeg;base64,${insurance.profile}` : '@/assets/default-insurance-logo.png'"
+                    :alt="insurance.insuranceName"
+                    class="max-w-full max-h-full object-contain"
+                  />
+                </div>
+                
+                <!-- Insurance Name -->
+                <span class="text-center text-blue-700 font-medium">{{ insurance.insuranceName }}</span>
+              </div>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="flex justify-between mt-8">
+              <Button 
+                @click="prevStep" 
+                class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded"
+              >
+                Back
+              </Button>
+           
+            </div>
           </div>
-          <!-- Step 2: Vehicle Details -->
-           <div class="grid grid-cols-2 gap-4 mb-4">
+
+          <!-- Step 3: Vehicle Details -->
+          <div class="grid grid-cols-2 gap-4 mb-4">
             
   
            
-          <div v-if="step === 2" class="w-full max-w-lg bg-white p-6 rounded-md">
-            <h3 class="text-lg font-semibold mb-4">Step 2: Vehicle Details</h3>
-            
-            <div class="grid grid-cols-2 gap-4">
-              <!-- Vehicle Type Selection -->
-              <Select
-                v-model="selectedMainCategory"
-                label="Vehicle Type"
-                :options="getMainCategories()"
-                @change="handleCategorySelection"
-                :attributes="{ placeholder: 'Select Vehicle Type' }"
-              />
-  
-              <Select
-                v-if="getSubCategories().length"
-                v-model="selectedSubCategory"
-                label="Category"
-                :options="getSubCategories()"
-                @change="handleCategorySelection"
-                :attributes="{ placeholder: 'Select Category' }"
-              />
-  
-              <Select
-                v-if="getSubSubCategories().length"
-                v-model="selectedSubSubCategory"
-                label="Sub Category"
-                :options="getSubSubCategories()"
-                @change="handleCategorySelection"
-                 :attributes="{ placeholder: 'Select subCategory' }"
-              />
-  
-              <Select
-                v-if="getFinalCategories().length"
-                v-model="selectedFinalCategory"
-                label="Final Category"
-                :options="getFinalCategories()"
-                @change="handleCategorySelection"
-                  :attributes="{ placeholder: 'Final Catagory' }"
-              />
-  
-              <!-- Other vehicle details -->
-              <Input
-                v-model="newVehicle.buyingPrice"
-                label="Buying Price"
-                type="number"
-                :attributes="{ placeholder: 'Enter buying price' }"
-              />
-  
-              <Input
-                v-model="newVehicle.plateNumber"
-                label="Plate Number"
-                :attributes="{ placeholder: 'Enter plate number' }"
-              />
-  
-              <Input
-                v-model="newVehicle.makeYear"
-                label="Make Year"
-                :attributes="{ placeholder: 'Enter make year' }"
-              />
-  
-              <Select
-                v-model="newVehicle.carName"
-                label="Car Make"
-                :options="['Toyota', 'Suzuki', 'Honda']"
-                  :attributes="{ placeholder: 'Enter car name' }"
-              />
-  
-              <Select
-                v-model="newVehicle.carModel"
-                label="Car Model"
-                :options="['Yaris', 'Dezire', 'Prado']"
-                  :attributes="{ placeholder: 'Enter car model' }"
-              />
+            <div v-if="step === 3" class="w-full max-w-lg bg-white p-6 rounded-md">
+              <h3 class="text-lg font-semibold mb-4">Step 2: Vehicle Details</h3>
+              
+              <div class="grid grid-cols-2 gap-4">
+                <!-- Vehicle Type Selection -->
+                <Select
+                  v-model="selectedMainCategory"
+                  label="Vehicle Type"
+                  :options="getMainCategories()"
+                  @change="handleCategorySelection"
+                  :attributes="{ placeholder: 'Select Vehicle Type' }"
+                />
+    
+                <Select
+                  v-if="getSubCategories().length"
+                  v-model="selectedSubCategory"
+                  label="Category"
+                  :options="getSubCategories()"
+                  @change="handleCategorySelection"
+                  :attributes="{ placeholder: 'Select Category' }"
+                />
+    
+                <Select
+                  v-if="getSubSubCategories().length"
+                  v-model="selectedSubSubCategory"
+                  label="Sub Category"
+                  :options="getSubSubCategories()"
+                  @change="handleCategorySelection"
+                   :attributes="{ placeholder: 'Select subCategory' }"
+                />
+    
+                <Select
+                  v-if="getFinalCategories().length"
+                  v-model="selectedFinalCategory"
+                  label="Final Category"
+                  :options="getFinalCategories()"
+                  @change="handleCategorySelection"
+                    :attributes="{ placeholder: 'Final Catagory' }"
+                />
+    
+                <!-- Other vehicle details -->
+                <Input
+                  v-model="newVehicle.buyingPrice"
+                  label="Buying Price"
+                  type="number"
+                  :attributes="{ placeholder: 'Enter buying price' }"
+                />
+    
+                <Input
+                  v-model="newVehicle.plateNumber"
+                  label="Plate Number"
+                  :attributes="{ placeholder: 'Enter plate number' }"
+                />
+    
+                <Input
+                  v-model="newVehicle.makeYear"
+                  label="Make Year"
+                  :attributes="{ placeholder: 'Enter make year' }"
+                />
+    
+                <Select
+                  v-model="newVehicle.carName"
+                  label="Car Make"
+                  :options="carMakes"
+                  :attributes="{ 
+                    placeholder: 'Select car make',
+                    // disabled: !carMakes.length,
+                    class: 'w-full'
+                  }"
+                >
+                  <template #label>
+                    Car Make <span class="text-red-500">*</span>
+                  </template>
+                </Select>
+
+                <Select
+                  v-model="newVehicle.carType"
+                  label="Car Type"
+                  :options="carTypes"
+                  :attributes="{ 
+                    placeholder: 'Select car type',
+                    // disabled: !newVehicle.carName || !carTypes.length,
+                    class: 'w-full'
+                  }"
+                >
+                  <template #label>
+                    Car Type <span class="text-red-500">*</span>
+                  </template>
+                </Select>
+
+                
+                <Select
+                  v-model="newVehicle.carModel"
+                  label="Car Model"
+                  :options="carModels"
+                  :attributes="{ 
+                    placeholder: 'Select car model',
+                    // disabled: !newVehicle.carType || !carModels.length,
+                    class: 'w-full'
+                  }"
+                >
+                
+                  <template #label>
+                    Car Model <span class="text-red-500">*</span>
+                  </template>
+                </Select>
+                <Select
+                  v-model="newVehicle.engine_No"
+                  label="Engine Number"
+                  :options="engineNumbers"
+                  :attributes="{ 
+                    placeholder: 'Select engine number',
+                    // disabled: !newVehicle.carModel || !engineNumbers.length,
+                    class: 'w-full'
+                  }"
+                >
+                
+                  <template #label>
+                    Engine Number <span class="text-red-500">*</span>
+                  </template>
+                </Select>
+              </div>
+    
+              <div class="flex justify-between mt-4">
+                <Button @click="prevStep" class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded">
+                  Back
+                </Button>
+                <Button 
+      @click="addVehicle" 
+      type="primary"
+      size="md"
+    >
+      {{ editingIndex !== null ? 'Update Vehicle' : 'Add Vehicle' }}
+    </Button>
+              </div>
             </div>
-  
-            <div class="flex justify-between mt-4">
-              <Button @click="prevStep" class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded">
-                Back
-              </Button>
-              <Button 
-    @click="addVehicle" 
-    type="primary"
-    size="md"
-  >
-    {{ editingIndex !== null ? 'Update Vehicle' : 'Add Vehicle' }}
-  </Button>
+    
+            <!-- List of Vehicles (Only in Step 2) -->
+            <div v-if="step === 3" class="w-full max-w-lg bg-[#F0F0FF] text-[#1E1E1E] rounded-md p-4 mx-4">
+              <h3 class="text-md font-semibold mb-2">List of cars you have added</h3>
+              <div v-if="carRequests.length === 0" class="text-gray-500">No vehicles added yet.</div>
+              <ul v-else>
+                <li v-for="(vehicle, index) in carRequests" :key="index" class="flex bg-[#FFFFFF] text-[#1E1E1E] items-center justify-between py-2 px-4 border rounded-md mb-2">
+                  <div>{{ vehicle.carName }} {{ vehicle.carModel }} | {{ vehicle.carType }}</div>
+                  <div class="flex items-center gap-2 justify-end">
+                    <Button 
+                      @click="(e) => editVehicle(e, index)"
+                      type="secondary"
+                      size="sm"
+                    >
+                      Edit
+                    </Button>
+                    <Button 
+                      @click="(e) => deleteVehicle(e, index)"
+                      type="danger"
+                      size="sm"
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </li>
+              </ul>
             </div>
+  </div>
+
+          <!-- Step 4: Quotation Details -->
+          <div v-if="step === 4" class="w-full bg-black p-6 rounded-md">
+            <h3 class="text-white text-lg font-semibold mb-4">Quotation Details</h3>
+            <p class="text-gray-400">This section will be integrated later.</p>
+            <Button @click="prevStep" class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded">
+                  Back
+                </Button>
           </div>
-  
-          <!-- List of Vehicles (Only in Step 2) -->
-          <div v-if="step === 2" class="w-full max-w-lg bg-[#F0F0FF] text-[#1E1E1E] rounded-md p-4 mx-4">
-            <h3 class="text-md font-semibold mb-2">List of cars you have added</h3>
-            <div v-if="carRequests.length === 0" class="text-gray-500">No vehicles added yet.</div>
-            <ul v-else>
-              <li v-for="(vehicle, index) in carRequests" :key="index" class="flex bg-[#FFFFFF] text-[#1E1E1E] items-center justify-between py-2 px-4 border rounded-md mb-2">
-                <div>{{ vehicle.carName }} {{ vehicle.carModel }} | {{ vehicle.carType }}</div>
-                <div class="flex items-center gap-2 justify-end">
-                  <Button 
-                    @click="(e) => editVehicle(e, index)"
-                    type="secondary"
-                    size="sm"
-                  >
-                    Edit
-                  </Button>
-                  <Button 
-                    @click="(e) => deleteVehicle(e, index)"
-                    type="danger"
-                    size="sm"
-                  >
-                    Delete
-                  </Button>
-                </div>
-              </li>
-            </ul>
-          </div>
-</div>
-          <!-- Step 3: Bank Account -->
-          <div v-if="step === 3" class="w-[700px]">
+
+          <!-- Step 5: Bank Account -->
+          <div v-if="step === 5" class="w-[700px]">
             <div class="bg-[#3C3C9E]  rounded-lg shadow-lg">  
               <div class="p-4">
               <div class="flex items-center mb-4 p-3 bg-white rounded-lg">  
@@ -774,10 +961,9 @@ const saveDraft = () => {
 
       <template #bottom>
         <div class="flex justify-between m-4 w-full gap-4 pr-4">
-          <!-- Save as Draft button - 25% width (only in steps 1 and 2) -->
-          <div v-if="step !== 3" class="w-1/4">
+          <!-- Save as Draft button - 25% width (only in steps 1-4) -->
+          <div v-if="step !== 5" class="w-1/4">
             <Button 
-              v-if="step === 1 || step === 2"
               @click="saveDraft" 
               type="secondary" 
               size="lg"
@@ -787,10 +973,10 @@ const saveDraft = () => {
             </Button>
           </div>
           
-          <!-- Continue buttons - 75% width (steps 1 and 2) -->
-          <div :class="step === 3 ? 'w-full' : 'flex-1'">
+          <!-- Navigation buttons - 75% width -->
+          <div :class="step === 5 ? 'w-full' : 'flex-1'">
             <Button 
-              v-if="step === 1" 
+              v-if="step < 5" 
               @click="nextStep" 
               type="primary" 
               size="lg"
@@ -799,16 +985,7 @@ const saveDraft = () => {
               Continue
             </Button>
             <Button 
-              v-if="step === 2" 
-              @click="nextStep" 
-              type="primary" 
-              size="lg"
-              class="w-full"
-            >
-              Continue
-            </Button>
-            <Button 
-              v-if="step === 3" 
+              v-if="step === 5" 
               @click="submitForm" 
               type="primary" 
               size="lg"
@@ -822,3 +999,19 @@ const saveDraft = () => {
     </NewFormParent>
   </ModalParent>
 </template>
+
+<style scoped>
+.grid > div {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.grid > div:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Selected insurance style */
+.grid > div.border-blue-500 {
+  box-shadow: 0 0 0 2px #3b82f6;
+}
+</style>

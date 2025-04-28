@@ -104,6 +104,17 @@ export default [
     privilage: ['create_users'],
   },
   {
+    path: '/insurance',
+    icon: icons.transfer,
+    name: 'Insurances',
+    meta: {
+      requiresAuth: true,
+      permissions: [],
+    },
+    type: "Pages",
+    privilage: ['create_user'],
+  },
+  {
     path: '/Users',
     name: 'Users',
     icon: icons.users,

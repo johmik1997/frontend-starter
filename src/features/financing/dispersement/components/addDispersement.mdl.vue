@@ -14,7 +14,7 @@ import { closeModal } from "@customizer/modal-x";
 import InputEmail from "@/components/new_form_elements/inputEmail.vue";
 import icons from "@/utils/icons";
 import { getAllInsurances, getCategoriesByInsurance } from "@/features/roles/Api/RoleApi";
-import { CreateClient } from "../api/premiumApi";
+import { CreateClient } from "../api/dispersementApi";
 import { v4 as uuidv4 } from 'uuid';
 import { getValidators } from '@/components/new_form_builder/util/validators.js';
 
@@ -192,7 +192,6 @@ const isValidPersonalDetails = () => {
     fatherName: validators.text.alpha(details.fatherName, [3], null, "Last Name must be at least 3 letters and contain only alphabets"),
     email: validators.text.email(details.email, null, null, "Please enter a valid email address"),
     mobilePhone: validators.text.phone(details.mobilePhone, null, null, "Please enter a valid phone number"),
-    insuranceUuid: validators.select.required(details.insuranceUuid, null, null, "Insurance selection is required")
   };
 
   const errors = Object.entries(validations)

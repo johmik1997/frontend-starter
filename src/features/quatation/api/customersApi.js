@@ -1,4 +1,5 @@
 import ApiService from "@/service/ApiService";
+import { getQueryFormObject } from "@/utils/utils";
 
 const api = new ApiService()
 const path = '/quotation'
@@ -19,6 +20,11 @@ export function getCustomers(config) {
 export function getAllInsurances(query = {}) {
   const qr = getQueryFormObject(query);
   return api.addAuthenticationHeader().get(`${path}/getAllInsurances${qr}`);
+}
+export function getAllcar(query = {}) {
+  const queryString = new URLSearchParams(query).toString();
+  const url = `/carSpecification/getCarSpecification${queryString ? `?${queryString}` : ''}`;
+  return api.addAuthenticationHeader().get(url);
 }
 export function getInsuredByWoreda(id, config) {
 	return api.addAuthenticationHeader().get(`${path}/${id}`, config)
@@ -46,5 +52,6 @@ export function updateCarDetails(carUuid, data) {
   return api.addAuthenticationHeader()
     .put(`/cars/updateCar/${carUuid}`, data);
 }
+
 
 

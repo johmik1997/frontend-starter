@@ -30,7 +30,7 @@ const props = defineProps({
             opacity: attributes?.placeholder && !value ? .6 : 1
           }"
           :ref="setRef"
-          class="appearance-none flex-1 bg-inherit mt-3 mx-3 justify-center text-text-clr h-full text-sm focus:outline-none"
+          class="appearance-none flex-1 bg-inherit mt-3 ml-2 justify-center text-text-clr h-full text-sm focus:outline-none"
         >
           <option
             selected

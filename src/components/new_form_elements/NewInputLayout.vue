@@ -14,7 +14,7 @@ const props = defineProps(["label", "error", "validation"]);
         v-if="label"
         >{{ label }}</span>
       <div
-        class=" overflow-hidden border bg-[#C4C4C433;] text-base  min-h-11 flex"
+        class=" overflow-hidden border bg-[#C4C4C433;] text-base min-h-11 flex"
         :class="$attrs.class"
       >
         <slot></slot>

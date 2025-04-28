@@ -12,6 +12,15 @@ const route = useRoute();
 const inputData = ref("");
 const search = ref("");
 const openDropdowns = ref(new Set());
+const isMobileMenuOpen = ref(false);
+
+const toggleMobileMenu = () => {
+  isMobileMenuOpen.value = !isMobileMenuOpen.value;
+};
+
+watch(() => route.path, () => {
+  isMobileMenuOpen.value = false;
+});
 
 // Filter navs based on privileges
 const filteredNavs = computed(() => {
@@ -104,8 +113,33 @@ const shouldShowNavItem = (nav) => {
 
 <template>
   <div class="flex h-full w-full overflow-hidden rounded-lg">
-    <!-- Sidebar with hidden scrollbar -->
-    <div class="__scrollable-hidden w-drawer-width border-r text-white bg-[#3C3C9E] overflow-y-scroll">
+    <!-- Mobile Menu Button -->
+    <button 
+      @click="toggleMobileMenu"
+      class="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-white shadow-lg"
+    >
+      <svg 
+        xmlns="http://www.w3.org/2000/svg" 
+        class="h-6 w-6 text-[#3C3C9E]" 
+        :class="{ 'transform rotate-90': isMobileMenuOpen }"
+        fill="none" 
+        viewBox="0 0 24 24" 
+        stroke="currentColor"
+      >
+        <path 
+          stroke-linecap="round" 
+          stroke-linejoin="round" 
+          stroke-width="2" 
+          d="M4 6h16M4 12h16M4 18h16"
+        />
+      </svg>
+    </button>
+
+    <!-- Sidebar -->
+    <div 
+      class="__scrollable-hidden fixed lg:relative w-[280px] lg:w-drawer-width border-r text-white bg-[#3C3C9E] overflow-y-scroll h-full transition-transform duration-300 ease-in-out z-40"
+      :class="{ '-translate-x-full lg:translate-x-0': !isMobileMenuOpen }"
+    >
       <div class="p-4 px-2 h-12 flex gap-4 items-center sticky top-0 bg-[#3C3C9E] z-10">
         <i v-html="icons.cbhi_logo" />
         <span class="font-bold text-lg"></span>
@@ -184,15 +218,27 @@ const shouldShowNavItem = (nav) => {
         </div>
       </div>
     </div>
-    <!-- Main content with hidden scrollbar -->
-    <div class="flex flex-col w-[calc(100%-var(--drawer-width))]">
+
+    <!-- Overlay for mobile -->
+    <div 
+      v-if="isMobileMenuOpen" 
+      class="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
+      @click="toggleMobileMenu"
+    ></div>
+
+    <!-- Main content -->
+    <div class="flex flex-col w-full lg:w-[calc(100%-var(--drawer-width))]">
       <div class="navbar-height flex items-center">
-        <NavBar v-model="search" class="w-full" :title="$route.name" />
+        <NavBar 
+          v-model="search" 
+          class="w-full" 
+          :title="$route.name"
+        />
       </div>
       <div class="__scrollable-hidden h-[calc(100%-var(--navbar-height))] bg-base-clr2 w-full overflow-y-scroll">
         <RouterView :search="search" :inputData="inputData" />
       </div>
-    </div> 
+    </div>
   </div>
 </template>
 
@@ -206,6 +252,13 @@ const shouldShowNavItem = (nav) => {
 /* Hide scrollbar for Chrome, Safari and Opera */
 .__scrollable-hidden::-webkit-scrollbar {
   display: none;
+}
+
+/* Mobile-specific styles */
+@media (max-width: 1024px) {
+  .navbar-height {
+    padding-left: 4rem; /* Space for mobile menu button */
+  }
 }
 
 /* Active route styling */
@@ -233,7 +286,15 @@ const shouldShowNavItem = (nav) => {
   background-color: transparent !important;
   color: inherit !important;
 }
+
+/* Add touch scrolling for mobile */
+@media (max-width: 1024px) {
+  .__scrollable-hidden {
+    -webkit-overflow-scrolling: touch;
+  }
+}
 </style>
+
 
 
 

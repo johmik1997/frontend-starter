@@ -46,6 +46,8 @@
             <div class="py-1 text-xs sm:text-sm">{{ customerId.customers?.carType }}</div>
             <div class="py-1 text-xs sm:text-sm font-normal text-[#2B3674]">Vehicle Model</div>
             <div class="py-1 text-xs sm:text-sm">{{ customerId.customers?.carModel }}</div>
+            <div class="py-1 text-xs sm:text-sm font-normal text-[#2B3674]">Engine Number</div>
+            <div class="py-1 text-xs sm:text-sm">{{ customerId.customers?.engine_No }}</div>
             <div class="py-1 text-xs sm:text-sm font-normal text-[#2B3674]">Vehicle Type</div>
             <div class="py-1 text-xs sm:text-sm">{{ customerId.customers?.category1 }}</div>
             
@@ -162,7 +164,7 @@
             v-if="customerId.customers?.quotationStatus =='PENDING'"
               class="flex justify-center  bg-[#3C3C9E] text-center w-full mx-2 items-center text-white  rounded text-sm"
               @click="saveChanges" 
-              :pending="isSubmitting"
+              :pending="isSubmit"
             >
             Save Changes
             </Button>
@@ -529,7 +531,7 @@ const editedAmount1 = ref(quotation.value.amount);
 const editedAmount2 = ref(quotation.value.deposit);
 const editedAmount3 = ref(quotation.value.premium);
 const isSubmitting = ref(false);
-
+const isSubmit = ref(false);
 // Toggle functions
 const toggleEdit1 = () => {  
   if (customerId.customers?.quotationStatus === 'PENDING') {
@@ -666,7 +668,7 @@ const saveChanges = async () => {
   }
 
   try {
-    isSubmitting.value = true;
+    isSubmit.value = true;
     const response = await updateCarDetails(customerId.customers?.carUuid, editedData);
     
     if (response.success) {
@@ -693,7 +695,7 @@ const saveChanges = async () => {
     console.error('Error updating vehicle details:', error);
     toasted(false, '', 'Failed to update vehicle details');
   } finally {
-    isSubmitting.value = false;
+    isSubmit.value = false;
   }
 };
 
