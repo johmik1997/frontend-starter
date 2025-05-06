@@ -59,9 +59,9 @@ export function getMonthlyPayments(uuid) {
     .get(`/monthlyPayments/getMonthlyPayments/${uuid}`);
 }
 
-export function makePayment(quotationUuid, month, paymentType = 'ONLINE') {
+export function makePayment(quotationUuid,  paymentType = 'ONLINE') {
   return api.addAuthenticationHeader()
-    .put(`/payment/pay/${quotationUuid}?paymentType=${paymentType}&month=${month}`);
+    .put(`/payment/pay/${quotationUuid}?paymentType=${paymentType}`);
 }
 
 export function getPaymentReceipt(paymentId) {

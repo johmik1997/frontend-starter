@@ -43,7 +43,7 @@ export default [
   },
   {
     path: '/quatation',
-    icon: icons.transfer,
+    icon: icons.quotation,
     name: 'Quotations',
     meta: {
       requiresAuth: true,
@@ -59,7 +59,6 @@ export default [
     meta: {
       requiresAuth: true,
       permissions: [],
-      
     },
     type: "Pages",
     isOpen: false, // Add this to control dropdown state
@@ -145,6 +144,7 @@ export default [
     type: "Settings"
   }
 ];
+
 
 
 

@@ -31,14 +31,17 @@ const props = defineProps({
     <div
       class="flex justify-between border-b border-text-secondary-clr/30 items-center"
     >
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-4 font-bold text-lg px-4 p-3">
         <button
           @click="onGoBack"
           v-if="goBack"
           class="grid place-items-center rounded-md border border-text-clr"
         >
         </button>
-        <p class="font-bold text-lg px-4 p-3">{{ title }}</p>
+        <!-- Use slot if provided, otherwise use title prop -->
+        <slot name="title">
+          <p class="font-bold text-lg px-4 p-3">{{ title }}</p>
+        </slot>
       </div>
       <div class="flex items-center gap-4">
         <slot name="right-actions"></slot>
@@ -97,3 +100,4 @@ const props = defineProps({
   border-radius: 50px;
 }
 </style>
+

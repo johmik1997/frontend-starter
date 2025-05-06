@@ -13,12 +13,20 @@ const props = defineProps({
   type: {
     type: String,
   },
+  noTransition: {
+    type: Boolean,
+    default: false
+  }
 });
 </script>
 <template>
   <button
     v-ripple
-    :class="[$style?.[size], $style?.[type]]"
+    :class="[
+      $style?.[size], 
+      $style?.[type],
+      noTransition ? 'transition-none' : ''
+    ]"
     class="px-4 py-1 flex items-center justify-center rounded capitalize"
   >
     <slot v-if="!pending"></slot>
@@ -54,3 +62,4 @@ const props = defineProps({
   @apply bg-primary text-white;
 }
 </style>
+

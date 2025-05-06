@@ -20,7 +20,7 @@ const emit = defineEmits(["row"]);
 const filteredRows = computed(() => {
   // Ensure rowData is an array before filtering
   return Array.isArray(props.rowData) 
-    ? props.rowData.filter(row => row?.quotationStatus === "DISPERSED" || row?.quotationStatus === "DECLINED") 
+    ? props.rowData.filter(row => row?.quotationStatus === "DISPERSED" || row?.quotationStatus === "EXPIRED") 
     : [];
 });
 </script>
@@ -62,7 +62,7 @@ const filteredRows = computed(() => {
               style="font-weight: 600; font-size: 14px; line-height: 21px; letter-spacing: 0%;">
               Active 
             </p>  
-            <p v-else-if="row?.quotationStatus === 'DECLINED'" 
+            <p v-else-if="row?.quotationStatus === 'EXPIRED'" 
               class="rounded-[2px] w-[87px] text-center text-[#fe3939] px-3 py-1 " 
               style="font-weight: 600; font-size: 14px; line-height: 21px; letter-spacing: 0%;">
               InActive 
@@ -95,8 +95,8 @@ const filteredRows = computed(() => {
           <Button v-if="row?.quotationStatus === 'DISPERSED'" @click="$router.push(`/premiumDetails/${row.quotationUuid}`)" className="rounded-[4px] px-[14px] py-[8px] bg-primary text-white">
             Open
           </Button>
-          <Button v-else @click="$router.push(`/premiumDetails/${row.quotationUuid}`)">
-           
+          <Button v-else @click="$router.push(`/premiumDetails/${row.quotationUuid}`)" class="rounded-[4px] px-[14px] py-[8px] bg-gray-500 text-white">
+           View
           </Button>
         </td>   
       </tr>   

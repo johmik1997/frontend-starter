@@ -1,5 +1,6 @@
 <script setup>
 import Button from '@/components/Button.vue';
+import icons from '@/utils/icons';
 
 const props = defineProps({  
   rowData: {  
@@ -42,13 +43,13 @@ const emit = defineEmits(["row"]);
   
         <!-- Custom computation for patientName -->
         <span v-else-if="key === 'customerName'">
-          {{ row.title }} {{ row.clientFirstName }} {{ row.clientFatherName }} {{ row.clientGrandFatherName }}
+          {{ row.title || '' }} {{ row.clientFirstName || row.firstName || '' }} {{ row.clientFatherName || row.lastName || '' }} {{ row.clientGrandFatherName || '' }}
         </span>
         <span v-else-if="key === 'quotationAmount'" class="font-bold text-black">
         ETB  {{ row.quotationAmount }} 
         </span>
         <span v-else-if="key === 'VehicleDetail'" class="">
-          {{ row.carName }}  {{ row.carModel }} - {{ row.carType }}
+          {{ row.carName || '' }} {{ row.carModel || '' }} {{ row.carType ? '- ' + row.carType : '' }}
         </span>
         <span v-else>
           {{ row[key] }}
@@ -61,18 +62,20 @@ const emit = defineEmits(["row"]);
       <td class="p-3 flex gap-3" v-if="headKeys.includes('actions')">  
         <Button 
           v-if="row?.quotationStatus === 'PENDING'"
-          @click="$router.push(`/details/${row.quotationUuid}`)" 
-          class="rounded-[4px]  bg-primary text-white"
+          @click="$router.push(`/quatation/details/${row.quotationUuid}`)" 
+          class="rounded-[4px]  bg-primary text-white gap-2"
         >
+        <i v-html="icons.open"></i>
           Open
         </Button>
         <Button 
            v-else
-          @click="$router.push(`/details/${row.quotationUuid}`)" 
-          class="rounded-[4px]  bg-[#EBE7FF] text-primary"
+          @click="$router.push(`/quatation/details/${row.quotationUuid}`)" 
+          class="rounded-[4px]  bg-[#EBE7FF] text-primary gap-2"
         >
-          View
+        <i v-html="icons.eye"></i>View
         </Button>
+        
       </td>   
     </tr>   
   </template>

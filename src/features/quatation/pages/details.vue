@@ -56,110 +56,188 @@
             
             <div v-if="customerId.customers?.category3" class="py-1 text-xs sm:text-sm font-normal text-[#2B3674]">Sub Category</div>
             <div v-if="customerId.customers?.category3" class="py-1 text-xs sm:text-sm">{{ customerId.customers?.category3 }}</div>
-            
+            {{ console.log(customerId.customers?.category3)}}
             <div v-if="customerId.customers?.category4" class="py-1 text-xs sm:text-sm font-normal text-[#2B3674]">Final Category</div>
             <div v-if="customerId.customers?.category4" class="py-1 text-xs sm:text-sm">{{ customerId.customers?.category4 }}</div>
           </div>
         </div>
 
         <!-- Edit Mode -->
-        <div v-else class="space-y-3">
-          <div class="space-y-3 w-full">
-            <div>
-              <label class="text-sm text-[#2B3674] mx-3">Vehicle Make <span class="text-red-500">*</span></label>
-              <div class="relative">
-                <input v-model="editedData.carName" type="text" required class="w-[90%] mx-3 mt-1 p-2 border rounded text-sm" />
-              </div>
-            </div>
+        <div v-if="isEditing" class="space-y-4">
+          <!-- Vehicle Make -->
+          <Select
+            v-model="editedData.carName"
+            label="Vehicle Make"
+            :options="carMakes"
+            :attributes="{ 
+              placeholder: 'Select Vehicle Make',
+              class: 'w-[90%] mx-3 mt-1 text-sm'
+            }"
+          >
+            <template #label>
+              Vehicle Make <span class="text-red-500">*</span>
+            </template>
+          </Select>
 
-            <div>
-              <label class="text-sm text-[#2B3674] mx-3">Vehicle Model <span class="text-red-500">*</span></label>
-              <div class="relative">
-                <input v-model="editedData.carModel" type="text" required class="w-[90%] mx-3 mt-1 p-2 border rounded text-sm" />
-              </div>
-            </div>
+          <!-- Car Type -->
+          <Select
+            v-model="editedData.carType"
+            label="Car Type"
+            :options="carTypes"
+            :disabled="!editedData.carName"
+            :attributes="{ 
+              placeholder: 'Select Car Type',
+              class: 'w-[90%] mx-3 mt-1 text-sm'
+            }"
+          >
+            <template #label>
+              Car Type <span class="text-red-500">*</span>
+            </template>
+          </Select>
 
-            <div>
-              <label class="text-sm text-[#2B3674] mx-3">Car Type <span class="text-red-500">*</span></label>
-              <div class="relative">
-                <input v-model="editedData.carType" type="text" required class="w-[90%] mx-3 mt-1 p-2 border rounded text-sm" />
-              </div>
-            </div>
+          <!-- Car Model -->
+          <Select
+            v-model="editedData.carModel"
+            label="Car Model"
+            :options="carModels"
+            :disabled="!editedData.carType"
+            :attributes="{ 
+              placeholder: 'Select Car Model',
+              class: 'w-[90%] mx-3 mt-1 text-sm'
+            }"
+          >
+            <template #label>
+              Car Model <span class="text-red-500">*</span>
+            </template>
+          </Select>
 
-            <div>
-              <label class="text-sm text-[#2B3674] mx-3">Vehicle Year <span class="text-red-500">*</span></label>
-              <div class="relative">
-                <input v-model="editedData.makeYear" type="text" required class="w-[90%] mx-3 mt-1 p-2 border rounded text-sm" />
-              </div>
-            </div>
+          <!-- Engine Number -->
+          <Select
+            v-model="editedData.engine_No"
+            label="Engine Number"
+            :options="engineNumbers"
+            :disabled="!editedData.carModel"
+            :attributes="{ 
+              placeholder: 'Select Engine Number',
+              class: 'w-[90%] mx-3 mt-1 text-sm'
+            }"
+          >
+            <template #label>
+              Engine Number <span class="text-red-500">*</span>
+            </template>
+          </Select>
 
-            <div>
-              <label class="text-sm text-[#2B3674] mx-3">Plate Code <span class="text-red-500">*</span></label>
-              <div class="relative">
-                <input v-model="editedData.plateNumber" type="text" required class="w-[90%] mx-3 mt-1 p-2 border rounded text-sm" />
-              </div>
-            </div>
+          <!-- Vehicle Year -->
+          <Input
+            v-model="editedData.makeYear"
+            label="Vehicle Year"
+            :validation="'required'"
+            :attributes="{ 
+              type: 'text',
+              placeholder: 'Enter Vehicle Year',
+            }"
+          >
+            <template #label>
+              Vehicle Year <span class="text-red-500">*</span>
+            </template>
+          </Input>
 
-            <div class="grid grid-cols-1 gap-3">
-              <div class="w-[90%] mx-3 mt-1 ">
-                <Select
-                  v-model="selectedMainCategory"
-                  label="Vehicle Type"
-                  :options="getMainCategories()"
-                  required
-                  :attributes="{ placeholder: 'Select Vehicle Type', class: 'w-[90%] mx-3 mt-1 text-sm' }"
-                >
-                  <template #label>
-                    Vehicle Type <span class="text-red-500">*</span>
-                  </template>
-                </Select>
-              </div>
+          <!-- Plate Code -->
+          <Input
+            v-model="editedData.plateNumber"
+            label="Plate Code"
+            :validation="'required'"
+            :attributes="{ 
+              type: 'text',
+              placeholder: 'Enter Plate Code',
+            }"
+          >
+            <template #label>
+              Plate Code <span class="text-red-500">*</span>
+            </template>
+          </Input>
 
-              <div v-if="getSubCategories().length" class="w-[90%] mx-3 mt-1 ">
-                <Select
-                  v-model="selectedSubCategory"
-                  label="Category"
-                  :options="getSubCategories()"
-                  required
-                  :attributes="{ placeholder: 'Select Category', class: 'w-[90%] mx-3 mt-1 text-sm' }"
-                >
-                  <template #label>
-                    Category <span class="text-red-500">*</span>
-                  </template>
-                </Select>
-              </div>
+          <!-- Buying Price -->
+          <Input
+            v-model="editedData.buyingPrice"
+            label="Buying Price"
+            :validation="'required'"
+            :attributes="{ 
+              type: 'text',
+              placeholder: 'Enter Buying Price',
+            }"
+          >
+            <template #label>
+              Buying Price <span class="text-red-500">*</span>
+            </template>
+          </Input>
+          <!-- Category Selection Section -->
+          <div v-if="isEditing" class="space-y-4">
+            <!-- Main Category -->
+            <Select
+              v-model="selectedMainCategory"
+              label="Vehicle Type"
+              :options="getMainCategories()"
+              required
+              :attributes="{ placeholder: 'Select Vehicle Type', class: 'w-[90%] mx-3 mt-1 text-sm' }"
+            >
+              <template #label>
+                Vehicle Type <span class="text-red-500">*</span>
+              </template>
+            </Select>
 
-              <div v-if="getSubSubCategories().length" class="w-[90%] mx-3 mt-1 ">
-                <Select
-                  v-model="selectedSubSubCategory"
-                  label="Sub Category"
-                  :options="getSubSubCategories()"
-                  required
-                  :attributes="{ placeholder: 'Select Sub Category', class: 'w-[90%] mx-3 mt-1 text-sm' }"
-                >
-                  <template #label>
-                    Sub Category <span class="text-red-500">*</span>
-                  </template>
-                </Select>
-              </div>
+            <!-- Sub Category -->
+            <Select
+              v-if="getSubCategories().length"
+              v-model="selectedSubCategory"
+              label="Category"
+              :options="getSubCategories()"
+              required
+              :attributes="{ placeholder: 'Select Category', class: 'w-[90%] mx-3 mt-1 text-sm' }"
+            >
+              <template #label>
+                Category <span class="text-red-500">*</span>
+              </template>
+            </Select>
 
-              <div v-if="getFinalCategories().length" class="w-[90%] mx-3 mt-1 bg-white">
-                <Select
-                  v-model="selectedFinalCategory"
-                  label="Final Category"
-                  :options="getFinalCategories()"
-                  required
-                  :attributes="{ placeholder: 'Select Final Category', class: 'w-[90%] mx-3 mt-1 bg-white text-sm' }"
-                >
-                  <template #label>
-                    Final Category <span class="text-red-500">*</span>
-                  </template>
-                </Select>
-              </div>
-            </div>
+            <!-- Sub Sub Category -->
+            <Select
+              v-if="getSubSubCategories().length"
+              v-model="selectedSubSubCategory"
+              label="Sub Category"
+              :options="getSubSubCategories()"
+              required
+              :attributes="{ placeholder: 'Select Sub Category', class: 'w-[90%] mx-3 mt-1 text-sm' }"
+            >
+              <template #label>
+                Sub Category <span class="text-red-500">*</span>
+              </template>
+            </Select>
 
-           
-            <div class="flex border-b-2 text-center items-center justify-center pt-6">
+            <!-- Final Category -->
+            <Select
+              v-if="getFinalCategories().length"
+              v-model="selectedFinalCategory"
+              label="Final Category"
+              :options="getFinalCategories()"
+              required
+              :attributes="{ placeholder: 'Select Final Category', class: 'w-[90%] mx-3 mt-1 text-sm' }"
+            >
+              <template #label>
+                Final Category <span class="text-red-500">*</span>
+              </template>
+            </Select>
+          </div>
+
+          <!-- Display current categories when not editing -->
+          <div v-else class="space-y-2">
+            <p>Vehicle Type: {{ selectedMainCategory }}</p>
+            <p v-if="selectedSubCategory">Category: {{ selectedSubCategory }}</p>
+            <p v-if="selectedSubSubCategory">Sub Category: {{ selectedSubSubCategory }}</p>
+            <p v-if="selectedFinalCategory">Final Category: {{ selectedFinalCategory }}</p>
+          </div>
+
+          <div class="flex border-b-2 text-center items-center justify-center pt-6">
             <Button 
             v-if="customerId.customers?.quotationStatus =='PENDING'"
               class="flex justify-center  bg-[#3C3C9E] text-center w-full mx-2 items-center text-white  rounded text-sm"
@@ -168,7 +246,6 @@
             >
             Save Changes
             </Button>
-          </div>
           </div>
         </div>
       </section>
@@ -363,16 +440,17 @@
 import { removeUndefined, toasted } from '@/utils/utils';
 import { openModal } from "@customizer/modal-x";
 
-import { getCustomersbyId, getLibreImages, setQuotation, updateCarDetails } from '../api/customersApi';
+import { getCustomersbyId, getLibreImages, setQuotation, updateCarDetails, getAllcar } from '../api/customersApi';
 import { useRoute } from 'vue-router';
 import { useCustomers } from '../store/customeridStore';
 import Button from '@/components/Button.vue';
 import icons from '@/utils/icons';
-import { ref, onMounted, watch, reactive } from 'vue';
+import { ref, onMounted, watch, reactive, nextTick } from 'vue';
 import axios from 'axios';
 import ApiService from '@/service/ApiService';
 import Select from '@/components/new_form_elements/Select.vue';
 import { saveCarLibre } from '@/features/financing/dispersement/api/dispersementApi';
+import Input from '@/components/new_form_elements/Input.vue';
 
 const customerId = useCustomers();
 const api = new ApiService();
@@ -603,10 +681,11 @@ const isEditing = ref(false);
 const editedData = reactive({
   carName: '',
   carModel: '',
-  carType: 'fuel',
+  carType: '',
   plateNumber: '',
   makeYear: '',
   buyingPrice: 0,
+  engine_No: '', // Make sure this matches the property name used in the API
   rateRequest: {
     category1: '',
     category2: '',
@@ -617,6 +696,7 @@ const editedData = reactive({
 
 const toggleEdit = () => {
   isEditing.value = true;
+  
   // Populate form with current values
   editedData.carName = customerId.customers?.carName || '';
   editedData.carModel = customerId.customers?.carModel || '';
@@ -624,10 +704,46 @@ const toggleEdit = () => {
   editedData.plateNumber = customerId.customers?.plateNumber || '';
   editedData.makeYear = customerId.customers?.makeYear || '';
   editedData.buyingPrice = customerId.customers?.buyingPrice || 0;
-  editedData.rateRequest.category1 = customerId.customers?.category1 || '';
-  editedData.rateRequest.category2 = customerId.customers?.category2 || '';
-  editedData.rateRequest.category3 = customerId.customers?.category3 || '';
-  editedData.rateRequest.category4 = customerId.customers?.category4 || '';
+  editedData.engine_No = customerId.customers?.engine_No || '';
+  
+  // Set categories
+  const category1 = customerId.customers?.category1;
+  const category2 = customerId.customers?.category2;
+  const category3 = customerId.customers?.category3;
+  const category4 = customerId.customers?.category4;
+
+  // Set main category based on category1
+  selectedMainCategory.value = category1 === 'PRIVATE' ? 'Motor Private' : 'Motor Commercial';
+
+  // Need to use nextTick to ensure the category structure is properly initialized
+  nextTick(() => {
+    // Set sub category if it exists
+    if (category2 && getSubCategories().includes(category2)) {
+      selectedSubCategory.value = category2;
+    }
+
+    // Set sub-sub category if it exists
+    nextTick(() => {
+      if (category3 && getSubSubCategories().includes(category3)) {
+        selectedSubSubCategory.value = category3;
+      }
+
+      // Set final category if it exists
+      nextTick(() => {
+        if (category4 && getFinalCategories().includes(category4)) {
+          selectedFinalCategory.value = category4;
+        }
+      });
+    });
+  });
+
+  // Update editedData.rateRequest
+  editedData.rateRequest = {
+    category1: category1 || '',
+    category2: category2 || '',
+    category3: category3 || '',
+    category4: category4 || ''
+  };
 };
 
 const cancelEdit = () => {
@@ -837,23 +953,58 @@ watch(selectedFinalCategory, (newValue) => {
 // Initialize categories when component mounts or when customerId.customers changes
 watch(() => customerId.customers, (newData) => {
   if (newData) {
+    const category1 = newData.category1;
+    const category2 = newData.category2;
+    const category3 = newData.category3;
+    const category4 = newData.category4;
+
     // Set main category
-    selectedMainCategory.value = newData.category1 === 'PRIVATE' ? 'Motor Private' : 'Motor Commercial';
-    
-    // Set other categories if they exist
-    if (newData.category2) selectedSubCategory.value = newData.category2;
-    if (newData.category3) selectedSubSubCategory.value = newData.category3;
-    if (newData.category4) selectedFinalCategory.value = newData.category4;
-    
+    selectedMainCategory.value = category1 === 'PRIVATE' ? 'Motor Private' : 'Motor Commercial';
+
+    // Use nextTick to ensure proper category initialization
+    nextTick(() => {
+      if (category2) {
+        selectedSubCategory.value = category2;
+      }
+
+      nextTick(() => {
+        if (category3) {
+          selectedSubSubCategory.value = category3;
+        }
+
+        nextTick(() => {
+          if (category4) {
+            selectedFinalCategory.value = category4;
+          }
+        });
+      });
+    });
+
     // Update editedData
     editedData.rateRequest = {
-      category1: newData.category1 || '',
-      category2: newData.category2 || '',
-      category3: newData.category3 || '',
-      category4: newData.category4 || ''
+      category1: category1 || '',
+      category2: category2 || '',
+      category3: category3 || '',
+      category4: category4 || ''
     };
   }
 }, { immediate: true });
+
+// Add debug logging to help track category values
+watch([selectedMainCategory, selectedSubCategory, selectedSubSubCategory, selectedFinalCategory], 
+  ([main, sub, subSub, final]) => {
+    console.log('Category values updated:', {
+      main,
+      sub,
+      subSub,
+      final,
+      availableSubCategories: getSubCategories(),
+      availableSubSubCategories: getSubSubCategories(),
+      availableFinalCategories: getFinalCategories()
+    });
+  }, 
+  { deep: true }
+);
 
 // Add these refs
 const frontLibre = ref(null);
@@ -919,7 +1070,126 @@ const submitLibreImages = async () => {
   }
 };
 
-  </script>
+// Add these refs
+const carMakes = ref([]);
+const carTypes = ref([]);
+const carModels = ref([]);
+const engineNumbers = ref([]);
+
+// Modified load functions
+const loadCarMakes = async () => {
+  try {
+    const response = await getAllcar();
+    if (response.data) {
+      carMakes.value = response.data;  // Remove the mapping, use direct values
+    }
+  } catch (error) {
+    console.error('Error fetching car makes:', error);
+  }
+};
+
+const loadCarTypes = async (carName) => {
+  try {
+    const response = await getAllcar({ carName });
+    if (response.data) {
+      carTypes.value = response.data;  // Remove the mapping, use direct values
+    }
+  } catch (error) {
+    console.error('Error fetching car types:', error);
+  }
+};
+
+const loadCarModels = async (carType) => {
+  try {
+    const response = await getAllcar({ carType });
+    if (response.data) {
+      carModels.value = response.data;  // Remove the mapping, use direct values
+    }
+  } catch (error) {
+    console.error('Error fetching car models:', error);
+  }
+};
+
+const loadEngineNumbers = async (carModel) => {
+  try {
+    const response = await getAllcar({ carModel });
+    console.log('Engine numbers response:', response.data); // Add this log
+    if (response.data) {
+      engineNumbers.value = response.data;
+    }
+  } catch (error) {
+    console.error('Error fetching engine numbers:', error);
+  }
+};
+
+// Modified watchers for cascading
+watch(() => editedData.carName, (newValue) => {
+  if (newValue) {
+    loadCarTypes(newValue);
+  } else {
+    // Reset dependent fields
+    editedData.carType = '';
+    editedData.carModel = '';
+    editedData.engine_No = '';
+    carTypes.value = [];
+    carModels.value = [];
+    engineNumbers.value = [];
+  }
+});
+
+watch(() => editedData.carType, (newValue) => {
+  if (newValue) {
+    loadCarModels(newValue);
+  } else {
+    // Reset dependent fields
+    editedData.carModel = '';
+    editedData.engine_No = '';
+    carModels.value = [];
+    engineNumbers.value = [];
+  }
+});
+
+watch(() => editedData.carModel, async (newValue) => {
+  if (newValue) {
+    await loadEngineNumbers(newValue);
+  } else {
+    // Reset dependent fields
+    editedData.engine_No = '';
+    engineNumbers.value = [];
+  }
+});
+
+// Load initial data and set existing values
+onMounted(async () => {
+  await loadCarMakes();
+  
+  if (editedData.carName) {
+    await loadCarTypes(editedData.carName);
+    if (editedData.carType) {
+      await loadCarModels(editedData.carType);
+      if (editedData.carModel) {
+        await loadEngineNumbers(editedData.carModel);
+      }
+    }
+  }
+});
+
+// Also load data when entering edit mode
+watch(() => isEditing.value, async (newValue) => {
+  if (newValue) {
+    await loadCarMakes();
+    
+    if (editedData.carName) {
+      await loadCarTypes(editedData.carName);
+      if (editedData.carType) {
+        await loadCarModels(editedData.carType);
+        if (editedData.carModel) {
+          await loadEngineNumbers(editedData.carModel);
+        }
+      }
+    }
+  }
+});  </script>
   
   
   <style scoped>  

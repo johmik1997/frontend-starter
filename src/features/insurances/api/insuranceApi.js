@@ -55,15 +55,24 @@ export function setQuotation(quotationUuid, amount, type) {
   return api.addAuthenticationHeader().post(`${path}/setQuotation/${quotationUuid}?${type}=${amount}`);
 }
 
-
-
+export function updateInsurance(insuranceUuid, data) {
+  const formData = new FormData();
+  formData.append('image', data.image);
+  
+  return api.addAuthenticationHeader().put(
+    `${path}/editInsurance/${insuranceUuid}?insuranceName=${encodeURIComponent(data.insuranceName)}&accountNumber=${encodeURIComponent(data.accountNumber)}`,
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    }
+  );
+}
 
 export function updateCarDetails(carUuid, data) {
   return api.addAuthenticationHeader()
     .put(`/cars/updateCar/${carUuid}`, data);
 }
-
-
-
 
 

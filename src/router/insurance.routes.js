@@ -1,22 +1,31 @@
-import Drafts from "../features/drfats/pages/drafts.vue";
 import InsuranceDetails from "@/features/insurances/pages/detail.vue";
 import Insurance from "../features/insurances/pages/insurance.vue";
-export default [
+import InsuranceIndex from "../features/insurances/pages/InsuranceIndex.vue";
 
- {
-		path: '/insurance',
-		name: 'insurance',
-		component: Insurance,
-		meta: {
-		  requiresAuth: true,
-		  privileges: ['create_user','View_card'],
-		}
-	  },
-	  {
-		path: '/detail/:insuranceUuid',
-		name: 'insuranceDetails',
-		component: InsuranceDetails,
-		props: true
-	  },
-	 
+export default [
+  {
+    path: '/insurance',
+    name: 'insurance',
+    component: InsuranceIndex,
+    meta: {
+      requiresAuth: true,
+      privileges: ['create_user','View_card'],
+    },
+    children: [
+      {
+        path: '',
+        component: Insurance,
+      },
+      {
+        path: 'detail/:insuranceUuid',
+        name: 'insuranceDetails',
+        component: InsuranceDetails,
+        props: true,
+        meta: {
+          requiresAuth: true,
+          privileges: ['create_user','View_card'],
+        }
+      }
+    ]
+  }
 ]

@@ -199,14 +199,14 @@
 
     <!-- Disbursement Button -->
     <div class="mt-4">
-      <button 
+      <Button 
        v-if="customerId.customers?.quotationStatus === 'DEPOSITED'"
         @click="openConfirmationModal" 
         class="w-full bg-[#3C3C9E] text-white py-3 rounded-lg font-semibold hover:bg-[#3C3C9E]"
         
       >
         Authorize Payment 
-      </button>
+      </Button>
          <button 
        v-else
        @click="$router.push(`/premiumDetails/${customerId.customers?.quotationUuid}`)"
@@ -484,7 +484,7 @@ const openConfirmationModal = () => {
       if (response.success || response.status === 200) {
         toasted(true, 'Dispersement authorized successfully');
         close();
-        await router.push('/payment/dispersement');
+       router.push('/payment/dispersement');
       } else {
         toasted(false, '', response.error || 'Failed to authorize dispersement');
         

@@ -62,8 +62,8 @@ function openAddInsuranceModal() {
     <Table
       :pending="pagination.pending.value"
       :headers="{
-        head: ['Logo','Insurance Name',  'Vehicle Detail', 'Registration Date', 'Status', 'actions'],
-        row: [ 'profile','insuranceName', 'VehicleDetail', 'registrationDate', 'quotationStatus'],
+        head: ['Logo','Insurance Name', 'Registration Date', 'Status', 'actions'],
+        row: [ 'profile','insuranceName', 'registrationDate', 'quotationStatus'],
       }"
       :rowCom="Status_row"
       :rows="insurance.insurances || []"

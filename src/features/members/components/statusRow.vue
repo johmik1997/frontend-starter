@@ -107,6 +107,7 @@ const getVehicleDetail = (row) => {
       >
         Send SMS
       </Button>
+      
     </td>
   </tr>
   </template>

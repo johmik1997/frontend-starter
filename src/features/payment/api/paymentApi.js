@@ -14,8 +14,8 @@ export function getAllPayment(query = {}) {
   return api.addAuthenticationHeader().get(`${path}/searchPayment${qr}`);
 }
 
-export function createPayment(id) {
-  return api.addAuthenticationHeader().put(`${path}/pay/${id}?paymentType=ONLINE`);
+export function createPayment(monthlyPaymentUuid) {
+  return api.addAuthenticationHeader().put(`${path}/pay/${monthlyPaymentUuid}?paymentType=ONLINE`);
 }
 export function createDirectPayment(id) {
   return api.addAuthenticationHeader().put(`${path}/pay/${id}?paymentType=DIRECT_pAY`);

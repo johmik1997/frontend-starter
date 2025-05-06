@@ -37,6 +37,17 @@ const carRequests = ref([]);
 const bankAccount = ref('');
 const step = ref(1);
 
+// Dynamic step title
+const stepTitle = computed(() => {
+  switch (step.value) {
+    case 1: return 'Personal Information';
+    case 2: return 'Insurance Selection';
+    case 3: return 'Vehicle Details';
+    case 4: return 'Bank Account Information';
+    default: return 'Add Client';
+  }
+});
+
 // Watch for changes in the nested data structure
 watch(
   () => props.data?.props?.data?.props?.data,
@@ -282,10 +293,8 @@ const nextStep = (event) => {
       toasted(false, "", "Please add at least one vehicle before continuing!");
       return;
     }
+    // Skip directly to bank account step (now step 4)
     step.value = 4;
-  } else if (step.value === 4) {
-    // For now, just proceed to next step since quotation details will be integrated later
-    step.value = 5;
   }
 };
 
@@ -463,31 +472,29 @@ const submitForm = async () => {
       }))
     };
 
+    console.log('Submitting form with data:', requestData);
+    
     const response = await CreateClient(requestData);
+    console.log('API response:', response);
 
     if (response.success) {
-      // Create a new quotation object with all necessary fields
-      const newQuotation = {
-        ...response.data,
-        customerName: `${personalDetails.value.firstName} ${personalDetails.value.fatherName}`,
-        quotationDate: new Date().toISOString().split('T')[0],
-        quotationStatus: 'PENDING',
-        VehicleDetail: carRequests.value[0]?.carName || '',
-        insurance: personalDetails.value.insuranceUuid,
-        quotationAmount: response.data.quotationAmount || 0
-      };
-
-      // Add to store after successful API call
-      quotationStore.add(newQuotation);
-
+      console.log('Success response data:', response.data);
+      
+      // Add the response data directly to the store
+      quotationStore.add(response.data);
+      
+      // Force refresh the quotation list
+      await quotationStore.fetchQuotations();
+      
       toasted(true, "Client Created Successfully!");
       closeModal();
     } else {
+      console.error('Error response:', response.error);
       toasted(false, "Error", response.error || "Failed to create client");
     }
   } catch (error) {
     console.error('Error creating client:', error);
-    toasted(false, "Error", error.message || "Failed to create client");
+    toasted(false, "Error", "An unexpected error occurred");
   }
 };
 
@@ -615,8 +622,25 @@ onMounted(() => {
 
 <template>
   <ModalParent>
-    <NewFormParent class="px-4 py-2" size="xs" title="Add Client">
-      <template #default >
+    <NewFormParent class="px-4 py-2 max-w-4xl" size="xs">
+      <template #title>
+        <div class="flex items-center gap-3">
+          <button 
+            @click="prevStep" 
+            v-if="step > 1"
+            class="flex items-center justify-center p-1 rounded-md hover:bg-gray-100"
+          >
+            <svg width="7" height="13" viewBox="0 0 7 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path opacity="0.6" fill-rule="evenodd" clip-rule="evenodd"
+                d="M5.82539 1.0134C6.03505 1.20471 6.05933 1.54072 5.87962 1.76391L2.15854 6.38525L5.87962 11.0066C6.05933 11.2298 6.03505 11.5658 5.82539 11.7571C5.61572 11.9484 5.30007 11.9226 5.12036 11.6994L1.12037 6.73164C0.959876 6.53232 0.959876 6.23819 1.12037 6.03887L5.12036 1.07113C5.30008 0.847943 5.61572 0.822096 5.82539 1.0134Z"
+                fill="#263558" stroke="#263558" stroke-linecap="round" />
+            </svg>
+          </button>
+          <span class="font-bold text-lg">{{ stepTitle }}</span>
+        </div>
+      </template>
+      
+      <template #default>
         <Form class="gap-5 mt-3 p-6 " id="addform">
           
           <!-- Step 1: Personal Details -->
@@ -686,20 +710,23 @@ onMounted(() => {
           </div>
 
           <!-- Step 2: Insurance Selection -->
-          <div v-if="step === 2" class="w-full mt-5">
-            <h3 class="text-lg font-semibold mb-2">Select Your Preferred Insurance Company.</h3>
-            <p class="text-gray-600 mb-6">Select the insurance company that you trust the most and feel offers the best fit for your needs and preferences.</p>
+          <div v-if="step === 2" class="w-full mt-3">
+            <h3 class="text-lg font-semibold mb-1">Select Your Preferred Insurance Company.</h3>
+            <p class="text-sm text-gray-600 mb-4">Select the insurance company that you trust the most and feel offers the best fit for your needs and preferences.</p>
 
-            <div class="grid grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-w-4xl mx-auto">
               <div 
                 v-for="insurance in (insurereq.response.value?.insurances || [])" 
                 :key="insurance.insuranceUuid"
                 @click="personalDetails.insuranceUuid = insurance.insuranceUuid"
-                class="flex flex-col items-center p-4 border rounded-lg cursor-pointer transition-all duration-200"
-                :class="{'border-blue-500 bg-blue-50': personalDetails.insuranceUuid === insurance.insuranceUuid}"
+                class="flex flex-col items-center p-3 border rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md"
+                :class="{
+                  'border-primary bg-[#F0F0FF]': personalDetails.insuranceUuid === insurance.insuranceUuid,
+                  'border-gray-200 hover:border-gray-300': personalDetails.insuranceUuid !== insurance.insuranceUuid
+                }"
               >
                 <!-- Insurance Logo -->
-                <div class="w-32 h-32 mb-3 flex items-center justify-center bg-white rounded-lg p-2">
+                <div class="w-16 h-16 sm:w-16 sm:h-16 mb-2 flex items-center justify-center bg-white rounded-lg p-2 border">
                   <img 
                     :src="insurance.profile ? `data:image/jpeg;base64,${insurance.profile}` : '@/assets/default-insurance-logo.png'"
                     :alt="insurance.insuranceName"
@@ -708,29 +735,26 @@ onMounted(() => {
                 </div>
                 
                 <!-- Insurance Name -->
-                <span class="text-center text-blue-700 font-medium">{{ insurance.insuranceName }}</span>
+                <span class="text-center text-sm font-medium" :class="{
+                  'text-primary': personalDetails.insuranceUuid === insurance.insuranceUuid,
+                  'text-gray-700': personalDetails.insuranceUuid !== insurance.insuranceUuid
+                }">
+                  {{ insurance.insuranceName }}
+                </span>
               </div>
             </div>
 
             <!-- Navigation Buttons -->
-            <div class="flex justify-between mt-8">
-              <Button 
-                @click="prevStep" 
-                class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded"
-              >
-                Back
-              </Button>
-           
-            </div>
+            
           </div>
 
           <!-- Step 3: Vehicle Details -->
-          <div class="grid grid-cols-2 gap-4 mb-4">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
             
   
            
             <div v-if="step === 3" class="w-full max-w-lg bg-white p-6 rounded-md">
-              <h3 class="text-lg font-semibold mb-4">Step 2: Vehicle Details</h3>
+              <h3 class="text-lg font-semibold mb-4">Step 3: Vehicle Details</h3>
               
               <div class="grid grid-cols-2 gap-4">
                 <!-- Vehicle Type Selection -->
@@ -852,10 +876,8 @@ onMounted(() => {
                 </Select>
               </div>
     
-              <div class="flex justify-between mt-4">
-                <Button @click="prevStep" class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded">
-                  Back
-                </Button>
+              <div class="flex justify-end mt-4">
+               
                 <Button 
       @click="addVehicle" 
       type="primary"
@@ -867,7 +889,7 @@ onMounted(() => {
             </div>
     
             <!-- List of Vehicles (Only in Step 2) -->
-            <div v-if="step === 3" class="w-full max-w-lg bg-[#F0F0FF] text-[#1E1E1E] rounded-md p-4 mx-4">
+            <div v-if="step === 3" class="w-full max-w-lg bg-[#F3F3F3] text-[#1E1E1E] rounded-md p-4 mx-4">
               <h3 class="text-md font-semibold mb-2">List of cars you have added</h3>
               <div v-if="carRequests.length === 0" class="text-gray-500">No vehicles added yet.</div>
               <ul v-else>
@@ -894,17 +916,8 @@ onMounted(() => {
             </div>
   </div>
 
-          <!-- Step 4: Quotation Details -->
-          <div v-if="step === 4" class="w-full bg-black p-6 rounded-md">
-            <h3 class="text-white text-lg font-semibold mb-4">Quotation Details</h3>
-            <p class="text-gray-400">This section will be integrated later.</p>
-            <Button @click="prevStep" class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded">
-                  Back
-                </Button>
-          </div>
-
-          <!-- Step 5: Bank Account -->
-          <div v-if="step === 5" class="w-[700px]">
+          <!-- Step 4: Bank Account (previously Step 5) -->
+          <div v-if="step === 4" class="w-[700px]">
             <div class="bg-[#3C3C9E]  rounded-lg shadow-lg">  
               <div class="p-4">
               <div class="flex items-center mb-4 p-3 bg-white rounded-lg">  
@@ -949,11 +962,10 @@ onMounted(() => {
               />
             </div></div>
             <div class="flex justify-between mt-4">
-              <Button @click="prevStep" class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded">
-                Back
-              </Button>
+              
             </div>
           </div>
+       
         
         
         </Form>
@@ -961,8 +973,8 @@ onMounted(() => {
 
       <template #bottom>
         <div class="flex justify-between m-4 w-full gap-4 pr-4">
-          <!-- Save as Draft button - 25% width (only in steps 1-4) -->
-          <div v-if="step !== 5" class="w-1/4">
+          <!-- Save as Draft button - 25% width (only in steps 1-3) -->
+          <div v-if="step !== 4" class="w-1/4">
             <Button 
               @click="saveDraft" 
               type="secondary" 
@@ -974,9 +986,9 @@ onMounted(() => {
           </div>
           
           <!-- Navigation buttons - 75% width -->
-          <div :class="step === 5 ? 'w-full' : 'flex-1'">
+          <div :class="step === 4 ? 'w-full' : 'flex-1'">
             <Button 
-              v-if="step < 5" 
+              v-if="step < 4" 
               @click="nextStep" 
               type="primary" 
               size="lg"
@@ -985,7 +997,7 @@ onMounted(() => {
               Continue
             </Button>
             <Button 
-              v-if="step === 5" 
+              v-if="step === 4" 
               @click="submitForm" 
               type="primary" 
               size="lg"

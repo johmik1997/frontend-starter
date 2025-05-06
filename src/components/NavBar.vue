@@ -38,7 +38,7 @@ const goBack = () => {
 };
 </script>
 <template>
-  <div class="flex justify-between items-center  bg-[#F6F6FF] relative">
+  <div class="flex justify-between items-center  bg-gray-50 relative">
     <!-- Left Side - Back Button and Title -->
     <div class="flex items-center gap-2 sm:gap-4">
       <button 

@@ -1,6 +1,8 @@
 <script setup>
 import Button from '@/components/Button.vue';
+import { useRouter } from 'vue-router';
 
+const router = useRouter();
 const props = defineProps({  
   rowData: {  
     type: Array,  
@@ -14,8 +16,11 @@ const props = defineProps({
     required: true,  
   },  
 }); 
-console.log(props.rowKeys);
 const emit = defineEmits(["row"]);  
+
+const handleNavigate = (insuranceUuid) => {
+  router.push(`/insurance/detail/${insuranceUuid}`);
+};
 </script>
 <template>  
     <tr 
@@ -64,12 +69,11 @@ const emit = defineEmits(["row"]);
       </td>  
       <td class="p-3 flex gap-3" v-if="headKeys.includes('actions')">  
         <Button 
-          @click="$router.push(`/detail/${row.insuranceUuid}`)" 
-          class="rounded-[4px]  bg-primary text-white"
+          @click="handleNavigate(row.insuranceUuid)" 
+          class="rounded-[4px] bg-primary text-white"
         >
           Open
         </Button>
-     
       </td>   
     </tr>   
   </template>

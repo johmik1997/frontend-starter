@@ -2,7 +2,17 @@
   <div class="container mx-auto p-4">
     <!-- Upper Grid - Insurance Details -->
     <div class="bg-white rounded-lg shadow mb-6 p-4">
-      <h2 class="text-xl font-semibold mb-4">Insurance Details</h2>
+      <div class="flex justify-between items-start mb-4">
+        <h2 class="text-xl font-semibold">Insurance Details</h2>
+        <Button 
+          @click="openEditModal" 
+          type="primary"
+          class="flex items-center gap-2"
+        >
+          <i class="fas fa-edit"></i>
+          Edit Insurance
+        </Button>
+      </div>
       <div v-if="insuranceDetails" class="flex items-center justify-between gap-6">
         <div class="flex items-center gap-6">
           <div class="w-24 h-24 rounded-lg overflow-hidden shadow-md">
@@ -57,11 +67,43 @@
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { getCustomersbyId, getRate } from '../api/insuranceApi';
+import { openModal, useModal } from "@customizer/modal-x";
+import Button from '@/components/Button.vue';
 
 const route = useRoute();
+const modal = useModal();
 const insuranceUuid = route.params.insuranceUuid;
 const insuranceDetails = ref(null);
 const rates = ref([]);
+
+// Function to fetch insurance details
+const fetchInsuranceDetails = async () => {
+  try {
+    const detailsResponse = await getCustomersbyId(insuranceUuid);
+    insuranceDetails.value = detailsResponse.data;
+  } catch (error) {
+    console.error('Error fetching insurance details:', error);
+  }
+};
+
+const openEditModal = () => {
+  console.log('Opening edit modal with data:', insuranceDetails.value);
+  openModal('editInsurance', {
+    data: {
+      insuranceUuid: insuranceDetails.value.insuranceUuid,
+      insuranceName: insuranceDetails.value.insuranceName,
+      accountNumber: insuranceDetails.value.accountNumber || '',
+      image: insuranceDetails.value.profile
+    }
+  });
+
+  // Watch for modal changes
+  modal.$subscribe((mutation, state) => {
+    if (!state.isOpen && state.lastClosed === 'editInsurance') {
+      fetchInsuranceDetails(); // Refresh the data when modal closes
+    }
+  });
+};
 
 const getTypeDetails = (rate) => {
   if (rate.carType === 'PRIVATE') {
@@ -80,16 +122,14 @@ const getTypeDetails = (rate) => {
 };
 
 onMounted(async () => {
+  await fetchInsuranceDetails();
+  
+  // Fetch rates
   try {
-    // Fetch insurance details
-    const detailsResponse = await getCustomersbyId(insuranceUuid);
-    insuranceDetails.value = detailsResponse.data;
-
-    // Fetch rates
     const ratesResponse = await getRate(insuranceUuid);
     rates.value = ratesResponse.data.content;
   } catch (error) {
-    console.error('Error fetching data:', error);
+    console.error('Error fetching rates:', error);
   }
 });
 </script>

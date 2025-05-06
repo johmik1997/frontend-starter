@@ -172,10 +172,56 @@ export function usePaginationcopy(options = {}) {
       : pagination.page.value;
   });
 
-  function send() {
-    pagination.reset()
-    searchPagination.reset()
-    fetch()
+  async function send() {
+    try {
+      pending.value = true;
+      
+      const response = await paginationOptions.value.cb(
+        {
+          page: currentPage.value,
+          limit: perPage.value,
+          ...paginationOptions.value.params
+        },
+        paginationOptions.value.config
+      );
+      
+      // Handle paginated response format
+      if (response && response.data && response.data.content) {
+        // Extract pagination metadata
+        const { totalElements, totalPages, size, number } = response.data;
+        
+        // Update pagination state
+        total.value = totalElements || 0;
+        totalPage.value = totalPages || 1;
+        perPage.value = size || perPage.value;
+        currentPage.value = number || 0;
+        
+        // Set the content data to the store
+        if (typeof paginationOptions.value.store.set === 'function') {
+          paginationOptions.value.store.set(response.data);
+        } else {
+          console.error('Store does not have a set method');
+        }
+      } else {
+        // Handle regular response format
+        const data = response.data || [];
+        total.value = data.length;
+        totalPage.value = Math.ceil(total.value / perPage.value);
+        
+        if (typeof paginationOptions.value.store.set === 'function') {
+          paginationOptions.value.store.set(data);
+        } else {
+          console.error('Store does not have a set method');
+        }
+      }
+      
+      return response;
+    } catch (error) {
+      console.error('Pagination error:', error);
+      return { success: false, error: error.message };
+    } finally {
+      pending.value = false;
+    }
   }
 
   return {

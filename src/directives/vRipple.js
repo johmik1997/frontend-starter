@@ -1,19 +1,29 @@
 function ripple(ev) {
 	const btn = ev.target.classList.contains('__ripple') ? ev.target : ev.target.closest('.__ripple')
+	if (!btn) return; // Guard against null
+
+	// Skip ripple effect for navigation buttons with active state
+	if (btn.closest('.router-link-active') || btn.classList.contains('no-ripple')) {
+		return;
+	}
 
 	const rippleChild = btn.querySelector('.__ripple_child')
-  const x = ev.layerX;
-  const y = ev.layerY;
-  const width = btn.clientWidth
+	if (!rippleChild) return; // Guard against null
+	
+	const x = ev.layerX;
+	const y = ev.layerY;
+	const width = btn.clientWidth
 
-  rippleChild.style.setProperty("--x", `${x}px`);
-  rippleChild.style.setProperty("--y", `${y}px`);
-  rippleChild.style.setProperty("--btnWidth", `${width}px`);
-  rippleChild.classList.add("__ripple_animation");
+	rippleChild.style.setProperty("--x", `${x}px`);
+	rippleChild.style.setProperty("--y", `${y}px`);
+	rippleChild.style.setProperty("--btnWidth", `${width}px`);
+	rippleChild.classList.add("__ripple_animation");
 
-  setTimeout(() => {
-    rippleChild.classList.remove("__ripple_animation");
-  }, 400);
+	setTimeout(() => {
+		if (rippleChild) {
+			rippleChild.classList.remove("__ripple_animation");
+		}
+	}, 400);
 }
 
 export default {

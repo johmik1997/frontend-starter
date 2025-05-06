@@ -2,7 +2,7 @@
 import Button from "@/components/Button.vue";
 import NavBar from "@/components/NavBar.vue";
 import navs from "@/config/navs";
-import { provide, ref, watch, computed } from "vue";
+import { provide, ref, watch, computed, nextTick, onMounted } from "vue";
 import { RouterLink, useRoute } from "vue-router";
 import { useAuth } from "@/stores/auth";
 import icons from "@/utils/icons";
@@ -18,8 +18,85 @@ const toggleMobileMenu = () => {
   isMobileMenuOpen.value = !isMobileMenuOpen.value;
 };
 
+// Prevent flash issue by delaying dropdown state changes
+const toggleDropdown = async (navPath, event) => {
+  // Prevent event propagation
+  if (event) {
+    event.stopPropagation();
+    event.preventDefault();
+  }
+
+  await nextTick();
+  
+  if (!openDropdowns.value.has(navPath)) {
+    // If we're opening the payment dropdown, just add it without removing others
+    if (navPath === '/payment') {
+      openDropdowns.value.add(navPath);
+    } else {
+      // For other dropdowns, close all and open only this one
+      openDropdowns.value = new Set([navPath]);
+    }
+  } else {
+    // Toggle off the dropdown when clicked again
+    openDropdowns.value.delete(navPath);
+  }
+};
+
 watch(() => route.path, () => {
   isMobileMenuOpen.value = false;
+});
+
+// Watch for route changes to handle dropdowns when navigating
+watch(() => route.path, (newPath, oldPath) => {
+  // Close mobile menu on route change
+  isMobileMenuOpen.value = false;
+  
+  // Extract the base paths for comparison
+  const newPathBase = newPath.split('/')[1];
+  const oldPathBase = oldPath?.split('/')[1];
+  
+  // Handle payment section specially
+  if (newPathBase === 'payment') {
+    // Always keep payment dropdown open when in payment section
+    openDropdowns.value.add('/payment');
+    
+    // Check if we're in a specific payment subsection
+    if (newPath.includes('/deposit') || newPath.includes('/depositdetails/')) {
+      // Keep deposit dropdown open
+      openDropdowns.value.add('/payment/deposit');
+    } else if (newPath.includes('/premium') || newPath.includes('/premiumdetails/')) {
+      // Keep premium dropdown open
+      openDropdowns.value.add('/payment/premium');
+    } else if (newPath.includes('/dispersement') || newPath.includes('/dispersementdetails/')) {
+      // Keep dispersement dropdown open
+      openDropdowns.value.add('/payment/dispersement');
+    }
+    return;
+  }
+  
+  // Handle quotation section
+  if (newPathBase === 'quatation' || newPath.includes('/quatation/details/')) {
+    // Keep quotation dropdown open
+    if (navs.some(nav => nav.path === '/quatation' && nav.children)) {
+      openDropdowns.value.add('/quatation');
+    }
+    return;
+  }
+  
+  // Handle insurance section
+  if (newPathBase === 'insurance' || newPath.includes('/insurance/detail/')) {
+    // Keep insurance dropdown open
+    if (navs.some(nav => nav.path === '/insurance' && nav.children)) {
+      openDropdowns.value.add('/insurance');
+    }
+    return;
+  }
+  
+  // Only close dropdowns when navigating to a completely different section
+  if (newPathBase !== oldPathBase) {
+    // We're navigating to a different main section, close all dropdowns
+    openDropdowns.value = new Set();
+  }
 });
 
 // Filter navs based on privileges
@@ -56,14 +133,6 @@ watch(
   }
 );
 
-const toggleDropdown = (navPath) => {
-  if (openDropdowns.value.has(navPath)) {
-    openDropdowns.value.delete(navPath);
-  } else {
-    openDropdowns.value.add(navPath);
-  }
-};
-
 const isDropdownOpen = (navPath) => openDropdowns.value.has(navPath);
 
 const isRouteActive = (navPath) => {
@@ -72,19 +141,55 @@ const isRouteActive = (navPath) => {
   const currentPath = route.path.toLowerCase();
   const baseNavPath = navPath.toLowerCase();
 
-  if (baseNavPath === '/payment/deposit') {
-    return currentPath === '/payment/deposit' || currentPath.startsWith('/depositdetails/');
+  // Handle financing routes
+  if (baseNavPath === '/payment') {
+    // Check if we're in any financing-related route
+    return currentPath.startsWith('/payment') || 
+           currentPath.includes('/depositdetails/') || 
+           currentPath.includes('/premiumdetails/') ||
+           currentPath.includes('/dispersementdetails/');
   }
 
+  // Handle deposit routes specifically
+  if (baseNavPath === '/payment/deposit') {
+    return currentPath === '/payment/deposit' || 
+           currentPath.startsWith('/payment/deposit/details/') || 
+           currentPath.includes('/depositdetails/');
+  }
+
+  // Handle premium routes
+  if (baseNavPath === '/payment/premium') {
+    return currentPath === '/payment/premium' || 
+           currentPath.includes('/premiumdetails/');
+  }
+
+  // Handle dispersement routes
+  if (baseNavPath === '/payment/dispersement') {
+    return currentPath === '/payment/dispersement' || 
+           currentPath.includes('/dispersementdetails/');
+  }
+
+  // Handle quotation routes
   if (baseNavPath === '/quatation') {
-    return currentPath === '/quatation' || currentPath.includes('/details/');
+    return currentPath === '/quatation' || 
+           currentPath.includes('/quatation/details/');
   }
   
+  // Handle insurance routes
+  if (baseNavPath === '/insurance') {
+    return currentPath === '/insurance' || 
+           currentPath.includes('/insurance/detail/');
+  }
+  
+  // Handle drafts
   if (baseNavPath === '/drafts') {
     return currentPath === '/drafts';
   }
 
-  return currentPath === baseNavPath;
+  // Default case - check if current path starts with the nav path
+  // This helps with detail pages that extend the base path
+  return currentPath === baseNavPath || 
+         (baseNavPath !== '/' && currentPath.startsWith(baseNavPath + '/'));
 };
 
 // Check if a nav item should be visible based on privileges
@@ -109,6 +214,40 @@ const shouldShowNavItem = (nav) => {
 
   return true;
 };
+
+// Initialize dropdowns based on current route
+const initializeDropdowns = () => {
+  const currentPath = route.path.toLowerCase();
+  
+  // Payment section
+  if (currentPath.startsWith('/payment')) {
+    openDropdowns.value.add('/payment');
+    
+    // Check specific payment subsections
+    if (currentPath.includes('/deposit') || currentPath.includes('/depositdetails/')) {
+      openDropdowns.value.add('/payment/deposit');
+    } else if (currentPath.includes('/premium') || currentPath.includes('/premiumdetails/')) {
+      openDropdowns.value.add('/payment/premium');
+    } else if (currentPath.includes('/dispersement') || currentPath.includes('/dispersementdetails/')) {
+      openDropdowns.value.add('/payment/dispersement');
+    }
+  }
+  
+  // Quotation section
+  if (currentPath.startsWith('/quatation') || currentPath.includes('/quatation/details/')) {
+    openDropdowns.value.add('/quatation');
+  }
+  
+  // Insurance section
+  if (currentPath.startsWith('/insurance') || currentPath.includes('/insurance/detail/')) {
+    openDropdowns.value.add('/insurance');
+  }
+};
+
+// Call initialization on component mount
+onMounted(() => {
+  initializeDropdowns();
+});
 </script>
 
 <template>
@@ -116,11 +255,11 @@ const shouldShowNavItem = (nav) => {
     <!-- Mobile Menu Button -->
     <button 
       @click="toggleMobileMenu"
-      class="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-white shadow-lg"
+      class="lg:hidden fixed left-1 z-50 p-2 my-1 rounded-lg bg-gray-100 shadow-lg"
     >
       <svg 
         xmlns="http://www.w3.org/2000/svg" 
-        class="h-6 w-6 text-[#3C3C9E]" 
+        class="h-3 w-5 text-[#3C3C9E]" 
         :class="{ 'transform rotate-90': isMobileMenuOpen }"
         fill="none" 
         viewBox="0 0 24 24" 
@@ -137,7 +276,7 @@ const shouldShowNavItem = (nav) => {
 
     <!-- Sidebar -->
     <div 
-      class="__scrollable-hidden fixed lg:relative w-[280px] lg:w-drawer-width border-r text-white bg-[#3C3C9E] overflow-y-scroll h-full transition-transform duration-300 ease-in-out z-40"
+      class="__scrollable-hidden fixed lg:relative w-[20%] border-r text-white bg-[#3C3C9E] overflow-y-scroll h-full transition-transform duration-300 ease-in-out z-40"
       :class="{ '-translate-x-full lg:translate-x-0': !isMobileMenuOpen }"
     >
       <div class="p-4 px-2 h-12 flex gap-4 items-center sticky top-0 bg-[#3C3C9E] z-10">
@@ -154,8 +293,11 @@ const shouldShowNavItem = (nav) => {
           <div v-for="nav in navItems" :key="nav.name" class="flex flex-col">
             <!-- Parent Nav Item -->
             <div v-if="shouldShowNavItem(nav)" 
-                 class="flex rounded transition-all duration-200 ease-linear hover:text-[#3C3C9E] hover:bg-white"
-                 :class="{ 'bg-[#FFFFFF4D] text-white': isRouteActive(nav.path) && nav.children }">
+                 class="flex rounded transition-all duration-200 ease-linear w-[86%] hover:text-[#3C3C9E] hover:bg-white"
+                 :class="{ 
+                   'bg-[#FFFFFF4D] text-white': isRouteActive(nav.path) && nav.children && nav.path !== '/payment',
+                   'bg-[#EFFFFF4D] text-white font-semibold': isRouteActive(nav.path) && nav.path === '/payment'
+                 }">
               <RouterLink
                 v-if="!nav.children"
                 :to="nav.path"
@@ -165,53 +307,66 @@ const shouldShowNavItem = (nav) => {
                   'router-link-active': isRouteActive(nav.path)
                 }"
               >
-                <Button class="flex-1 max-w-full flex gap-4 !justify-start items-center pl-5">
+                <Button class="w-full flex-1 max-w-full flex gap-2 !justify-start items-center pl-3 nav-button">
                   <div class="grid place-items-center rounded">
                     <span v-html="nav.icon" />
                   </div>
-                  <span>{{ nav.name }}</span>
+                  <span class="text-sm truncate">{{ nav.name }}</span>
                 </Button>
               </RouterLink>
               
               <!-- Dropdown Toggle Button -->
-              <Button
+              <div
                 v-else
-                class="flex-1 max-w-full flex gap-4 !justify-between items-center pl-5 pr-3"
+                class="flex-1 max-w-full flex  !justify-between items-center py-2  pl-3 pr-2 cursor-pointer"
                 :class="{
-                  'bg-white text-[#3C3C9E]': isRouteActive(nav.path),
-                  'router-link-active': isRouteActive(nav.path)
+                  'bg-white text-[#3C3C9E]': isRouteActive(nav.path) && nav.path !== '/payment',
+                  'bg-[#FFFFFF4D] text-white hover:bg-white hover:text-[#3C3C9E] font-semibold': isRouteActive(nav.path) && nav.path === '/payment'
                 }"
-                @click="toggleDropdown(nav.path)"
+                @click.stop="(event) => toggleDropdown(nav.path, event)"
               >
-                <div class="flex gap-4 items-center">
+                <div class="flex gap-2 items-center">
                   <div class="grid place-items-center rounded">
                     <span v-html="nav.icon" />
                   </div>
-                  <span>{{ nav.name }}</span>
+                  <span class="text-sm truncate">{{ nav.name }}</span>
                 </div>
                 <i
                   class="transition-transform duration-200"
                   :class="{ 'rotate-180': isDropdownOpen(nav.path) }"
                   v-html="icons.down"
                 />
-              </Button>
+              </div>
             </div>
 
             <!-- Child Nav Items -->
             <div
               v-if="nav.children"
-              class="overflow-hidden transition-all duration-200"
-              :class="{ 'h-0': !isDropdownOpen(nav.path) }"
+              class="overflow-hidden transition-all pt-2 duration-200"
+              :style="{ 
+                height: isDropdownOpen(nav.path) ? `${nav.children.length * 40}px` : '0px'
+              }"
             >
               <RouterLink
                 v-for="child in nav.children"
                 :key="child.name"
                 :to="child.path"
-                class="block ml-10 text-left"
+                class="block ml-10 text-left child-link h-10 flex items-center"
+                :class="{
+                  'bg-white text-[#3C3C9E]': isRouteActive(child.path),
+                  'router-link-active': isRouteActive(child.path)
+                }"
+                @click.stop
               >
-                <Button class="flex items-start w-full !justify-start my-2 text-left py-1.5 hover:text-[#3C3C9E] hover:bg-white">
-                  <span class="flex text-left pl-5 items-start justify-start">{{ child.name }}</span>
-                </Button>
+                <div 
+                  class="flex items-center w-full !justify-start text-left py-1.5 hover:text-[#3C3C9E] hover:bg-white cursor-pointer"
+                  :class="{
+                    'bg-white text-[#3C3C9E]': isRouteActive(child.path),
+                    'font-semibold': isRouteActive(child.path)
+                  }"
+                >
+                  <span class="flex text-left pl-5 items-center justify-start">{{ child.name }}</span>
+                </div>
               </RouterLink>
             </div>
           </div>
@@ -227,7 +382,7 @@ const shouldShowNavItem = (nav) => {
     ></div>
 
     <!-- Main content -->
-    <div class="flex flex-col w-full lg:w-[calc(100%-var(--drawer-width))]">
+    <div class="flex flex-col py-2 px-6 w-full lg:w-[80%]">
       <div class="navbar-height flex items-center">
         <NavBar 
           v-model="search" 
@@ -257,34 +412,27 @@ const shouldShowNavItem = (nav) => {
 /* Mobile-specific styles */
 @media (max-width: 1024px) {
   .navbar-height {
-    padding-left: 4rem; /* Space for mobile menu button */
+    padding-left: 3rem; /* Space for mobile menu button */
   }
 }
 
 /* Active route styling */
 .__scrollable-hidden .router-link-active {
-  background-color: theme("colors.white") !important;
+  background-color: white !important;
   color: #3C3C9E !important;
 }
 
-.__scrollable-hidden .router-link-active button {
-  background-color: theme("colors.white") !important;
-  color: #3C3C9E !important;
+.__scrollable-hidden .router-link-active .nav-button {
+  background-color: transparent !important;
 }
 
-.__scrollable-hidden .router-link-active button span {
+.__scrollable-hidden .router-link-active span {
   font-weight: 600;
 }
 
-/* Add specific styling for dropdown items */
-.__scrollable-hidden .router-link-active.child-link {
-  background-color: transparent !important;
-  color: inherit !important;
-}
-
-.__scrollable-hidden .router-link-active.child-link button {
-  background-color: transparent !important;
-  color: inherit !important;
+/* Child link styling */
+.child-link {
+  transition: none !important;
 }
 
 /* Add touch scrolling for mobile */
@@ -294,30 +442,6 @@ const shouldShowNavItem = (nav) => {
   }
 }
 </style>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
