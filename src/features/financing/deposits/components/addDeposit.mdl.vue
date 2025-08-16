@@ -9,7 +9,7 @@ import NewFormParent from "@/components/NewFormParent.vue";
 import Form from "@/components/new_form_builder/Form.vue";
 import { Input } from "@/components/new_form_elements";
 import { useApiRequest } from "@/composables/useApiRequest";
-import { usePaginationcopy } from "@/composables/usePaginationcopy";
+import { usePagination } from "@/composables/usePagination";
 import { closeModal } from "@customizer/modal-x";
 import { searchClientByPhone, submitDeposit, updateQuotationStatus } from "../api/depositsApi";
 import { useQuotation } from '../store/deposit';
@@ -24,7 +24,7 @@ let searchTimeout = null // Add debounce timeout
 const selectedClient = ref(null)
 
 // Setup pagination - Fix the callback to properly use searchPhone value
-const pagination = usePaginationcopy({
+const pagination = usePagination({
   cb: () => searchClientByPhone(searchPhone.value),
   auto: false
 })

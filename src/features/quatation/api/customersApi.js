@@ -13,10 +13,12 @@ export function importInsured(data, config) {
 	})
 }
 
-export function getCustomers(config) {
-	return api.addAuthenticationHeader().get(`${path}/getAllQuotation`, config)
+export function getCustomers(query = {}) {
+  console.log('API query params:', query);
+  const qr = getQueryFormObject(query);
+  console.log('Formatted query string:', qr);
+  return api.addAuthenticationHeader().get(`${path}/getAllQuotation${qr}`);
 }
-
 export function getAllInsurances(query = {}) {
   const qr = getQueryFormObject(query);
   return api.addAuthenticationHeader().get(`${path}/getAllInsurances${qr}`);
@@ -52,6 +54,7 @@ export function updateCarDetails(carUuid, data) {
   return api.addAuthenticationHeader()
     .put(`/cars/updateCar/${carUuid}`, data);
 }
+
 
 
 

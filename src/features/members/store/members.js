@@ -5,7 +5,18 @@ export const useMembers = defineStore("members", () => {
   const members = ref([]);
 
   function set(data) {
-    members.value = data;
+    console.log('Setting members data:', data);
+    
+    // Check if the data has a content array (pagination format)
+    if (data && data.content && Array.isArray(data.content)) {
+      members.value = data.content;
+    } else if (Array.isArray(data)) {
+      members.value = data;
+    } else {
+      members.value = [];
+    }
+    
+    console.log('Updated members array:', members.value);
   }
 
   function getAll() {

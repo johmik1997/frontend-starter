@@ -3,7 +3,7 @@ import DefaultPage from '@/components/DefaultPage.vue'
 import Table from '@/components/Table.vue'
 import Button from '@/components/Button.vue'
 import icons from "@/utils/icons";
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import Status_row from '../components/statusRow.vue';
 
 import { useMemberForm } from '../store/membersFormStore';
@@ -13,181 +13,36 @@ import { useMembers } from '../store/members';
 import { usePaginationcopy } from '@/composables/usePaginationcopy';
 import { getMembers } from '../api/membersApi';
 import { usePaginations } from '@/composables/usePaginations';
+import TableRowSkeleton from '@/components/TableRowSkeleton.vue';
 const membersStore = useMembers();
 const searchKey = ref('');
 
-const pagination = usePaginations({
+// Use usePaginationcopy instead of usePaginations for consistency
+const pagination = usePaginationcopy({
   store: membersStore,
   cb: (data, config) =>
-  getMembers(
+    getMembers(
       removeUndefined({
         ...data,
         search: searchKey.value,
       })
     ),
-}); 
-const entries = ref([
-  {
-    clientName: "Abebe Beso Bela",
-    RegisteredDate: "03-262025",
-    lastActivity: "Not Checked",
-    Vehicle: "2 days", // Custom value for inactivity
-    status: "Active", // Custom value foActive history
-    phoneNumber: "0912345678", // Example Ethiopian phone number
-  },
-  {
-    clientName: "Abebe Beso Bela",
-    RegisteredDate: "03-262025",
-    lastActivity: "Not Checked",
-    Vehicle: "11 days", // Custom value for inactivity
-    status: "Active", // Custom value foActive history
-    phoneNumber: "0923456789", // Example Ethiopian phone number
-  },
-  {
-    clientName: "Abebe Beso Bela",
-    RegisteredDate: "03-262025",
-    lastActivity: "Checked",
-    Vehicle: "6 days", // Custom value for inactivity
-    status: "Inactive", // Custom value foInactive history
-    phoneNumber: "0934567890", // Example Ethiopian phone number
-  },
-  {
-    clientName: "Abebe Beso Bela",
-    RegisteredDate: "03-262025",
-    lastActivity: "Not Checked",
-    Vehicle: "3 days", // Custom value for inactivity
-    status: "Inactive", // Custom value foActive history
-    phoneNumber: "0913456789", // Example Ethiopian phone number
-  },
-  {
-    clientName: "Abebe Beso Bela",
-    RegisteredDate: "03-262025",
-    lastActivity: "Not Checked",
-    Vehicle: "7 days", // Custom value for inactivity
-    status: "Active", // Custom value foActive history
-    phoneNumber: "0945678901", // Example Ethiopian phone number
-  },
-  {
-    clientName: "Abebe Beso Bela",
-    RegisteredDate: "03-262025",
-    lastActivity: "Checked",
-    Vehicle: "8 days", // Custom value for inactivity
-    status: "Active", // Custom value foActive history
-    phoneNumber: "0915678901", // Example Ethiopian phone number
-  },
-  {
-    clientName: "Abebe Beso Bela",
-    RegisteredDate: "03-262025",
-    lastActivity: "Not Checked",
-    Vehicle: "4 days", // Custom value for inactivity
-    status: "Active", // Custom value foActive history
-    phoneNumber: "0924678901", // Example Ethiopian phone number
-  },
-  {
-    clientName: "Abebe Beso Bela",
-    RegisteredDate: "03-262025",
-    lastActivity: "Not Checked",
-    Vehicle: "12 days", // Custom value for inactivity
-    status: "Active", // Custom value foActive history
-    phoneNumber: "0935789012", // Example Ethiopian phone number
-  },
-  {
-    clientName: "Abebe Beso Bela",
-    RegisteredDate: "03-262025",
-    lastActivity: "Not Checked",
-    Vehicle: "15 days", // Custom value for inactivity
-    status: "Active", // Custom value foActive history
-    phoneNumber: "0912345679", // Example Ethiopian phone number
-  },
-  {
-    clientName: "Abebe Beso Bela",
-    RegisteredDate: "03-262025",
-    lastActivity: "Not Checked",
-    Vehicle: "10 days", // Custom value for inactivity
-    status: "Active", // Custom value foActive history
-    phoneNumber: "0923456790", // Example Ethiopian phone number
-  },
-  {
-    clientName: "Abebe Beso Bela",
-    RegisteredDate: "03-262025",
-    lastActivity: "Not Checked",
-    Vehicle: "18 days", // Custom value for inactivity
-    status: "Active", // Custom value foActive history
-    phoneNumber: "0934567901", // Example Ethiopian phone number
-  },
-  {
-    clientName: "Abebe Beso Bela",
-    RegisteredDate: "03-262025",
-    lastActivity: "Not Checked",
-    Vehicle: "22 days", // Custom value for inactivity
-    status: "Active", // Custom value foActive history
-    phoneNumber: "0915678912", // Example Ethiopian phone number
-  },
-  {
-    clientName: "Abebe Beso Bela",
-    RegisteredDate: "03-262025",
-    lastActivity: "Checked",
-    Vehicle: "9 days", // Custom value for inactivity
-    status: "Active", // Custom value foActive history
-    phoneNumber: "0945678902", // Example Ethiopian phone number
-  },
-  {
-    clientName: "Abebe Beso Bela",
-    RegisteredDate: "03-262025",
-    lastActivity: "Not Checked",
-    Vehicle: "5 days", // Custom value for inactivity
-    status: "Active", // Custom value foActive history
-    phoneNumber: "0912345670", // Example Ethiopian phone number
-  },
-  {
-    clientName: "Abebe Beso Bela",
-    RegisteredDate: "03-262025",
-    lastActivity: "Checked",
-    Vehicle: "14 days", // Custom value for inactivity
-    status: "Active", // Custom value foActive history
-    phoneNumber: "0923456781", // Example Ethiopian phone number
-  },
-  {
-    clientName: "Abebe Beso Bela",
-    RegisteredDate: "03-262025",
-    lastActivity: "Not Checked",
-    Vehicle: "16 days", // Custom value for inactivity
-    status: "Active", // Custom value foActive history
-    phoneNumber: "0934567902", // Example Ethiopian phone number
-  },
-  {
-    clientName: "Abebe Beso Bela",
-    RegisteredDate: "03-262025",
-    lastActivity: "Not Checked",
-    Vehicle: "20 days", // Custom value for inactivity
-    status: "Active", // Custom value foActive history
-    phoneNumber: "0915678903", // Example Ethiopian phone number
-  },
-  {
-    clientName: "Abebe Beso Bela",
-    RegisteredDate: "03-262025",
-    lastActivity: "Not Checked",
-    Vehicle: "25 days", // Custom value for inactivity
-    status: "Active", // Custom value foActive history
-    phoneNumber: "0945678903", // Example Ethiopian phone number
-  },
-  {
-    clientName: "Abebe Beso Bela",
-    RegisteredDate: "03-262025",
-    lastActivity: "Not Checked",
-    Vehicle: "30 days", // Custom value for inactivity
-    status: "Active", // Custom value foActive history
-    phoneNumber: "0912345675", // Example Ethiopian phone number
-  },
-]);
-
-onMounted(async () => {
-  await membersStore.fetchMembers();
 });
 
+// Watch for changes in searchKey
+watch(searchKey, (newValue) => {
+  console.log('Search value changed:', newValue);
+  // Use send to trigger a new search
+  pagination.send();
+});
+
+onMounted(async () => {
+  // Initial data load
+  pagination.send();
+});
 </script>
 <template>
-	<DefaultPage placeholder="Search For a Member" class=" justify-start">
+	<DefaultPage placeholder="Search For a Member" v-model="searchKey">
 		<template #more>
 			<div class="flex items-center justify-end  rounded-lg border-2 border-[#3C3C9E]">  
         <button  
@@ -235,6 +90,7 @@ onMounted(async () => {
 			
 		</template>
    <Table
+   :pending="pagination.pending.value"
 	   :headers="{
 		    head: ['#', 'Client Name', 'Registered date', 'Vehicle Detail', 'Phone Number', 'Policy Status', 'actions'],
 			row: ['id', 'clientName', 'RegisteredDate', 'Vehicle', 'phoneNumber', 'status']
@@ -248,5 +104,7 @@ onMounted(async () => {
 	 
 	</DefaultPage>
 </template>
+
+
 
 

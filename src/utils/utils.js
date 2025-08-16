@@ -172,8 +172,15 @@ export async function getBgbase64Url(url) {
   });
 }
 
-export function removeUndefined(values) {
-  return JSON.parse(JSON.stringify(values));
+export function removeUndefined(obj) {
+  const result = {};
+  for (const key in obj) {
+    if (obj[key] !== undefined && obj[key] !== null && obj[key] !== '') {
+      result[key] = obj[key];
+    }
+  }
+  console.log('Removed undefined values:', obj, '->', result);
+  return result;
 }
 
 export function calculateAge(dateOfBirth) {
@@ -423,3 +430,4 @@ export const hospitals = [
   "Lancet Hospital",
   "Biras Hospital",
 ];
+

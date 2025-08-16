@@ -477,7 +477,7 @@ const openConfirmationModal = () => {
 
   openModal('Confirmation', {
     title: 'Authorize Dispersement',
-    message: `Are you sure you want to authorize dispersement amount of ETB ${amount} to Lion Insurance?`
+    message: `Are you sure you want to authorize dispersement amount of ETB ${amount} to Bunna Insurance?`
   }, async (res, close) => {
     if (res) {
       const response = await authorizeDispersement(quotationUuid);

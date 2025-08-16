@@ -20,13 +20,10 @@ const quotations = computed(() => quotationStore.quotations);
 // Add searchKey ref
 const searchKey = ref('');
 
-// Get search from DefaultPage if available
-const defaultPageSearch = inject('search', '');
-
-// Watch for changes in the injected search
-watch(defaultPageSearch, (newValue) => {
-  searchKey.value = newValue;
-  // Refresh the data when search changes
+// Watch for changes in searchKey
+watch(searchKey, (newValue) => {
+  console.log('Search value changed:', newValue);
+  // Use send directly since it handles resetting internally
   pagination.send();
 });
 
@@ -74,7 +71,7 @@ function viewDetails(quotationUuid) {
 </script>
 
 <template>
-  <DefaultPage placeholder="Search For a Member" @search="searchKey = $event">
+  <DefaultPage placeholder="Search For a Member" v-model="searchKey">
     <!-- Header actions -->
     <template #more>
       <div class="flex gap-2 justify-end items-center ">
@@ -100,6 +97,10 @@ function viewDetails(quotationUuid) {
     </Table>
   </DefaultPage>
 </template>
+
+
+
+
 
 
 
