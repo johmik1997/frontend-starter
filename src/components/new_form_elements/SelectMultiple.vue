@@ -28,7 +28,6 @@ if (props.value.length) {
 }
 
 function add(option, emit) {
-  console.log(option.methods, option.privilege);
   if (!selected.value.find((sel) => sel?.privilege == option?.privilege)) {
     selected.value.push({ privilege: option?.privilege, actions: [] });
     selectedPrivileges.value[option.privilege] = option?.methods;

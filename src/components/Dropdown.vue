@@ -27,7 +27,6 @@ watchEffect((cleanUP) => {
 });
 
 function toggle() {
-  console.log('sdfsd');
   
   openDropdown.value = !openDropdown.value;
 }
