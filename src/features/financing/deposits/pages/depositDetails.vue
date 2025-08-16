@@ -1,12 +1,13 @@
 <template>
   <div class="mx-auto p-3 sm:p-6 bg-white">
     <!-- Header -->
-    <header class="flex flex-col sm:flex-row items-start sm:items-center mb-4 pb-5 ml-2 sm:ml-5 border-b justify-between gap-2">
+    <header
+      class="flex flex-col sm:flex-row items-start sm:items-center mb-4 pb-5 ml-2 sm:ml-5 border-b justify-between gap-2">
       <div class="flex items-center gap-2">
         <i class="pl-2" v-html="icons.pro" />
         <h1 class="text-sm sm:text-md font-semibold">
-          {{ customerId.customers?.clientFirstName }} 
-          {{ customerId.customers?.clientFatherName }} 
+          {{ customerId.customers?.clientFirstName }}
+          {{ customerId.customers?.clientFatherName }}
           {{ customerId.customers?.clientGrandFatherName }}
         </h1>
       </div>
@@ -24,20 +25,20 @@
               <div class="text-xs sm:text-sm font-normal text-[#2B3674]">First Name</div>
               <div class="text-xs sm:text-sm">{{ customerId.customers?.clientFirstName }}</div>
             </div>
-            
+
             <div class="flex justify-between items-center">
               <div class="text-xs sm:text-sm font-normal text-[#2B3674]">Last Name</div>
               <div class="text-xs sm:text-sm">{{ customerId.customers?.clientFatherName }}</div>
             </div>
-            
+
             <div class="flex justify-between items-center">
               <div class="text-xs sm:text-sm font-normal text-[#2B3674]">Email</div>
               <div class="text-xs sm:text-sm break-all">{{ customerId.customers?.clientEmail }}</div>
             </div>
-            
+
             <div class="flex justify-between items-center">
               <div class="text-xs sm:text-sm font-normal text-[#2B3674]">Phone Number</div>
-              <div class="text-xs sm:text-sm">{{ customerId.customers?.clientPhoneNumber}}</div>
+              <div class="text-xs sm:text-sm">{{ customerId.customers?.clientPhoneNumber }}</div>
             </div>
           </div>
         </section>
@@ -48,24 +49,24 @@
           <div class="flex flex-col gap-2 pt-2">
             <div class="flex justify-between items-center">
               <div class="text-xs sm:text-sm font-normal text-[#2B3674]">Vehicle Make</div>
-              <div class="text-xs sm:text-sm">{{ customerId.customers?.carName}}</div>
+              <div class="text-xs sm:text-sm">{{ customerId.customers?.carName }}</div>
             </div>
-            
+
             <div class="flex justify-between items-center">
               <div class="text-xs sm:text-sm font-normal text-[#2B3674]">Vehicle Model</div>
               <div class="text-xs sm:text-sm">{{ customerId.customers?.carModel }}</div>
             </div>
-            
+
             <div class="flex justify-between items-center">
               <div class="text-xs sm:text-sm font-normal text-[#2B3674]">Vehicle Year</div>
               <div class="text-xs sm:text-sm">{{ customerId.customers?.makeYear }}</div>
             </div>
-            
+
             <div class="flex justify-between items-center">
               <div class="text-xs sm:text-sm font-normal text-[#2B3674]">Plate Code</div>
               <div class="text-xs sm:text-sm">{{ customerId.customers?.plateCode }}</div>
             </div>
-            
+
             <div class="flex justify-between items-center">
               <div class="text-xs sm:text-sm font-normal text-[#2B3674]">Insurance</div>
               <div class="text-xs sm:text-sm">{{ customerId.customers?.insurance }}</div>
@@ -79,14 +80,16 @@
           <div class="flex flex-col gap-2 pt-2">
             <div class="flex justify-between items-center">
               <div class="text-xs sm:text-sm font-normal text-[#2B3674]">Total Premium</div>
-              <div class="text-xs sm:text-sm font-bold text-[#494F51]">ETB {{ customerId.customers?.quotationAmount}} /Year</div>
+              <div class="text-xs sm:text-sm font-bold text-[#494F51]">ETB {{ customerId.customers?.quotationAmount }}
+                /Year</div>
             </div>
-            
+
             <div class="flex justify-between items-center">
               <div class="text-xs sm:text-sm font-normal text-[#2B3674]">Monthly Repayment </div>
-              <div class="text-xs sm:text-sm font-bold text-[#494F51]">ETB {{ customerId.customers?.monthlyPayment }} /Month</div>
+              <div class="text-xs sm:text-sm font-bold text-[#494F51]">ETB {{ customerId.customers?.monthlyPayment }}
+                /Month</div>
             </div>
-         
+
           </div>
         </section>
       </div>
@@ -95,85 +98,82 @@
       <div class="grid grid-cols-1 gap-4">
         <!-- Quotation Details Section -->
         <div class="bg-white shadow-md rounded-lg p-6">
-    <!-- Header -->
-    <div class="flex justify-between items-center mb-4 border-b py-2">
-      <h2 class="text-lg font-semibold">Deposit Status</h2>
-      <span class="px-3 py-1 bg-purple-100 text-purple-700 text-sm font-medium rounded-lg border border-purple-300">
-        Paid
-      </span>
-    </div>
+          <!-- Header -->
+          <div class="flex justify-between items-center mb-4 border-b py-2">
+            <h2 class="text-lg font-semibold">Deposit Status</h2>
+            <span
+              class="px-3 py-1 bg-purple-100 text-purple-700 text-sm font-medium rounded-lg border border-purple-300">
+              Paid
+            </span>
+          </div>
 
-    <!-- Deposit Info -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 text-gray-700 text-sm border-b pb-6">
-      <div class="flex flex-col gap-2 pl-2">
-        <span class="font-semibold">Amount</span>
-        <span class="text-lg font-bold">ETB {{ depositDetails?.amount?.toLocaleString() }}</span>
-      </div>
+          <!-- Deposit Info -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 text-gray-700 text-sm border-b pb-6">
+            <div class="flex flex-col gap-2 pl-2">
+              <span class="font-semibold">Amount</span>
+              <span class="text-lg font-bold">ETB {{ depositDetails?.amount?.toLocaleString() }}</span>
+            </div>
 
-      <div class="flex flex-col gap-2">
-        <span class="font-semibold">Method</span>
-        <span class="flex items-center gap-2 font-medium text-blue-600">
-          <img src="@/assets/telebirr-icon.svg" alt="Payment" class="w-5 h-5" />
-          {{ depositDetails?.paymentMethod || 'TeleBirr' }}
-        </span>
-      </div>
+            <div class="flex flex-col gap-2">
+              <span class="font-semibold">Method</span>
+              <span class="flex items-center gap-2 font-medium text-blue-600">
+                <img src="@/assets/telebirr-icon.svg" alt="Payment" class="w-5 h-5" />
+                {{ depositDetails?.paymentMethod || 'TeleBirr' }}
+              </span>
+            </div>
 
-      <div class="flex flex-col gap-2">
-        <span class="font-semibold">Deposited On</span>
-        <span class="font-bold">
-          {{ new Date(depositDetails?.depositDate).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-          }) }}
-        </span>
-      </div>
+            <div class="flex flex-col gap-2">
+              <span class="font-semibold">Deposited On</span>
+              <span class="font-bold">
+                {{ new Date(depositDetails?.depositDate).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                }) }}
+              </span>
+            </div>
 
-      <div class="flex flex-col gap-2 pl-2">
-        <span class="font-semibold">Receipt Number</span>
-        <div class="flex items-center justify-between gap-4">
-          <span class="font-bold">{{ depositDetails?.receiptNumber }}</span>
+            <div class="flex flex-col gap-2 pl-2">
+              <span class="font-semibold">Receipt Number</span>
+              <div class="flex items-center justify-between gap-4">
+                <span class="font-bold">{{ depositDetails?.receiptNumber }}</span>
+              </div>
+            </div>
+
+            <div class="flex flex-col justify-center">
+              <a href="#" @click.prevent="viewImage('Deposit Receipt', receiptImage)"
+                class="text-blue-600 font-medium hover:underline flex items-center gap-1">
+                <img src="@/assets/receipt-icon.svg" alt="Receipt" class="w-5 h-5" />
+                View Deposit Receipt
+              </a>
+            </div>
+          </div>
+
+          <!-- Notes Input -->
+          <div class="mt-4">
+            <textarea placeholder="Write if there is any note or remarkable for authorization..."
+              class="w-full border border-gray-300 rounded-lg p-3 focus:ring  h-44"></textarea>
+          </div>
+
+          <!-- Disbursement Button -->
+          <div class="mt-4">
+            <button @click="$router.push(`/dispersementDetails/${customerId.customers?.quotationUuid}`)"
+              class="w-full bg-[#3C3C9E] text-white py-3 rounded-lg font-semibold hover:bg-[#3C3C9E]">
+              Make Payment for Insurance
+            </button>
+          </div>
         </div>
-      </div>
-
-      <div class="flex flex-col justify-center">
-        <a 
-          href="#" 
-          @click.prevent="viewImage('Deposit Receipt', receiptImage)"
-          class="text-blue-600 font-medium hover:underline flex items-center gap-1"
-        >
-          <img src="@/assets/receipt-icon.svg" alt="Receipt" class="w-5 h-5" />
-          View Deposit Receipt
-        </a>
-      </div>
-    </div>
-
-    <!-- Notes Input -->
-    <div class="mt-4">
-      <textarea
-        placeholder="Write if there is any note or remarkable for authorization..."
-        class="w-full border border-gray-300 rounded-lg p-3 focus:ring  h-44"
-      ></textarea>
-    </div>
-
-    <!-- Disbursement Button -->
-    <div class="mt-4">
-      <button @click="$router.push(`/dispersementDetails/${customerId.customers?.quotationUuid}`)" class="w-full bg-[#3C3C9E] text-white py-3 rounded-lg font-semibold hover:bg-[#3C3C9E]">
-        Make Payment for Insurance
-      </button>
-    </div>
-  </div>
         <!-- Libre Section -->
-      
+
       </div>
     </div>
   </div>
-</template>  
-  
+</template>
+
 <script setup>
-import { usePaginations } from '@/composables/usePaginations';
+import { usePaginations } from '@/composables/usePaginationTemp';
 import { removeUndefined, toasted } from '@/utils/utils';
 import { openModal } from "@customizer/modal-x";
 import { getDepositDetails, getCustomersbyId } from '../api/depositsApi';
@@ -223,7 +223,7 @@ const fetchDepositDetails = async () => {
             depositDate: res.data.depositDate,
             deposited: res.data.deposited
           };
-          
+
           // Handle the attachment (base64 image)
           if (res.data.attachment) {
             receiptImage.value = `data:image/jpeg;base64,${res.data.attachment}`;
@@ -375,7 +375,7 @@ const saveEdit = async () => {
     quotation.value.amount = newAmount;
     quotation.value.deposit = calculateDeposit(newAmount);
     quotation.value.premium = calculateMonthlyPremium(newAmount);
-    
+
     isEditing1.value = false;
     editedAmount1.value = '';
   }
@@ -385,14 +385,14 @@ const sendFinalQuotation = async () => {
   try {
     isSubmitting.value = true;
     const quotationUuid = customerId.customers?.quotationUuid;
-    
+
     if (!quotationUuid) {
       toasted(false, '', 'Quotation ID not found');
       return;
     }
 
     const response = await setQuotation(quotationUuid, quotation.value.amount, 'quotation');
-    
+
     if (response.success) {
       await setQuotation(quotationUuid, quotation.value.deposit, 'deposit');
       await setQuotation(quotationUuid, quotation.value.premium, 'premium');
@@ -411,5 +411,4 @@ const sendFinalQuotation = async () => {
 console.log(customerId.customers?.clientFirstName);
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>

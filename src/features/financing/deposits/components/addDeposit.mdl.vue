@@ -9,7 +9,6 @@ import NewFormParent from "@/components/NewFormParent.vue";
 import Form from "@/components/new_form_builder/Form.vue";
 import { Input } from "@/components/new_form_elements";
 import { useApiRequest } from "@/composables/useApiRequest";
-import { usePaginationcopy } from "@/composables/usePaginationcopy";
 import { closeModal } from "@customizer/modal-x";
 import { searchClientByPhone, submitDeposit, updateQuotationStatus } from "../api/depositsApi";
 import { useQuotation } from '../store/deposit';
@@ -68,7 +67,7 @@ const selectClient = (client) => {
     toasted(false, "", "This client has already made a deposit")
     return
   }
-  
+
   selectedClient.value = {
     userUuid: client.userUuid,
     quotationUuid: client.quotationUuid,
@@ -86,7 +85,7 @@ const selectClient = (client) => {
 
 const nextStep = (event) => {
   event?.preventDefault() // Prevent form submission
-  
+
   if (!selectedClient.value) {
     toasted(false, "", "Please select a client first")
     return
@@ -174,16 +173,12 @@ const submitForm = async () => {
           <div v-if="step === 1">
             <!-- Search Bar -->
             <div class="w-full mb-4">
-              <Input
-                v-model="searchPhone"
-                placeholder="Search by phone number"
-                class="w-full"
-              >
+              <Input v-model="searchPhone" placeholder="Search by phone number" class="w-full">
               <template #right>
-                  <Button @click="searchClients" type="primary" size="sm">
-                    Search
-                  </Button>
-                </template>
+                <Button @click="searchClients" type="primary" size="sm">
+                  Search
+                </Button>
+              </template>
               </Input>
             </div>
 
@@ -205,48 +200,36 @@ const submitForm = async () => {
                     <td colspan="6" class="px-6 py-4">Loading...</td>
                   </tr>
                   <tr v-else-if="clients.length === 0" class="text-center">
-                    <td colspan="6" class="px-6 py-4">
-                      {{ searchPhone ? 'No pending deposits found for this phone number' : 'Please enter a phone number to search' }}
+                    <td colspan="6" class="px-6 py-4 ">
+                      <!-- {{ searchPhone ? 'No pending deposits found for this phone number' : "Please enter a phone numberto search"}} -->
                     </td>
                   </tr>
-                  <tr v-for="client in clients" 
-                      :key="client.quotationUuid" 
-                      :class="{'bg-[#3C3C9E] text-white': selectedClient?.quotationUuid === client.quotationUuid}"
-                      class="hover:bg-[#3C3C9E] hover:text-white">
+                  <tr v-for="client in clients" :key="client.quotationUuid"
+                    :class="{ 'bg-[#3C3C9E] text-white': selectedClient?.quotationUuid === client.quotationUuid }"
+                    class="hover:bg-[#3C3C9E] hover:text-white">
                     <td class="px-6 py-4">{{ client.clientFirstName }} {{ client.clientFatherName }}</td>
                     <td class="px-6 py-4">{{ client.clientPhoneNumber }}</td>
                     <!-- <td class="px-6 py-4">{{ client.clientEmail }}</td> -->
                     <td class="px-6 py-4">{{ client.carName }} {{ client.carModel }}</td>
                     <!-- <td class="px-6 py-4">{{ client.insurance }}</td> -->
                     <td class="px-6 py-4">
-                      <Button 
-                        @click="selectClient(client)" 
-                        type="secondary" 
-                        size="sm"
-                        :disabled="client.deposited"
-                      >
+                      <Button @click="selectClient(client)" type="secondary" size="sm" :disabled="client.deposited">
                         {{ client.deposited ? 'Already Deposited' : 'Select' }}
                       </Button>
                     </td>
                   </tr>
                 </tbody>
               </table>
-              
+
               <!-- Pagination Controls -->
               <div class="flex justify-between items-center px-6 py-3 bg-gray-50">
-                <button 
-                  @click="pagination.previous"
-                  :disabled="pagination.page === 1"
-                  class="px-3 py-1 bg-white border rounded-md disabled:opacity-50"
-                >
+                <button @click="pagination.previous" :disabled="pagination.page === 1"
+                  class="px-3 py-1 bg-white border rounded-md disabled:opacity-50">
                   Previous
                 </button>
-                <span>Page {{ pagination.page }} of {{ pagination.totalPages|| 1}}</span>
-                <button 
-                  @click="pagination.next"
-                  :disabled="!pagination.hasMore"
-                  class="px-3 py-1 bg-white border rounded-md disabled:opacity-50"
-                >
+                <span>Page {{ pagination.page }} of {{ pagination.totalPages || 1 }}</span>
+                <button @click="pagination.next" :disabled="!pagination.hasMore"
+                  class="px-3 py-1 bg-white border rounded-md disabled:opacity-50">
                   Next
                 </button>
               </div>
@@ -301,11 +284,12 @@ const submitForm = async () => {
                   <div class="flex justify-between">
                     <p class="text-sm text-[#2B3674]">Monthly Payment</p>
                     <p class="font-bold text-[#494F51]">{{ selectedClient.monthlyPayment }}</p>
-                  </div>  <div class="flex justify-between">
+                  </div>
+                  <div class="flex justify-between">
                     <p class="text-sm text-[#2B3674]">Account Number</p>
                     <p class="font-bold text-[#494F51]">{{ selectedClient.accountNumber }}</p>
                   </div>
-                 
+
                 </div>
               </div>
             </div>
@@ -314,22 +298,13 @@ const submitForm = async () => {
             <div class="mt-6">
               <h3 class="text-lg font-semibold mb-4">Status Update</h3>
               <div class="grid grid-cols-1 gap-4">
-                <input 
-                  type="hidden" 
-                  v-model="statusDetails.quotationStatus" 
-                  value="DEPOSITED"
-                />
+                <input type="hidden" v-model="statusDetails.quotationStatus" value="DEPOSITED" />
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">
                     Remark <span class="text-red-500">*</span>
                   </label>
-                  <textarea
-                    v-model="statusDetails.remark"
-                    rows="4"
-                    class="w-full p-2 border rounded-md"
-                    placeholder="Enter remark"
-                    required
-                  ></textarea>
+                  <textarea v-model="statusDetails.remark" rows="4" class="w-full p-2 border rounded-md"
+                    placeholder="Enter remark" required></textarea>
                 </div>
               </div>
             </div>
@@ -349,33 +324,16 @@ const submitForm = async () => {
 
       <template #bottom>
         <div class="flex justify-between m-4 w-full gap-4 pr-4">
-          <Button 
-            v-if="step === 2"
-            @click.prevent="prevStep" 
-            type="secondary" 
-            size="lg"
-          >
+          <Button v-if="step === 2" @click.prevent="prevStep" type="secondary" size="lg">
             Back
           </Button>
-          
-          <Button 
-            v-if="step === 1" 
-            @click.prevent="nextStep" 
-            type="primary" 
-            size="lg"
-            :disabled="!selectedClient"
-            class="w-full"
-          >
+
+          <Button v-if="step === 1" @click.prevent="nextStep" type="primary" size="lg" :disabled="!selectedClient"
+            class="w-full">
             Continue
           </Button>
-          
-          <Button 
-            v-if="step === 2" 
-            @click.prevent="submitForm" 
-            type="primary" 
-            size="lg"
-            class="w-full"
-          >
+
+          <Button v-if="step === 2" @click.prevent="submitForm" type="primary" size="lg" class="w-full">
             Submit
           </Button>
         </div>

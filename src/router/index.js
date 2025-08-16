@@ -15,8 +15,6 @@ import Login from "@/pages/login/Login.vue";
 import subcityRoutes from "./subcity.routes";
 import Dashboard from '@/features/dashboard/pages/Dashboard.vue'
 import { useAuth } from '@/stores/auth'
-import DepositDetails from '@/features/financing/deposits/pages/DepositDetails.vue'
-import DispersementDetails from '@/features/financing/dispersement/pages/dispersementDetails.vue'
 
 const routes = [
   {

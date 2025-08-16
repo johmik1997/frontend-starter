@@ -1,7 +1,6 @@
 <script setup>
 import Table from '@/components/Table.vue';
 import PrivilegesDataProvider from '../components/PrivilegesDataProvider.vue';
-import { usePagination } from '@/composables/usePagination';
 import { usePrivilege } from '../store/privilegeStore';
 import { useApiRequest } from '@/composables/useApiRequest';
 import { toasted } from '@/utils/utils';
@@ -10,10 +9,11 @@ import { openModal } from '@customizer/modal-x';
 import Dropdown from '@/components/Dropdown.vue';
 import BaseIcon from '@/components/base/BaseIcon.vue';
 import { mdiDeleteAlert, mdiDotsVertical, mdiPencil } from '@mdi/js';
+import { usePaginations } from '@/composables/usePaginationTemp';
 
 
 const privilegeStore = usePrivilege();
-const pagination = usePagination({
+const pagination = usePaginations({
   state: privilegeStore,
   cb: getAllPrivilege,
 })
@@ -44,7 +44,7 @@ function remove(id) {
   <div class="p-7">
 
     <div class="flex space-x-8 min-[320px]:text-center max-[600px]:flex-col justify-end mr-5">
-    
+
 
       <div class="flex items-center space-x-4">
         <slot name="select">

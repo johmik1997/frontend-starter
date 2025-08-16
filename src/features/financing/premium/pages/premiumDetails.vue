@@ -1,27 +1,24 @@
 <template>
   <div class="mx-auto p-3 sm:p-6 bg-white">
     <!-- Header -->
-    <header class="flex flex-col sm:flex-row items-start sm:items-center mb-4 pb-5 ml-2 sm:ml-5 border-b justify-between gap-2">
+    <header
+      class="flex flex-col sm:flex-row items-start sm:items-center mb-4 pb-5 ml-2 sm:ml-5 border-b justify-between gap-2">
       <div class="flex items-center gap-2">
         <i class="pl-2" v-html="icons.pro" />
         <h1 class="text-sm sm:text-md font-semibold">
-          {{ customerId.customers?.clientFirstName }} 
-          {{ customerId.customers?.clientFatherName }} 
+          {{ customerId.customers?.clientFirstName }}
+          {{ customerId.customers?.clientFatherName }}
           {{ customerId.customers?.clientGrandFatherName }}
         </h1>
       </div>
-      <p class="text-sm">{{ customerId.customers?.carName }} {{ customerId.customers?.carModel }} - {{ customerId.customers?.carType }}</p>
+      <p class="text-sm">{{ customerId.customers?.carName }} {{ customerId.customers?.carModel }} - {{
+        customerId.customers?.carType }}</p>
     </header>
 
     <!-- Tabs -->
     <div class="border-b flex space-x-6 px-4">
-      <button
-        v-for="tab in tabs"
-        :key="tab"
-        @click="activeTab = tab"
-        class="py-2 px-4 text-sm font-medium"
-        :class="activeTab === tab ? 'border-b-2 border-primary text-primary' : 'text-gray-500'"
-      >
+      <button v-for="tab in tabs" :key="tab" @click="activeTab = tab" class="py-2 px-4 text-sm font-medium"
+        :class="activeTab === tab ? 'border-b-2 border-primary text-primary' : 'text-gray-500'">
         {{ tab }}
       </button>
     </div>
@@ -39,11 +36,13 @@
             </div>
             <div class="flex justify-between items-center">
               <div class="text-xs sm:text-sm font-normal text-[#2B3674]">Father Name</div>
-              <div class="text-xs sm:text-sm font-bold text-[#494F51]">{{ customerId.customers?.clientFatherName }}</div>
+              <div class="text-xs sm:text-sm font-bold text-[#494F51]">{{ customerId.customers?.clientFatherName }}
+              </div>
             </div>
             <div class="flex justify-between items-center">
               <div class="text-xs sm:text-sm font-normal text-[#2B3674]">Grandfather Name</div>
-              <div class="text-xs sm:text-sm font-bold text-[#494F51]">{{ customerId.customers?.clientGrandFatherName }}</div>
+              <div class="text-xs sm:text-sm font-bold text-[#494F51]">{{ customerId.customers?.clientGrandFatherName }}
+              </div>
             </div>
             <div class="flex justify-between items-center">
               <div class="text-xs sm:text-sm font-normal text-[#2B3674]">Phone Number</div>
@@ -81,11 +80,13 @@
           <div class="flex flex-col gap-2 pt-2">
             <div class="flex justify-between items-center">
               <div class="text-xs sm:text-sm font-normal text-[#2B3674]">Total Premium</div>
-              <div class="text-xs sm:text-sm font-bold text-[#494F51]">ETB {{ quotation.amount?.toLocaleString() }}</div>
+              <div class="text-xs sm:text-sm font-bold text-[#494F51]">ETB {{ quotation.amount?.toLocaleString() }}
+              </div>
             </div>
             <div class="flex justify-between items-center">
               <div class="text-xs sm:text-sm font-normal text-[#2B3674]">Monthly Repayment</div>
-              <div class="text-xs sm:text-sm font-bold text-[#494F51]">ETB {{ quotation.premium?.toLocaleString() }}</div>
+              <div class="text-xs sm:text-sm font-bold text-[#494F51]">ETB {{ quotation.premium?.toLocaleString() }}
+              </div>
             </div>
           </div>
         </section>
@@ -98,7 +99,8 @@
         </div>
 
         <!-- Show payment details only when nextUnpaidPayment exists and is PENDING -->
-        <div v-if="nextUnpaidPayment && nextUnpaidPayment.monthlyPaymentStatus === 'PENDING' && customerId.customers?.quotationStatus === 'DISPERSED'">
+        <div
+          v-if="nextUnpaidPayment && nextUnpaidPayment.monthlyPaymentStatus === 'PENDING' && customerId.customers?.quotationStatus === 'DISPERSED'">
           <!-- Current Payment Header -->
           <div class="flex justify-between items-center mb-6">
             <div class="text-lg font-medium">{{ nextUnpaidPayment.number }}th Payment</div>
@@ -108,7 +110,7 @@
           </div>
 
           <!-- Payment Details Grid -->
-          <div  v-if="customerId.customers?.quotationStatus === 'DISPERSED'" class="grid grid-cols-4 gap-8 mb-6">
+          <div v-if="customerId.customers?.quotationStatus === 'DISPERSED'" class="grid grid-cols-4 gap-8 mb-6">
             <div>
               <div class="text-gray-600 text-sm mb-1">Monthly Payment</div>
               <div class="text-lg font-medium">ETB {{ nextUnpaidPayment.monthlyPayment?.toLocaleString() }}</div>
@@ -131,12 +133,9 @@
           </div>
 
           <!-- Make Payment Button -->
-          <button 
-          v-if="customerId.customers?.quotationStatus === 'DISPERSED'"
-            @click="handlePayment"
+          <button v-if="customerId.customers?.quotationStatus === 'DISPERSED'" @click="handlePayment"
             :disabled="pendingPayments[nextUnpaidPayment.monthlyPaymentUuid]"
-            class="w-full bg-[#3C3C9E] text-white py-3 rounded text-base font-medium hover:bg-[#4343c6] transition-colors mb-8"
-          >
+            class="w-full bg-[#3C3C9E] text-white py-3 rounded text-base font-medium hover:bg-[#4343c6] transition-colors mb-8">
             {{ pendingPayments[nextUnpaidPayment.monthlyPaymentUuid] ? 'Processing...' : 'Make Payment' }}
           </button>
         </div>
@@ -147,11 +146,7 @@
             <h3 class="text-gray-700 font-medium">Payment History</h3>
             <div class="flex gap-4 items-center">
               <div class="relative">
-                <input 
-                  type="text" 
-                  placeholder="Search Payment ID..." 
-                  class="pl-10 pr-4 py-2 border rounded text-sm"
-                >
+                <input type="text" placeholder="Search Payment ID..." class="pl-10 pr-4 py-2 border rounded text-sm">
                 <i class="absolute left-3 top-1/2 transform -translate-y-1/2" v-html="icons.search"></i>
               </div>
               <button class="text-[#4318FF] border border-[#4318FF] px-4 py-2 rounded text-sm">
@@ -174,8 +169,8 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="payment in paymentHistory" :key="payment.id" 
-                  :class="{'bg-red-50': payment.monthlyPaymentStatus === 'MISSED', 'bg-purple-50': payment.type === 'Deposit'}">
+              <tr v-for="payment in paymentHistory" :key="payment.id"
+                :class="{ 'bg-red-50': payment.monthlyPaymentStatus === 'MISSED', 'bg-purple-50': payment.type === 'Deposit' }">
                 <td class="py-3">{{ payment.index }}</td>
                 <td>{{ payment.paymentId }}</td>
                 <td>
@@ -192,18 +187,12 @@
                   </span>
                 </td>
                 <td>
-                  <button 
-                    v-if="payment.monthlyPaymentStatus === 'PAID'"
-                    @click="downloadReceipt(payment.paymentId)" 
-                    class="text-[#4318FF] border border-[#4318FF] px-4 py-1 rounded"
-                  >
+                  <button v-if="payment.monthlyPaymentStatus === 'PAID'" @click="downloadReceipt(payment.paymentId)"
+                    class="text-[#4318FF] border border-[#4318FF] px-4 py-1 rounded">
                     Receipt
                   </button>
-                  <button 
-                    v-else
-                    @click="sendReminder(payment.paymentId)" 
-                    class="bg-[#4318FF] text-white px-4 py-1 rounded"
-                  >
+                  <button v-else @click="sendReminder(payment.paymentId)"
+                    class="bg-[#4318FF] text-white px-4 py-1 rounded">
                     Notify
                   </button>
                 </td>
@@ -212,7 +201,7 @@
           </table>
         </div>
       </div>
-     <!-- Schedules Tab -->
+      <!-- Schedules Tab -->
       <div v-if="activeTab === 'Schedules'" class="bg-white p-6 rounded">
         <div v-if="loading" class="flex justify-center items-center h-40">
           <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -223,19 +212,13 @@
           <div class="mb-8">
             <h3 class="text-gray-700 mb-4">Calendar</h3>
             <div class="grid gap-2">
-              <div v-for="monthData in calendarData" 
-                   :key="monthData.month" 
-                   class="flex items-center">
+              <div v-for="monthData in calendarData" :key="monthData.month" class="flex items-center">
                 <div class="w-12 text-sm text-gray-600 font-medium">{{ monthData.month }}</div>
                 <div class="flex gap-1">
-                  <div 
-                    v-for="(dayObj, index) in monthData.days" 
-                    :key="index"
-                    class="w-8 h-8 flex items-center justify-center text-sm"
-                    :class="getPaymentColorClasses(dayObj, {
+                  <div v-for="(dayObj, index) in monthData.days" :key="index"
+                    class="w-8 h-8 flex items-center justify-center text-sm" :class="getPaymentColorClasses(dayObj, {
                       paymentDate: monthData.paymentDate
-                    })"
-                  >
+                    })">
                     {{ dayObj.day }}
                   </div>
                 </div>
@@ -248,8 +231,7 @@
             <h3 class="text-gray-700 mb-4">Past payments</h3>
             <div class="space-y-2">
               <div v-for="payment in pastPayments" :key="payment.monthlyPaymentUuid"
-                   class="flex items-center justify-between p-3 rounded bg-purple-50"
-              >
+                class="flex items-center justify-between p-3 rounded bg-purple-50">
                 <div class="flex items-center gap-4">
                   <div class="w-6 h-6 rounded-full bg-[#3C3C9E] flex items-center justify-center">
                     <i class="text-white">✓</i>
@@ -265,11 +247,10 @@
                 </button>
               </div>
               <div v-for="payment in missedPayments" :key="payment.monthlyPaymentUuid"
-                   class="flex items-center justify-between p-3 rounded bg-[#FFD9D9]"
-              >
+                class="flex items-center justify-between p-3 rounded bg-[#FFD9D9]">
                 <div class="flex items-center gap-4">
                   <div class="w-6 h-6 rounded-full bg-[#e8c5c5] flex items-center justify-center">
-                    
+
                   </div>
                   <span class="text-sm">
                     {{ payment.month }}{{ getOrdinalSuffix(payment.month) }}
@@ -289,12 +270,11 @@
             <h3 class="text-gray-700 mb-4">Next payments</h3>
             <div class="space-y-2">
               <div v-for="payment in nextPayments" :key="payment.monthlyPaymentUuid"
-                   class="grid grid-cols-3 p-3 bg-gray-50 rounded items-center"
-              >
+                class="grid grid-cols-3 p-3 bg-gray-50 rounded items-center">
                 <span class="text-sm">{{ payment.month }}{{ getOrdinalSuffix(payment.month) }}</span>
                 <div class="text-sm">ETB {{ formatCurrency(payment.payment) }}</div>
                 <div class="text-sm">{{ payment.paymentDate }}</div>
-               
+
               </div>
             </div>
           </div>
@@ -309,11 +289,12 @@ import { ref, reactive, onMounted, watch, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { useCustomers } from '../../dispersement/store/dispersementStore';
 import { getCustomersbyId } from '../../dispersement/api/dispersementApi';
-import { usePaginations } from '@/composables/usepaginations';
 import icons from '@/utils/icons';
 import { getMonthlyPayments, makePayment, getPaymentReceipt, sendPaymentReminder } from '../api/premiumApi';
 import { toasted } from '@/utils/utils';
 import { useApiRequest } from '@/composables/useApiRequest';
+import { usePaginations } from '@/composables/usePaginationTemp';
+
 
 const route = useRoute();
 const customerId = useCustomers();
@@ -428,7 +409,7 @@ onMounted(() => {
 
 const handlePayment = () => {
   if (!nextUnpaidPayment.value) return;
-  
+
   const monthlyPaymentUuid = nextUnpaidPayment.value.monthlyPaymentUuid;
   pendingPayments[monthlyPaymentUuid] = true;
 
@@ -439,10 +420,10 @@ const handlePayment = () => {
       if (res.data) {
         // Store the payment URL
         const paymentUrl = res.data;
-        
+
         // Refresh the monthly payments data
         await fetchMonthlyPayments();
-        
+
         // Redirect to payment URL
         window.location.href = paymentUrl;
       } else {
@@ -492,7 +473,7 @@ const fetchMonthlyPayments = async () => {
   try {
     const response = await getMonthlyPayments(route.params.premiumUuid);
     monthlyPayments.value = response.data;
-    
+
     // Sort monthly payments by month number
     monthlyPayments.value.sort((a, b) => a.month - b.month);
   } catch (error) {
@@ -516,7 +497,7 @@ const getDayFromDate = (dateString) => {
 // Computed property for calendar data
 const months = computed(() => {
   if (!monthlyPayments.value.length) return [];
-  
+
   return monthlyPayments.value.map(payment => {
     const paymentDay = getDayFromDate(payment.paymentDate);
     return {
@@ -570,9 +551,9 @@ const nextPayments = computed(() => {
 
 // Add this to format currency
 const formatCurrency = (amount) => {
-  return amount?.toLocaleString(undefined, { 
+  return amount?.toLocaleString(undefined, {
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2 
+    maximumFractionDigits: 2
   });
 };
 
@@ -592,7 +573,7 @@ const nextUnpaidPayment = computed(() => {
   const unpaidPayment = monthlyPayments.value
     ?.filter(payment => payment.monthlyPaymentStatus === 'PENDING')
     .sort((a, b) => a.month - b.month)[0];
-    
+
   if (!unpaidPayment) return null;
 
   return {
@@ -661,23 +642,23 @@ const getDaysInMonth = (date) => {
 
 const getPaymentColorClasses = (dayObj, payment) => {
   if (!payment?.paymentDate) return 'text-gray-400';
-  
+
   const paymentDate = new Date(payment.paymentDate);
   const paymentDay = paymentDate.getDate();
   const paymentMonth = getMonthAbbr(paymentDate);
-  
+
   // Only apply special colors if we're in the payment month
   if (dayObj.month !== paymentMonth) {
     return 'text-gray-400';
   }
-  
+
   const day = dayObj.day;
-  
+
   // Grace period: 3 days before payment date
   const gracePeriodStart = paymentDay - 3;
   // Late period: 2 days after payment date
   const latePeriodEnd = paymentDay + 2;
-  
+
   if (day === paymentDay) {
     return 'bg-[#3C3C9E] text-white rounded-full'; // Payment day (blue)
   } else if (day >= gracePeriodStart && day < paymentDay) {
@@ -685,24 +666,24 @@ const getPaymentColorClasses = (dayObj, payment) => {
   } else if (day > paymentDay && day <= latePeriodEnd) {
     return 'bg-orange-100 rounded'; // Late period (orange)
   }
-  
+
   return 'text-gray-400'; // Other days
 };
 
 // Modify your computed property to include payment dates
 const calendarData = computed(() => {
   if (!monthlyPayments.value) return [];
-  
+
   return monthlyPayments.value.map(payment => {
     const paymentDate = new Date(payment.paymentDate);
     const paymentDay = paymentDate.getDate();
     const daysInMonth = getDaysInMonth(paymentDate);
     const nextMonthDate = new Date(paymentDate.getFullYear(), paymentDate.getMonth() + 1, 1);
-    
+
     // Calculate start and end days to show around 20 days total
     let startDay = paymentDay - 10;
     let endDay = paymentDay + 9;
-    
+
     // Generate array of days with month wrapping
     const days = [];
     for (let i = startDay; i <= endDay; i++) {
