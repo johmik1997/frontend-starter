@@ -9,9 +9,9 @@ import { openModal } from "@customizer/modal-x"
 import { useQuotation } from '../store/Quotation'
 import { getCustomers } from '../api/customersApi'
 import { removeUndefined } from '@/utils/utils'
-import { usePaginationcopy } from '@/composables/usePaginationcopy'
 import { useRouter } from 'vue-router';
 import TableRowSkeleton from '@/components/TableRowSkeleton.vue';
+import { usePaginationcopy } from '@/composables/usePaginationcopy'
 
 const router = useRouter();
 const quotationStore = useQuotation();
@@ -64,7 +64,7 @@ function viewDetails(quotationUuid) {
     console.error('No quotationUuid provided');
     return;
   }
-  
+
   // Navigate to the details page
   router.push(`/quatation/details/${quotationUuid}`);
 }
@@ -76,24 +76,18 @@ function viewDetails(quotationUuid) {
     <template #more>
       <div class="flex gap-2 justify-end items-center ">
         <Button @click="openAddClientModal" type="primary" class="flex items-center gap-2">
-          <i v-html="icons.add"></i>  New Quotations
+          <i v-html="icons.add"></i> New Quotations
         </Button>
       </div>
     </template>
 
     <!-- Quotations table -->
-    <Table
-      :pending="pagination.pending.value"
-      :headers="{
-        head: ['Customer Name', 'Inspection Date', 'Vehicle Detail', 'Insurance', 'Premium', 'Status', 'actions'],
-        row: ['customerName', 'quotationDate', 'VehicleDetail', 'insurance', 'quotationAmount', 'quotationStatus'],
-      }"
-      :rowCom="Status_row"
-      :rows="quotationStore.quotations"
-      :Fallback="TableRowSkeleton"
-    >
+    <Table :pending="pagination.pending.value" :headers="{
+      head: ['Customer Name', 'Inspection Date', 'Vehicle Detail', 'Insurance', 'Premium', 'Status', 'actions'],
+      row: ['customerName', 'quotationDate', 'VehicleDetail', 'insurance', 'quotationAmount', 'quotationStatus'],
+    }" :rowCom="Status_row" :rows="quotationStore.quotations" :Fallback="TableRowSkeleton">
       <!-- Custom cell renderers -->
-    
+
     </Table>
   </DefaultPage>
 </template>

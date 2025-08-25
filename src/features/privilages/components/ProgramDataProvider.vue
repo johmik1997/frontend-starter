@@ -1,5 +1,5 @@
 <script setup>
-import { usePagination } from '@/composables/usePagination';
+import { usePagination } from '@/composables/usePaginationTemp';
 import { watch } from 'vue';
 import { getAllPrograms } from '../api/ProgramApi';
 import { usePrograms } from '../store/programsStore';
@@ -22,12 +22,8 @@ if (programsStore.programs.length == 0) {
   pagination.send();
 }
 
-watch(pagination.data, console.log, {immediate: true})
+watch(pagination.data, console.log, { immediate: true })
 </script>
 <template>
-  <slot
-    :pending="pagination.pending.value"
-    :error="pagination.error.value"
-    :programs="programsStore.programs"
-  />
+  <slot :pending="pagination.pending.value" :error="pagination.error.value" :programs="programsStore.programs" />
 </template>

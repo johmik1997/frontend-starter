@@ -10,7 +10,7 @@ import { openModal } from "@customizer/modal-x"
 import { useInsurance } from '../store/insuranceStore'
 import { getInsurances } from '../api/insuranceApi'
 import { removeUndefined } from '@/utils/utils'
-import { usePaginations } from '@/composables/usePaginations.js'
+import { usePaginations } from '@/composables/usePaginationTemp.js'
 
 const insurance = useInsurance()
 const searchKey = ref('')
@@ -53,24 +53,16 @@ function openAddInsuranceModal() {
     <template #more>
       <div class="flex gap-2 justify-end items-center">
         <Button @click="openAddInsuranceModal" type="primary" class="flex items-center gap-2">
-         Add New Insurance
+          Add New Insurance
         </Button>
       </div>
     </template>
 
     <!-- Quotations table -->
-    <Table
-      :pending="pagination.pending.value"
-      :headers="{
-        head: ['Logo','Insurance Name', 'Registration Date', 'Status', 'actions'],
-        row: [ 'profile','insuranceName', 'registrationDate', 'quotationStatus'],
-      }"
-      :rowCom="Status_row"
-      :rows="insurance.insurances || []"
-      :Fallback="TableRowSkeleton"
-    >
+    <Table :pending="pagination.pending.value" :headers="{
+      head: ['Logo', 'Insurance Name', 'Registration Date', 'Status', 'actions'],
+      row: ['profile', 'insuranceName', 'registrationDate', 'quotationStatus'],
+    }" :rowCom="Status_row" :rows="insurance.insurances || []" :Fallback="TableRowSkeleton">
     </Table>
   </DefaultPage>
 </template>
-
-

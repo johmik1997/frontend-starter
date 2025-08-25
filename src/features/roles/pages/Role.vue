@@ -6,10 +6,10 @@ import { toasted } from '@/utils/utils';
 import { useApiRequest } from '@/composables/useApiRequest';
 import TableRowSkeleton from '@/components/TableRowSkeleton.vue';
 import { openModal } from '@customizer/modal-x';
-import { usePaginationcopy } from '@/composables/usePaginationcopy';
 import Dropdown from '@/components/Dropdown.vue';
 import BaseIcon from '@/components/base/BaseIcon.vue';
 import { mdiDeleteAlert, mdiDotsVertical, mdiPencil } from '@mdi/js';
+import { usePaginationcopy } from '@/composables/usePaginationcopy';
 
 const rolesStore = useRoles();
 
@@ -45,7 +45,7 @@ function remove(id) {
   <div class="p-7">
 
     <div class="flex space-x-8 min-[320px]:text-center max-[600px]:flex-col justify-end mr-5">
-     
+
       {{ console.log(rolesStore) }}
 
       <div class="flex items-center space-x-4 ">

@@ -1,5 +1,5 @@
 <script setup>
-import { usePagination } from "@/composables/usePagination";
+import { usePagination } from "@/composables/usePaginationTemp";
 import { getAllRoles } from "../api/rolesApi";
 import { useRoles } from "../store/rolesStore";
 import { watch } from "vue";

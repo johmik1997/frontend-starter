@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@customizer/modal-x": "^0.0.64",
+    "@customizer/modal-x": "^0.0.90",
     "@mdi/js": "^7.4.47",
     "@vueuse/components": "^11.1.0",
     "axios": "^1.7.7",

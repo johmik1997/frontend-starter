@@ -1,6 +1,5 @@
 <script setup>
 import Table from '@/components/Table.vue';
-import { usePagination } from '@/composables/usePagination';
 import { useUsers } from '../store/userStore';
 import { useApiRequest } from '@/composables/useApiRequest';
 import { getAllUser, removeUserById } from '../Api/UserApi';
@@ -9,9 +8,10 @@ import { openModal } from '@customizer/modal-x';
 import Dropdown from '@/components/Dropdown.vue';
 import BaseIcon from '@/components/base/BaseIcon.vue';
 import { mdiDeleteAlert, mdiDotsVertical, mdiPencil } from '@mdi/js';
+import { usePaginations } from '@/composables/usePaginationTemp';
 
 const usersStore = useUsers();
-const pagination = usePagination({
+const pagination = usePaginations({
   store: usersStore,
   cb: getAllUser,
 })
@@ -43,7 +43,7 @@ function remove(id) {
   <div class="p-7">
     <div class="flex space-x-8  min-[320px]:text-center max-[600px]:flex-col justify-end mr-5">
       <div class="m-6 ml-1 flex  item-center ">
-        
+
       </div>
 
       <div class="flex items-center space-x-4">
@@ -66,7 +66,7 @@ function remove(id) {
 
     <Table :pending="pagination.pending.value" :headers="{
       head: [
-        
+
         'Fullname',
         'Email',
         'Mobile Phone',
@@ -76,7 +76,7 @@ function remove(id) {
         'Actions',
       ],
       row: [
- 
+
         'fullname',
         'email',
         'mobilePhone',
