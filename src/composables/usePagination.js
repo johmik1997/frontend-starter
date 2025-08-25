@@ -59,10 +59,9 @@ export function usePagination(options = {}) {
     req.send(
       () => paginationOptions.value.cb(getPaginationData(next, current)),
       (res) => {
-        
         if (paginationOptions.value.store && res.success) {
           console.log(res);
-          
+          // Fix: Store only the response array, not the entire res.data
           paginationOptions.value.store.set(res.data?.response || []);
         }
 
@@ -195,3 +194,8 @@ export function usePagination(options = {}) {
     previous,
   };
 }
+
+
+
+
+

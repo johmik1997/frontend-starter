@@ -113,6 +113,28 @@ export default [
     type: "Pages",
     privilage: ['create_user'],
   },
+    {
+    path: '/car_specifications',
+    icon: icons.car,
+    name: 'Car Specifications',
+    meta: {
+      requiresAuth: true,
+      permissions: [],
+    },
+    type: "Pages",
+    privilage: ['create_user'],
+  },
+    {
+    path: '/premium',
+    icon: icons.premium,
+    name: 'Premium',
+    meta: {
+      requiresAuth: true,
+      permissions: [],
+    },
+    type: "Pages",
+    privilage: ['create_user'],
+  },
   {
     path: '/Users',
     name: 'Users',

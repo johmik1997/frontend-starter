@@ -422,14 +422,45 @@ export function addValidator(validators) {
   }
 }
 
+function pass(value, limit, _, message) {
+  // Password validation: at least 6 characters with numbers or letters
+  const minLength = limit || 6;
+  
+  if (!value || value.length < minLength) {
+    return [false, message || `Password must be at least ${minLength} characters long`];
+  }
+  
+  // Must contain at least letters or numbers
+  if (!/[a-zA-Z0-9]/.test(value)) {
+    return [false, message || `Password must contain letters or numbers`];
+  }
+  
+  return [true];
+}
+
 export function getValidators() {
   return {
     checkbox,
     select,
     file,
     textarea,
-    text,
-    password,
+    text: {
+      ...common,
+      email(value, _, __, message) {
+        if (!value) return [false, message || "Email is required"];
+        if (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(value)) {
+          return [true];
+        }
+        return [false, message || "Please enter a valid email address"];
+      },
+      phone,
+      oneof,
+      pass, // Add pass validator to text
+    },
+    password: {
+      required,
+      pass, // Add pass validator to password
+    },
     date,
   };
 }

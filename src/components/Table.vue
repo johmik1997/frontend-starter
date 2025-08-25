@@ -92,103 +92,229 @@ const page = inject("page", 1);
 const totalPages = inject("totalPages", 1);
 </script>
 <template>
-  <div class="h-full Table-header">
-    <DataTable
-      :firstCol="props.firstCol"
-      class="bg-table-clr border border-white/10"
-      :headers="spec.head"
-    >
-      <template v-if="firstCol" #headerFirst>
-        <slot name="headerFirst" />
-      </template>
-      <slot name="row">
-        <template v-if="rowCom">
+  <div class="modern-table-container">
+    <!-- Table Card -->
+    <div class="table-card">
+      <DataTable
+        :firstCol="props.firstCol"
+        class="modern-table"
+        :headers="spec.head"
+      >
+        <template v-if="firstCol" #headerFirst>
+          <slot name="headerFirst" />
+        </template>
+        <slot name="row">
+          <template v-if="rowCom">
+            <component
+              :is="rowCom"
+              v-bind="{
+                cells: cells,
+                headKeys: spec.head,
+                rowData: rows,
+                rowKeys: spec.row,
+              }"
+            />
+          </template>
+
+          <template v-else>
+            <GenericTableRow
+              @row="(row) => emit('row', row)"
+              :firstCol="props.firstCol"
+              :head-keys="spec.head"
+              :row-data="rows"
+              :row-keys="spec.row"
+              :cells="cells"
+            >
+              <template v-if="firstCol" #select="{ row }">
+                <slot name="select" :row="row" />
+              </template>
+              <template #actions="{ row }">
+                <slot name="actions" :row="row" />
+              </template>
+              <template #reason="{ row }">
+                <slot name="reason" :row="row" />
+              </template>
+            </GenericTableRow>
+            
+            <!-- Empty State -->
+            <tr v-if="!rows?.length && !pending" class="empty-state-row">
+              <td :colspan="spec.head.length + 1" class="empty-state-cell">
+                <slot name="placeholder">
+                  <div class="empty-state">
+                    <div class="empty-icon" v-html="icons.no_data" />
+                    <h3 class="empty-title">No Data Available</h3>
+                    <p class="empty-subtitle">{{ placeholder || 'There are no records to display at the moment.' }}</p>
+                  </div>
+                </slot>
+              </td>
+            </tr>
+          </template>
+        </slot>
+        
+        <!-- Loading State -->
+        <template v-if="pending">
           <component
-            :is="rowCom"
-            v-bind="{
-              cells: cells,
-              headKeys: spec.head,
-              rowData: rows,
-              rowKeys: spec.row,
-            }"
+            :cols="spec.head.length + 1"
+            :key="num"
+            v-for="num in 8"
+            :is="Fallback"
           />
         </template>
+      </DataTable>
+    </div>
 
-        <template v-else>
-          <GenericTableRow
-            @row="(row) => emit('row', row)"
-            :firstCol="props.firstCol"
-            :head-keys="spec.head"
-            :row-data="rows"
-            :row-keys="spec.row"
-            :cells="cells"
-          >
-            <template v-if="firstCol" #select="{ row }">
-              <slot name="select" :row="row" />
-            </template>
-            <template #actions="{ row }">
-              <slot name="actions" :row="row" />
-            </template>
-            <template #reason="{ row }">
-              <slot name="reason" :row="row" />
-            </template>
-          </GenericTableRow>
-          <tr v-if="!rows?.length && !pending">
-            <td :colspan="spec.head.length + 1">
-              <slot name="placeholder">
-                <div class="flex flex-col gap-2 items-center">
-                  <div
-                    class="flex-1 w-full flex justify-center py-5 h-full size-28 *:h-56"
-                    v-html="icons.no_data"
-                  />
-                  <p class="text-xl">{{ placeholder ? placeholder : 'No Data Found' }}</p>
-                </div>
-              </slot>
-            </td>
-          </tr>
-        </template>
-      </slot>
-      <template v-if="pending">
-        <component
-          :cols="spec.head.length + 1"
-          :key="num"
-          v-for="num in 15"
-          :is="Fallback"
-        />
-      </template>
-    </DataTable>
-    <div
-      v-if="showPagination && totalPages > 1"
-      class="flex items-center border-t mt-2 p-2 justify-between"
-    >
-      <button v-ripple
-        @click="previousPage"
-        class="text-center border-dark/20 group flex justify-center min-w-[8rem] gap-4 p-2 rounded border"
-      >
-        <i class="transition-all duration-150 ease-linear group-hover:-translate-x-2" v-html="icons.back" />
-        <span>Previous</span>
-      </button>
-      <!--<p>Page {{ page }} of {{ totalPages }}</p>-->
-      <button v-ripple @click="nextPage" class="group flex items-center gap-4 justify-center min-w-[8rem] text-center border-dark/20 p-2 rounded border">
-        <span>Next</span>
-        <i class="group-hover:translate-x-2 transition-all duration-150 ease-linear" v-html="icons.forward" />
-      </button>
+    <!-- Modern Pagination -->
+    <div v-if="showPagination && totalPages > 1" class="pagination-container">
+      <div class="pagination-info">
+        <span class="page-info">Page {{ page }} of {{ totalPages }}</span>
+      </div>
+      
+      <div class="pagination-controls">
+        <button 
+          @click="previousPage"
+          :disabled="page <= 1"
+          class="pagination-btn pagination-btn-prev"
+        >
+          <svg class="pagination-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          <span>Previous</span>
+        </button>
+        
+        <button 
+          @click="nextPage"
+          :disabled="page >= totalPages"
+          class="pagination-btn pagination-btn-next"
+        >
+          <span>Next</span>
+          <svg class="pagination-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
     </div>
   </div>
 </template>
-<style>
-.Table-header {
-  text-align: left;
-  line-height: 21px;
-  color: #4e585f;
-  @apply text-sm;
+<style scoped>
+.modern-table-container {
+  @apply w-full space-y-4;
+  overflow: visible !important;
 }
 
-.Table-contents {
-  text-align: start;
-  padding-bottom: 0.5rem;
-  line-height: 21px;
-  font-weight: 500;
-  color: #4e585f;
+.table-card {
+  @apply bg-white rounded-xl shadow-sm border border-gray-100;
+  overflow: visible !important;
+}
+
+.modern-table {
+  @apply w-full;
+  overflow: visible !important;
+}
+
+/* Empty State Styles */
+.empty-state-row {
+  @apply bg-gray-50/50;
+}
+
+.empty-state-cell {
+  @apply p-12 text-center;
+}
+
+.empty-state {
+  @apply flex flex-col items-center justify-center space-y-4 max-w-md mx-auto;
+}
+
+.empty-icon {
+  @apply w-20 h-20 text-gray-300;
+}
+
+.empty-title {
+  @apply text-xl font-semibold text-gray-700;
+}
+
+.empty-subtitle {
+  @apply text-gray-500 text-center leading-relaxed;
+}
+
+/* Pagination Styles */
+.pagination-container {
+  @apply flex items-center justify-between px-6 py-4 bg-white rounded-xl border border-gray-100 shadow-sm;
+}
+
+.pagination-info {
+  @apply flex items-center space-x-4;
+}
+
+.page-info {
+  @apply text-sm font-medium text-gray-700;
+}
+
+.pagination-controls {
+  @apply flex items-center space-x-3;
+}
+
+.pagination-btn {
+  @apply flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-lg border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+}
+
+.pagination-btn:not(:disabled) {
+  @apply text-gray-700 bg-white border-gray-300 hover:bg-gray-50 hover:border-gray-400 focus:ring-blue-500;
+}
+
+.pagination-btn:disabled {
+  @apply text-gray-400 bg-gray-50 border-gray-200 cursor-not-allowed;
+}
+
+.pagination-btn-prev:not(:disabled):hover .pagination-icon {
+  @apply -translate-x-1;
+}
+
+.pagination-btn-next:not(:disabled):hover .pagination-icon {
+  @apply translate-x-1;
+}
+
+.pagination-icon {
+  @apply w-4 h-4 transition-transform duration-200;
+}
+
+/* Global table improvements */
+:deep(.modern-table table) {
+  @apply w-full border-collapse;
+}
+
+:deep(.modern-table thead) {
+  @apply bg-gray-50/80;
+}
+
+:deep(.modern-table th) {
+  @apply px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200;
+}
+
+:deep(.modern-table tbody tr) {
+  @apply border-b border-gray-100 hover:bg-gray-50/50 transition-colors duration-150;
+}
+
+:deep(.modern-table tbody tr:last-child) {
+  @apply border-b-0;
+}
+
+:deep(.modern-table td) {
+  @apply px-6 py-4 text-sm text-gray-900;
+}
+
+/* Row hover effects */
+:deep(.modern-table tbody tr:hover) {
+  @apply bg-blue-50/30 cursor-pointer;
+}
+
+/* Skeleton loading improvements */
+:deep(.modern-table .skeleton-row) {
+  @apply animate-pulse;
+}
+
+:deep(.modern-table .skeleton-row td) {
+  @apply py-4;
 }
 </style>
+
+

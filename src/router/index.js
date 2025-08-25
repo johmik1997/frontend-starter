@@ -15,23 +15,29 @@ import Login from "@/pages/login/Login.vue";
 import subcityRoutes from "./subcity.routes";
 import Dashboard from '@/features/dashboard/pages/Dashboard.vue'
 import { useAuth } from '@/stores/auth'
-import DepositDetails from '@/features/financing/deposits/pages/DepositDetails.vue'
-import DispersementDetails from '@/features/financing/dispersement/pages/dispersementDetails.vue'
+import carSpecificationsRoutes from './carSpecifications.routes'
+import premiumRoutes from './premium.routes'
 
 const routes = [
   {
     path: "",
     name: "Root",
     component: MainLayout,
+    meta: { requiresAuth: true },
     children: [
+      {
+        path: "",
+        redirect: "/dashboard"
+      },
       {
         path: "/dashboard",
         name: "dashboard",
         component: Dashboard,
+        meta: { requiresAuth: true },
       },
       ...membersRoutes,
       ...rolesRoutes,
-      ...privilagesRoutes, // Removed duplicate
+      ...privilagesRoutes,
       ...usersRoutes,
       ...branchesRoutes,
       ...subcityRoutes,
@@ -39,7 +45,9 @@ const routes = [
       ...paymentRoutes,
       ...subcitiesRoutes,
       ...ketenaRoutes,
-      ...insuranceRoutes
+      ...insuranceRoutes,
+      ...carSpecificationsRoutes,
+      ...premiumRoutes,
     ],
   },
   { path: "/login", name: "Login", component: Login },
@@ -55,75 +63,65 @@ const router = createRouter({
 router.beforeEach(async (to, from) => {
   const auth = useAuth();
 
+  // Try to restore auth from localStorage if not in store
   if (!auth.auth?.accessToken) {
-    let detiail = localStorage.getItem('userDetail');
-    if (detiail) {
-      detiail = JSON.parse(detiail);
+    let detail = localStorage.getItem('userDetail');
+    if (detail) {
+      detail = JSON.parse(detail);
       auth.setAuth({
-        user: detiail,
-        accessToken: detiail?.token,
+        user: detail,
+        accessToken: detail?.token,
       });
     }
   }
 
+  // If going to login and already authenticated, redirect back
   if (to.path == '/login' && auth.auth?.accessToken) {
+    return { path: from.path };
+  }
+
+  // If no authentication and trying to access protected route
+  if (!auth.auth?.accessToken && to.meta?.requiresAuth) {
     return {
-      path: from.path,
+      path: `/login`,
+      query: { redirect: to.path },
     };
   }
 
+  // If route doesn't require auth, allow access
+  if (!to.meta?.requiresAuth) {
+    return true;
+  }
+
+  // Check privileges for authenticated users
   if (
-    !to.meta?.requiresAuth ||
     auth.auth?.user?.privileges?.includes('All Privileges') ||
     auth.auth?.user?.roleName === 'Super Admin'
   ) {
-    let detiail = localStorage.getItem('userDetail');
-    if (detiail) {
-      detiail = JSON.parse(detiail);
-      auth.setAuth({
-        user: detiail,
-        accessToken: detiail?.token,
-      });
-    }
     return true;
   }
 
-  if (!auth.auth?.accessToken) {
-    return {
-      path: `/login`,
-      query: {
-        redirect: to.path,
-      },
-    };
-  }
-
+  // Role-based access
   if (
-    (auth.auth?.user?.roleName &&
-      to.meta?.role &&
-      auth.auth?.user?.roleName == to.meta?.role) ||
-    (!to.meta?.role && !to.meta?.privileges && to.meta?.requiresAuth)
+    (auth.auth?.user?.roleName && to.meta?.role && 
+     auth.auth?.user?.roleName == to.meta?.role) ||
+    (!to.meta?.role && !to.meta?.privileges)
   ) {
     return true;
   }
 
-  let privileges = auth.auth.user?.privileges;
-
-  const found = (to.meta?.privileges || []).find((privilage) => {
-    return privileges?.includes(`ROLE_${privilage}`);
+  // Privilege-based access
+  const privileges = auth.auth.user?.privileges;
+  const found = (to.meta?.privileges || []).find((privilege) => {
+    return privileges?.includes(`ROLE_${privilege}`);
   });
 
   if (found) return true;
 
-  return {
-    path: '/forbidden',
-  };
+  return { path: '/forbidden' };
 });
+
 export default router;
-
-
-
-
-
 
 
 

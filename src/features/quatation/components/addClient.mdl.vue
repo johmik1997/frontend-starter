@@ -622,111 +622,157 @@ onMounted(() => {
 
 <template>
   <ModalParent>
-    <NewFormParent class="px-4 py-2 max-w-4xl" size="xs">
+    <NewFormParent class="px-6 py-4 max-w-5xl" size="lg">
       <template #title>
-        <div class="flex items-center gap-3">
-          <button 
-            @click="prevStep" 
-            v-if="step > 1"
-            class="flex items-center justify-center p-1 rounded-md hover:bg-gray-100"
-          >
-            <svg width="7" height="13" viewBox="0 0 7 13" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path opacity="0.6" fill-rule="evenodd" clip-rule="evenodd"
-                d="M5.82539 1.0134C6.03505 1.20471 6.05933 1.54072 5.87962 1.76391L2.15854 6.38525L5.87962 11.0066C6.05933 11.2298 6.03505 11.5658 5.82539 11.7571C5.61572 11.9484 5.30007 11.9226 5.12036 11.6994L1.12037 6.73164C0.959876 6.53232 0.959876 6.23819 1.12037 6.03887L5.12036 1.07113C5.30008 0.847943 5.61572 0.822096 5.82539 1.0134Z"
-                fill="#263558" stroke="#263558" stroke-linecap="round" />
-            </svg>
-          </button>
-          <span class="font-bold text-lg">{{ stepTitle }}</span>
+        <div class="flex items-center justify-between w-full">
+          <div class="flex items-center gap-4">
+            <button 
+              @click="prevStep" 
+              v-if="step > 1"
+              class="flex items-center justify-center p-2 rounded-full hover:bg-gray-100 transition-colors"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <div>
+              <h2 class="font-bold text-xl text-gray-800">{{ stepTitle }}</h2>
+              <p class="text-sm text-gray-500">Step {{ step }} of 4</p>
+            </div>
+          </div>
+          
+          <!-- Progress Bar -->
+          <div class="flex items-center gap-2">
+            <div class="flex items-center gap-1">
+              <div 
+                v-for="i in 4" 
+                :key="i"
+                class="w-8 h-2 rounded-full transition-all duration-300"
+                :class="i <= step ? 'bg-primary' : 'bg-gray-200'"
+              ></div>
+            </div>
+            <span class="text-xs text-gray-500 ml-2">{{ Math.round((step / 4) * 100) }}%</span>
+          </div>
         </div>
       </template>
       
       <template #default>
-        <Form class="gap-5 mt-3 p-6 " id="addform">
-          
+         <Form class="gap-5 mt-3 p-6 " id="addform">
+        
           <!-- Step 1: Personal Details -->
-          <div v-if="step === 1" class="gap-4 grid grid-cols-2">
-          
-            <input v-model="personalDetails.userUuid" type="hidden" name="userUuid" />
-  
-  
-            <Input
-              v-model="personalDetails.firstName"
-              name="firstName"
-              validation="required|alpha"
-              label="First Name"
-              :attributes="{ 
-                placeholder: 'Enter first name',
-                title: 'Minimum 3 letters, alphabets only'
-              }"
-            />
-            <Input
-              v-model="personalDetails.fatherName"
-              name="fatherName"
-              validation="required|alpha"
-              label="Last Name"
-              :attributes="{ 
-                placeholder: 'Enter last name',
-                title: 'Minimum 3 letters, alphabets only'
-              }"
-            />
-            <Input
-              v-model="personalDetails.email"
-              name="email"
-              validation="required|email"
-              label="email"
-              :attributes="{ 
-                placeholder: 'Enter email',
-                title: 'Minimum 3 letters, alphabets only'
-              }">
-           <template #right>
-                <div class="flex items-center bg-[#f6f5f545]">
-                  <i v-html="icons.email" class="mr-4" />
+          <div v-if="step === 1" class="space-y-6">
+            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-100">
+              <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+                  <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                  </svg>
                 </div>
-              </template>
-            </Input> 
-            <!-- <Input
-              v-model="personalDetails.email"
-              name="email"
-              validation="required|email"
-              label="Email"
-              :attributes="{ 
-                placeholder: 'Enter email',
-                type: 'email'
-              }"
-              class="pr-10"
-            /> -->
-              <!--  -->
-  
-            <Input
-              v-model="personalDetails.mobilePhone"
-              name="mobilePhone"
-              validation="required|phone"
-              label="Mobile Phone"
-              :attributes="{ 
-                placeholder: 'Enter Phone number (+2519XXXXXXXX)',
-                title: 'Valid formats: +2519XXXXXXXX or 09XXXXXXXX'
-              }"
-            />
+                <div>
+                  <h3 class="text-lg font-semibold text-gray-800">Personal Information</h3>
+                  <p class="text-sm text-gray-600">Please provide your basic information to get started</p>
+                </div>
+              </div>
+              
+              <Form class="grid grid-cols-1 md:grid-cols-2 gap-6" id="addform">
+                <input v-model="personalDetails.userUuid" type="hidden" name="userUuid" />
+                
+                <Input
+                  v-model="personalDetails.firstName"
+                  name="firstName"
+                  validation="required|alpha"
+                  label="First Name"
+                  :attributes="{ 
+                    placeholder: 'Enter your first name',
+                    title: 'Minimum 3 letters, alphabets only'
+                  }"
+                />
+                
+                <Input
+                  v-model="personalDetails.fatherName"
+                  name="fatherName"
+                  validation="required|alpha"
+                  label="Last Name"
+                  :attributes="{ 
+                    placeholder: 'Enter your last name',
+                    title: 'Minimum 3 letters, alphabets only'
+                  }"
+                />
+                
+                <Input
+                  v-model="personalDetails.email"
+                  name="email"
+                  validation="required|email"
+                  label="Email Address"
+                  :attributes="{ 
+                    placeholder: 'Enter your email address',
+                    type: 'email'
+                  }"
+                >
+                  <template #right>
+                    <div class="flex items-center text-gray-400">
+                      <i v-html="icons.email" class="w-5 h-5" />
+                    </div>
+                  </template>
+                </Input>
+                
+                <Input
+                  v-model="personalDetails.mobilePhone"
+                  name="mobilePhone"
+                  validation="required|phone"
+                  label="Mobile Phone"
+                  :attributes="{ 
+                    placeholder: '+251 9XX XXX XXX',
+                    title: 'Valid formats: +2519XXXXXXXX or 09XXXXXXXX'
+                  }"
+                >
+                  <template #left>
+                    <div class="flex items-center text-gray-400">
+                      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                      </svg>
+                    </div>
+                  </template>
+                </Input>
+              </Form>
+            </div>
           </div>
 
           <!-- Step 2: Insurance Selection -->
-          <div v-if="step === 2" class="w-full mt-3">
-            <h3 class="text-lg font-semibold mb-1">Select Your Preferred Insurance Company.</h3>
-            <p class="text-sm text-gray-600 mb-4">Select the insurance company that you trust the most and feel offers the best fit for your needs and preferences.</p>
+          <div v-if="step === 2" class="space-y-6">
+            <div class="text-center mb-8">
+              <div class="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M3 6a3 3 0 013-3h10a1 1 0 01.8 1.6L14.25 8l2.55 3.4A1 1 0 0116 13H6a1 1 0 00-1 1v3a1 1 0 11-2 0V6z" clip-rule="evenodd"/>
+                </svg>
+              </div>
+              <h3 class="text-2xl font-bold text-gray-800 mb-2">Choose Your Insurance Provider</h3>
+              <p class="text-gray-600 max-w-2xl mx-auto">Select the insurance company that best fits your needs and preferences. Each provider offers unique benefits and coverage options.</p>
+            </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-w-4xl mx-auto">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-w-6xl mx-auto">
               <div 
                 v-for="insurance in (insurereq.response.value?.insurances || [])" 
                 :key="insurance.insuranceUuid"
                 @click="personalDetails.insuranceUuid = insurance.insuranceUuid"
-                class="flex flex-col items-center p-3 border rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md"
+                class="group relative flex flex-col items-center p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
                 :class="{
-                  'border-primary bg-[#F0F0FF]': personalDetails.insuranceUuid === insurance.insuranceUuid,
-                  'border-gray-200 hover:border-gray-300': personalDetails.insuranceUuid !== insurance.insuranceUuid
+                  'border-primary bg-primary/5 shadow-lg ring-2 ring-primary/20': personalDetails.insuranceUuid === insurance.insuranceUuid,
+                  'border-gray-200 hover:border-gray-300 bg-white': personalDetails.insuranceUuid !== insurance.insuranceUuid
                 }"
               >
+                <!-- Selection Indicator -->
+                <div 
+                  v-if="personalDetails.insuranceUuid === insurance.insuranceUuid"
+                  class="absolute -top-2 -right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center"
+                >
+                  <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                  </svg>
+                </div>
+                
                 <!-- Insurance Logo -->
-                <div class="w-16 h-16 sm:w-16 sm:h-16 mb-2 flex items-center justify-center bg-white rounded-lg p-2 border">
+                <div class="w-20 h-20 mb-4 flex items-center justify-center bg-white rounded-xl p-3 border shadow-sm group-hover:shadow-md transition-shadow">
                   <img 
                     :src="insurance.profile ? `data:image/jpeg;base64,${insurance.profile}` : '@/assets/default-insurance-logo.png'"
                     :alt="insurance.insuranceName"
@@ -735,189 +781,212 @@ onMounted(() => {
                 </div>
                 
                 <!-- Insurance Name -->
-                <span class="text-center text-sm font-medium" :class="{
+                <h4 class="text-center text-sm font-semibold transition-colors" :class="{
                   'text-primary': personalDetails.insuranceUuid === insurance.insuranceUuid,
-                  'text-gray-700': personalDetails.insuranceUuid !== insurance.insuranceUuid
+                  'text-gray-700 group-hover:text-gray-900': personalDetails.insuranceUuid !== insurance.insuranceUuid
                 }">
                   {{ insurance.insuranceName }}
-                </span>
+                </h4>
               </div>
             </div>
-
-            <!-- Navigation Buttons -->
-            
           </div>
 
           <!-- Step 3: Vehicle Details -->
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-            
-  
-           
-            <div v-if="step === 3" class="w-full max-w-lg bg-white p-6 rounded-md">
-              <h3 class="text-lg font-semibold mb-4">Step 3: Vehicle Details</h3>
-              
-              <div class="grid grid-cols-2 gap-4">
-                <!-- Vehicle Type Selection -->
-                <Select
-                  v-model="selectedMainCategory"
-                  label="Vehicle Type"
-                  :options="getMainCategories()"
-                  @change="handleCategorySelection"
-                  :attributes="{ placeholder: 'Select Vehicle Type' }"
-                />
-    
-                <Select
-                  v-if="getSubCategories().length"
-                  v-model="selectedSubCategory"
-                  label="Category"
-                  :options="getSubCategories()"
-                  @change="handleCategorySelection"
-                  :attributes="{ placeholder: 'Select Category' }"
-                />
-    
-                <Select
-                  v-if="getSubSubCategories().length"
-                  v-model="selectedSubSubCategory"
-                  label="Sub Category"
-                  :options="getSubSubCategories()"
-                  @change="handleCategorySelection"
-                   :attributes="{ placeholder: 'Select subCategory' }"
-                />
-    
-                <Select
-                  v-if="getFinalCategories().length"
-                  v-model="selectedFinalCategory"
-                  label="Final Category"
-                  :options="getFinalCategories()"
-                  @change="handleCategorySelection"
-                    :attributes="{ placeholder: 'Final Catagory' }"
-                />
-    
-                <!-- Other vehicle details -->
-                <Input
-                  v-model="newVehicle.buyingPrice"
-                  label="Buying Price"
-                  type="number"
-                  :attributes="{ placeholder: 'Enter buying price' }"
-                />
-    
-                <Input
-                  v-model="newVehicle.plateNumber"
-                  label="Plate Number"
-                  :attributes="{ placeholder: 'Enter plate number' }"
-                />
-    
-                <Input
-                  v-model="newVehicle.makeYear"
-                  label="Make Year"
-                  :attributes="{ placeholder: 'Enter make year' }"
-                />
-    
-                <Select
-                  v-model="newVehicle.carName"
-                  label="Car Make"
-                  :options="carMakes"
-                  :attributes="{ 
-                    placeholder: 'Select car make',
-                    // disabled: !carMakes.length,
-                    class: 'w-full'
-                  }"
-                >
-                  <template #label>
-                    Car Make <span class="text-red-500">*</span>
-                  </template>
-                </Select>
-
-                <Select
-                  v-model="newVehicle.carType"
-                  label="Car Type"
-                  :options="carTypes"
-                  :attributes="{ 
-                    placeholder: 'Select car type',
-                    // disabled: !newVehicle.carName || !carTypes.length,
-                    class: 'w-full'
-                  }"
-                >
-                  <template #label>
-                    Car Type <span class="text-red-500">*</span>
-                  </template>
-                </Select>
-
+          <div v-if="step === 3" class="space-y-6">
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+              <!-- Vehicle Form -->
+              <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                <div class="flex items-center gap-3 mb-6">
+                  <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 class="text-lg font-semibold text-gray-800">Add Vehicle Details</h3>
+                    <p class="text-sm text-gray-600">Provide information about your vehicle</p>
+                  </div>
+                </div>
                 
-                <Select
-                  v-model="newVehicle.carModel"
-                  label="Car Model"
-                  :options="carModels"
-                  :attributes="{ 
-                    placeholder: 'Select car model',
-                    // disabled: !newVehicle.carType || !carModels.length,
-                    class: 'w-full'
-                  }"
-                >
-                
-                  <template #label>
-                    Car Model <span class="text-red-500">*</span>
-                  </template>
-                </Select>
-                <Select
-                  v-model="newVehicle.engine_No"
-                  label="Engine Number"
-                  :options="engineNumbers"
-                  :attributes="{ 
-                    placeholder: 'Select engine number',
-                    // disabled: !newVehicle.carModel || !engineNumbers.length,
-                    class: 'w-full'
-                  }"
-                >
-                
-                  <template #label>
-                    Engine Number <span class="text-red-500">*</span>
-                  </template>
-                </Select>
-              </div>
-    
-              <div class="flex justify-end mt-4">
                
-                <Button 
-      @click="addVehicle" 
-      type="primary"
-      size="md"
-    >
-      {{ editingIndex !== null ? 'Update Vehicle' : 'Add Vehicle' }}
-    </Button>
-              </div>
-            </div>
-    
-            <!-- List of Vehicles (Only in Step 2) -->
-            <div v-if="step === 3" class="w-full max-w-lg bg-[#F3F3F3] text-[#1E1E1E] rounded-md p-4 mx-4">
-              <h3 class="text-md font-semibold mb-2">List of cars you have added</h3>
-              <div v-if="carRequests.length === 0" class="text-gray-500">No vehicles added yet.</div>
-              <ul v-else>
-                <li v-for="(vehicle, index) in carRequests" :key="index" class="flex bg-[#FFFFFF] text-[#1E1E1E] items-center justify-between py-2 px-4 border rounded-md mb-2">
-                  <div>{{ vehicle.carName }} {{ vehicle.carModel }} | {{ vehicle.carType }}</div>
-                  <div class="flex items-center gap-2 justify-end">
-                    <Button 
-                      @click="(e) => editVehicle(e, index)"
-                      type="secondary"
-                      size="sm"
+                  <!-- Vehicle Type Selection -->
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Select
+                      v-model="selectedMainCategory"
+                      label="Vehicle Type"
+                      :options="getMainCategories()"
+                      @change="handleCategorySelection"
+                      :attributes="{ placeholder: 'Select Vehicle Type' }"
+                    />
+        
+                    <Select
+                      v-if="getSubCategories().length"
+                      v-model="selectedSubCategory"
+                      label="Category"
+                      :options="getSubCategories()"
+                      @change="handleCategorySelection"
+                      :attributes="{ placeholder: 'Select Category' }"
+                    />
+                  </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4" v-if="getSubSubCategories().length || getFinalCategories().length">
+                    <Select
+                      v-if="getSubSubCategories().length"
+                      v-model="selectedSubSubCategory"
+                      label="Sub Category"
+                      :options="getSubSubCategories()"
+                      @change="handleCategorySelection"
+                      :attributes="{ placeholder: 'Select Sub Category' }"
+                    />
+        
+                    <Select
+                      v-if="getFinalCategories().length"
+                      v-model="selectedFinalCategory"
+                      label="Final Category"
+                      :options="getFinalCategories()"
+                      @change="handleCategorySelection"
+                      :attributes="{ placeholder: 'Select Final Category' }"
+                    />
+                  </div>
+        
+                  <!-- Vehicle Details -->
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Input
+                      v-model="newVehicle.buyingPrice"
+                      label="Buying Price (ETB)"
+                      type="number"
+                      :attributes="{ placeholder: 'Enter buying price' }"
                     >
-                      Edit
-                    </Button>
+                      <template #left>
+                        <span class="text-gray-500 font-medium">ETB</span>
+                      </template>
+                    </Input>
+        
+                    <Input
+                      v-model="newVehicle.plateNumber"
+                      label="Plate Number"
+                      :attributes="{ placeholder: 'e.g., AA-123456' }"
+                    />
+                  </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Input
+                      v-model="newVehicle.makeYear"
+                      label="Make Year"
+                      :attributes="{ placeholder: 'e.g., 2020' }"
+                    />
+        
+                    <Select
+                      v-model="newVehicle.carName"
+                      label="Car Make"
+                      :options="carMakes"
+                      :attributes="{ placeholder: 'Select car make' }"
+                    />
+                  </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Select
+                      v-model="newVehicle.carType"
+                      label="Car Type"
+                      :options="carTypes"
+                      :attributes="{ placeholder: 'Select car type' }"
+                    />
+                    
+                    <Select
+                      v-model="newVehicle.carModel"
+                      label="Car Model"
+                      :options="carModels"
+                      :attributes="{ placeholder: 'Select car model' }"
+                    />
+                  </div>
+
+                  <Select
+                    v-model="newVehicle.engine_No"
+                    label="Engine Number"
+                    :options="engineNumbers"
+                    :attributes="{ placeholder: 'Select engine number' }"
+                  />
+        
+                  <div class="flex justify-end pt-4">
                     <Button 
-                      @click="(e) => deleteVehicle(e, index)"
-                      type="danger"
-                      size="sm"
+                      @click="addVehicle" 
+                      type="primary"
+                      size="md"
+                      class="px-8"
                     >
-                      Delete
+                      {{ editingIndex !== null ? 'Update Vehicle' : 'Add Vehicle' }}
                     </Button>
                   </div>
-                </li>
-              </ul>
+               
+              </div>
+        
+              <!-- Vehicle List -->
+              <div class="bg-gray-50 border border-gray-200 rounded-xl p-6">
+                <div class="flex items-center gap-3 mb-6">
+                  <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 class="text-lg font-semibold text-gray-800">Added Vehicles</h3>
+                    <p class="text-sm text-gray-600">{{ carRequests.length }} vehicle(s) added</p>
+                  </div>
+                </div>
+                
+                <div v-if="carRequests.length === 0" class="text-center py-12">
+                  <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+                  </svg>
+                  <p class="text-gray-500 text-sm">No vehicles added yet</p>
+                  <p class="text-gray-400 text-xs mt-1">Add your first vehicle using the form</p>
+                </div>
+                
+                <div v-else class="space-y-3 max-h-96 overflow-y-auto">
+                  <div 
+                    v-for="(vehicle, index) in carRequests" 
+                    :key="index" 
+                    class="bg-white rounded-lg p-4 border border-gray-200 hover:shadow-sm transition-shadow"
+                  >
+                    <div class="flex items-start justify-between">
+                      <div class="flex-1">
+                        <h4 class="font-semibold text-gray-800 mb-1">
+                          {{ vehicle.carName }} {{ vehicle.carModel }}
+                        </h4>
+                        <div class="text-sm text-gray-600 space-y-1">
+                          <p><span class="font-medium">Type:</span> {{ vehicle.carType }}</p>
+                          <p><span class="font-medium">Plate:</span> {{ vehicle.plateNumber }}</p>
+                          <p><span class="font-medium">Year:</span> {{ vehicle.makeYear }}</p>
+                          <p><span class="font-medium">Price:</span> ETB {{ Number(vehicle.buyingPrice).toLocaleString() }}</p>
+                        </div>
+                      </div>
+                      <div class="flex flex-col gap-2 ml-4">
+                        <Button 
+                          @click="(e) => editVehicle(e, index)"
+                          type="secondary"
+                          size="sm"
+                          class="text-xs"
+                        >
+                          Edit
+                        </Button>
+                        <Button 
+                          @click="(e) => deleteVehicle(e, index)"
+                          type="danger"
+                          size="sm"
+                          class="text-xs"
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-  </div>
+          </div>
 
-          <!-- Step 4: Bank Account (previously Step 5) -->
-          <div v-if="step === 4" class="w-[700px]">
+          <!-- Step 4: Bank Account -->
+         <div v-if="step === 4" class="space-y-6">
             <div class="bg-[#3C3C9E]  rounded-lg shadow-lg">  
               <div class="p-4">
               <div class="flex items-center mb-4 p-3 bg-white rounded-lg">  
@@ -962,48 +1031,72 @@ onMounted(() => {
               />
             </div></div>
             <div class="flex justify-between mt-4">
-              
+              <Button @click="prevStep" class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded">
+                Back
+              </Button>
             </div>
           </div>
        
-        
-        
-        </Form>
+      </Form>
       </template>
 
       <template #bottom>
-        <div class="flex justify-between m-4 w-full gap-4 pr-4">
-          <!-- Save as Draft button - 25% width (only in steps 1-3) -->
-          <div v-if="step !== 4" class="w-1/4">
+        <div class="flex justify-between items-center p-6 bg-gray-50 border-t border-gray-200">
+          <!-- Save as Draft button -->
+          <div v-if="step !== 4">
             <Button 
               @click="saveDraft" 
               type="secondary" 
               size="lg"
-              class="w-full"
+              class="px-8"
             >
+              <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
+              </svg>
               Save as Draft
             </Button>
           </div>
+          <div v-else></div>
           
-          <!-- Navigation buttons - 75% width -->
-          <div :class="step === 4 ? 'w-full' : 'flex-1'">
+          <!-- Navigation buttons -->
+          <div class="flex items-center gap-3">
+            <Button 
+              v-if="step > 1 && step !== 4" 
+              @click="prevStep" 
+              type="secondary" 
+              size="lg"
+              class="px-8"
+            >
+              <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"/>
+              </svg>
+              Back
+            </Button>
+            
             <Button 
               v-if="step < 4" 
               @click="nextStep" 
               type="primary" 
               size="lg"
-              class="w-full"
+              class="px-8"
             >
               Continue
+              <svg class="w-4 h-4 ml-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+              </svg>
             </Button>
+            
             <Button 
               v-if="step === 4" 
               @click="submitForm" 
               type="primary" 
               size="lg"
-              class="w-full"
+              class="px-8"
             >
-              Submit
+              <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+              </svg>
+              Submit Application
             </Button>
           </div>
         </div>
@@ -1013,17 +1106,53 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.grid > div {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+/* Custom animations */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.grid > div:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+.step-content {
+  animation: slideIn 0.3s ease-out;
 }
 
-/* Selected insurance style */
-.grid > div.border-blue-500 {
-  box-shadow: 0 0 0 2px #3b82f6;
+/* Hover effects for insurance cards */
+.insurance-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.insurance-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Progress bar animation */
+.progress-bar {
+  transition: width 0.5s ease-in-out;
+}
+
+/* Custom scrollbar for vehicle list */
+.vehicle-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.vehicle-list::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.vehicle-list::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.vehicle-list::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 </style>

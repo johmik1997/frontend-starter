@@ -5,13 +5,12 @@ import InputLayout from "./NewInputLayout.vue";
 <template>
   <InputParent v-slot="{ setRef, validation, error, value, changeValue }">
     <InputLayout :validation="validation" :error="error" :label="$attrs?.label">
-      <div class="flex w-full">
-        <slot class="" name="left" />
-        <input
-          :ref="setRef"
-        />
+      <div class="input-wrapper">
+        <slot name="left" />
+        <input :ref="setRef" />
         <slot name="right" />
       </div>
     </InputLayout>
   </InputParent>
 </template>
+

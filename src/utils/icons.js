@@ -32,6 +32,46 @@ export default {
 </svg>
 
 `,
+car: `
+	<svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Car Body (Background) -->
+    <path opacity="0.3" d="M20.5 15.7632H3.5C2.94772 15.7632 2.5 16.2109 2.5 16.7632V19.2632C2.5 19.8155 2.94772 20.2632 3.5 20.2632H20.5C21.0523 20.2632 21.5 19.8155 21.5 19.2632V16.7632C21.5 16.2109 21.0523 15.7632 20.5 15.7632Z" fill="currentColor" stroke="currentColor" stroke-width="1.5"/>
+    
+    <!-- Windshield -->
+    <path opacity="0.6" d="M6.5 8.26318H17.5L18.5 11.2632H5.5L6.5 8.26318Z" fill="currentColor" stroke="currentColor" stroke-width="1.5"/>
+    
+    <!-- Wheels -->
+    <path opacity="0.4" d="M8 18.2632C8 18.8155 7.55228 19.2632 7 19.2632C6.44772 19.2632 6 18.8155 6 18.2632C6 17.7109 6.44772 17.2632 7 17.2632C7.55228 17.2632 8 17.7109 8 18.2632Z" fill="currentColor" stroke="currentColor" stroke-width="1.5"/>
+    <path opacity="0.4" d="M18 18.2632C18 18.8155 17.5523 19.2632 17 19.2632C16.4477 19.2632 16 18.8155 16 18.2632C16 17.7109 16.4477 17.2632 17 17.2632C17.5523 17.2632 18 17.7109 18 18.2632Z" fill="currentColor" stroke="currentColor" stroke-width="1.5"/>
+    
+    <!-- Ground/Shadow Line -->
+    <mask id="car-spec-mask" fill="currentColor">
+        <path d="M23 21.2632H1C0.59 21.2632 0.25 20.9232 0.25 20.5132C0.25 20.1032 0.59 19.7632 1 19.7632H23C23.41 19.7632 23.75 20.1032 23.75 20.5132C23.75 20.9232 23.41 21.2632 23 21.2632Z"/>
+    </mask>
+    <path d="M23 21.2632H1C0.59 21.2632 0.25 20.9232 0.25 20.5132C0.25 20.1032 0.59 19.7632 1 19.7632H23C23.41 19.7632 23.75 20.1032 23.75 20.5132C23.75 20.9232 23.41 21.2632 23 21.2632Z" fill="currentColor"/>
+    <path d="M23 21.2632V19.7632H1V21.2632V22.7632H23V21.2632ZM1 21.2632V19.7632C1.41843 19.7632 1.75 20.0948 1.75 20.5132H0.25H-1.25C-1.25 21.7516 -0.238427 22.7632 1 22.7632V21.2632ZM0.25 20.5132H1.75C1.75 20.9316 1.41843 21.2632 1 21.2632V19.7632V18.2632C-0.238427 18.2632 -1.25 19.2748 -1.25 20.5132H0.25ZM1 19.7632V21.2632H23V19.7632V18.2632H1V19.7632ZM23 19.7632V21.2632C22.5816 21.2632 22.25 20.9316 22.25 20.5132H23.75H25.25C25.25 19.2748 24.2384 18.2632 23 18.2632V19.7632ZM23.75 20.5132H22.25C22.25 20.0948 22.5816 19.7632 23 19.7632V21.2632V22.7632C24.2384 22.7632 25.25 21.7516 25.25 20.5132H23.75Z" fill="currentColor" mask="url(#car-spec-mask)"/>
+    
+    <!-- Specification List Lines -->
+    <path opacity="0.8" d="M7 12.2632H17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    <path opacity="0.6" d="M7 13.7632H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    <path opacity="0.4" d="M7 15.2632H12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+</svg>`,
+premium: `
+<svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Crown Base / Shadow -->
+    <path opacity="0.3" d="M21 19.2632H3C2.59 19.2632 2.25 18.9232 2.25 18.5132C2.25 18.1032 2.59 17.7632 3 17.7632H21C21.41 17.7632 21.75 18.1032 21.75 18.5132C21.75 18.9232 21.41 19.2632 21 19.2632Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+    
+    <!-- Main Gemstone (Diamond) -->
+    <path d="M11.9999 3.76318L7.99992 8.76318H4.76992L2.26992 12.2632L11.9999 16.7632L21.7299 12.2632L19.2299 8.76318H15.9999L11.9999 3.76318Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    
+    <!-- Highlight on Gem -->
+    <path opacity="0.6" d="M12 5.26318L9.5 8.76318H14.5L12 5.26318Z" fill="white" stroke="currentColor" stroke-width="1.0"/>
+    
+    <!-- Sparkle/Star Elements -->
+    <path opacity="0.8" d="M18.5 5.26318C18.9142 5.26318 19.25 4.92739 19.25 4.51318C19.25 4.09896 18.9142 3.76318 18.5 3.76318C18.0858 3.76318 17.75 4.09896 17.75 4.51318C17.75 4.92739 18.0858 5.26318 18.5 5.26318Z" fill="currentColor" stroke="currentColor" stroke-width="1.0"/>
+    <path opacity="0.8" d="M5.5 5.26318C5.91421 5.26318 6.25 4.92739 6.25 4.51318C6.25 4.09896 5.91421 3.76318 5.5 3.76318C5.08579 3.76318 4.75 4.09896 4.75 4.51318C4.75 4.92739 5.08579 5.26318 5.5 5.26318Z" fill="currentColor" stroke="currentColor" stroke-width="1.0"/>
+    <path opacity="0.8" d="M12 11.2632C12.4142 11.2632 12.75 10.9274 12.75 10.5132C12.75 10.099 12.4142 9.76318 12 9.76318C11.5858 9.76318 11.25 10.099 11.25 10.5132C11.25 10.9274 11.5858 11.2632 12 11.2632Z" fill="currentColor" stroke="currentColor" stroke-width="1.0"/>
+</svg>`,
 	leeds: `
 	<svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M19 8.01315C20.6569 8.01315 22 6.67001 22 5.01315C22 3.3563 20.6569 2.01315 19 2.01315C17.3431 2.01315 16 3.3563 16 5.01315C16 6.67001 17.3431 8.01315 19 8.01315Z" fill="currentcolor"/>

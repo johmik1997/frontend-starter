@@ -4,16 +4,21 @@ import InputLayout from "@/components/new_form_elements/NewInputLayout.vue";
 </script>
 
 <template>
-  <InputParent v-slot="{ setRef, error }">
+  <InputParent v-slot="{ setRef, error, validation }">
     <InputLayout
-      :class="$attrs?.class + ' !rounded'"
+      :class="$attrs?.class"
       :label="$attrs.label"
       :error="error"
+      :validation="validation"
     >
-      <textarea
-        :ref="setRef"
-      />
-      <slot name="right" />
+      <div class="input-wrapper">
+        <textarea
+          :ref="setRef"
+          class="custom-input"
+        />
+        <slot name="right" />
+      </div>
     </InputLayout>
   </InputParent>
 </template>
+
