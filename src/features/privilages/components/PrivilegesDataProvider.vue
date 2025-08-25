@@ -3,30 +3,42 @@ import { watch } from 'vue';
 import { usePrivilege } from '../store/privilegeStore';
 import { getAllPrivilege } from '../Api/PrivilegeApi';
 import { usePaginations } from '@/composables/usePaginationTemp';
-
+import { removeUndefined } from '@/utils/utils.js';
 
 const props = defineProps({
-  prePage: {
+  search: String,
+  perPage: {
     type: Number,
-    default: 25
-  }
-})
-const privilegesStore = usePrivilege();
+    default: 25,
+  },
+});
+
+const privilegeStore = usePrivilege();
 
 const pagination = usePaginations({
   auto: false,
-  perPage: props.prePage,
-  store: privilegesStore,
-  cb: getAllPrivilege,
+  perPage: props.perPage,
+  store: privilegeStore,
+  cb: (data) => getAllPrivilege({ ...data, ...removeUndefined({ search: props.search }) }),
 });
 
-if (privilegesStore.privilege.length == 0) {
+// Initial fetch
+if (!privilegeStore.privilege.length) {
   pagination.send();
 }
 
-watch(pagination.data, console.log, { immediate: true })
+// Re-fetch when search changes
+watch(
+  () => props.search,
+  () => {
+    pagination.send();
+  }
+);
 </script>
 <template>
-  {{ console.log(privilegesStore.privilege) }}
-  <slot :pending="pagination.pending.value" :error="pagination.error.value" :privileges="privilegesStore.privilege" />
+  <slot 
+    :privileges="privilegeStore.privilege" 
+    :pending="pagination.pending.value" 
+    :error="pagination.error.value" 
+  />
 </template>

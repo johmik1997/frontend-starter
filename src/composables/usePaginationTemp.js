@@ -15,12 +15,11 @@ export function usePaginations(options = {}) {
   const search = ref("");
   const perPage = ref(paginationOptions.value.perPage);
 
-  const req = useApiRequest();
+  const req = useApiRequest(); // This has req.pending
 
   const searching = ref(false);
   const searchPagination = useTablePagination(perPage.value);
   const pagination = useTablePagination(perPage.value);
-
   function getPaginationData(next = true, current = false) {
     if (searching.value) {
       return JSON.parse(
@@ -63,13 +62,13 @@ export function usePaginations(options = {}) {
         if (paginationOptions.value.store && res.success) {
           console.log(res);
           
-          paginationOptions.value.store.set(res.data || []);
+          paginationOptions.value.store.set(res.data?.response || []);
         }
 
         pagination.totalPages.value = res.data?.totalPages || 1;
         if (
           res.success &&
-          res.data?.length < pagination.limit.value
+          res.data?.response?.length < pagination.limit.value
         ) {
           pagination.done.value = true;
         }
@@ -97,7 +96,7 @@ export function usePaginations(options = {}) {
           searchPagination.totalPages.value = res.data?.totalPages || 1;
           if (
             res?.success &&
-            res.data?.length < searchPagination.limit.value
+            res.data?.response?.length < searchPagination.limit.value
           ) {
             searchPagination.done.value = true;
           }
@@ -172,24 +171,62 @@ export function usePaginations(options = {}) {
       : pagination.page.value;
   });
 
-  function send() {
-    pagination.reset()
-    searchPagination.reset()
-    fetch()
+  async function send() {
+    try {
+      // Use req.pending instead of pending
+      req.pending.value = true;
+      
+      const response = await paginationOptions.value.cb(
+        {
+          page: pagination.page.value, // Use pagination.page.value instead of currentPage
+          size: perPage.value, // Use 'size' instead of 'limit' to match your API
+          search: search.value || undefined,
+          ...paginationOptions.value.params
+        },
+        paginationOptions.value.config
+      );
+      
+      // Handle paginated response format
+      if (response && response.data) {
+        // Extract pagination metadata - adjust based on your API response structure
+        const { totalElements, totalPages, size, number, content } = response.data;
+        
+        // Update pagination state
+        pagination.total.value = totalElements || 0;
+        pagination.totalPages.value = totalPages || 1;
+        perPage.value = size || perPage.value;
+        pagination.page.value = number || 0;
+        
+        // Set the response data to the store
+        if (paginationOptions.value.store && typeof paginationOptions.value.store.set === 'function') {
+          paginationOptions.value.store.set(content || response.data.response || response.data);
+        }
+      }
+      
+      return response;
+    } catch (error) {
+      console.error('Pagination error:', error);
+      req.error.value = error; // Set error on req
+      return { success: false, error: error.message };
+    } finally {
+      req.pending.value = false; // Use req.pending instead of pending
+    }
   }
 
   return {
-    page,
+    page: computed(() => searching.value ? searchPagination.page.value : pagination.page.value),
     search,
     send,
     perPage,
-    totalPages: req.response.value?.totalPages || 0,
-    data:
-      paginationOptions.value.store && !searching.value
-        ? paginationOptions.value.store.getAll()
-        : req.response || [],
+    totalPages: computed(() => searching.value ? searchPagination.totalPages.value : pagination.totalPages.value),
+    data: computed(() => {
+      if (paginationOptions.value.store && !searching.value) {
+        return paginationOptions.value.store.getAll();
+      }
+      return req.response.value?.data?.response || req.response.value?.data || [];
+    }),
     error: req.error,
-    pending: req.pending,
+    pending: req.pending, // Return req.pending
     dirty: req.dirty,
     next,
     previous,

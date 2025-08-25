@@ -1,49 +1,50 @@
 import { ref } from "vue";
 import { defineStore } from "pinia";
 
-export const usePrivilege = defineStore("Privilegestore", () => {
-  const privilege = ref([]);
+export const usePrivilege = defineStore("allPrivilegeStore", () => {
+  const privileges = ref([]);
 
   function set(data) {
     console.log(data);
-    privilege.value = data;
+    privileges.value = data;
   }
 
   function getAll() {
-    return privilege.value;
+    return privileges.value;
+  }
+
+  function add(data) {
+    return privileges.value.push(data);
   }
 
   function update(id, data) {
-    const idx = privilege.value.findIndex((el) => el.privilegeUuid == id);
-    if (idx == -1) return;
+    const idx = privileges.value.findIndex((el) => el.privilegeUuid === id);
+    if (idx === -1) return;
 
-    privilege.value.splice(idx, 1, data);
+    privileges.value.splice(idx, 1, data);
   }
 
   function remove(id) {
-    const idx = privilege.value.findIndex((el) => el.privilegeUuid == id);
-    if (idx == -1) return;
+    const idx = privileges.value.findIndex((el) => el.privilegeUuid === id);
+    if (idx === -1) return;
 
-    privilege.value.splice(idx, 1);
-  }
-  function add(data) {
-    privilege.value.push(data);
+    privileges.value.splice(idx, 1);
   }
 
-  // function updateStatus(id, status) {
-  //   const idx = roles.value.findIndex((el) => el.roleUuid == id);
-  //   if (idx == -1) return;
+  function updateStatus(id, status) {
+    const idx = privileges.value.findIndex((el) => el.privilegeUuid === id);
+    if (idx === -1) return;
 
-  //   roles.value[idx].roleStatus = status;
-  // }
+    privileges.value[idx].privilegeStatus = status;
+  }
 
   return {
-    privilege,
+    privileges,
     getAll,
+    add,
     update,
     remove,
-    add,
-    // updateStatus,
+    updateStatus,
     set,
   };
 });
