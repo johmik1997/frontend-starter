@@ -12,6 +12,7 @@ import { removeUndefined } from '@/utils/utils';
 import { useMembers } from '../store/members';
 import { getMembers } from '../api/membersApi';
 import { usePaginations } from '@/composables/usePaginationTemp';
+import { usePaginationcopy } from '@/composables/usePaginationcopy';
 const membersStore = useMembers();
 const searchKey = ref('');
 
