@@ -50,7 +50,7 @@ export default [
       permissions: [],
     },
     type: "Pages",
-    privilage: ['create_user'],
+    privilage: ['create_quations'],
   },
   {
     path: '/payment',
@@ -62,7 +62,7 @@ export default [
     },
     type: "Pages",
     isOpen: false, // Add this to control dropdown state
-    privilage: ['create_user'],
+    privilage: ['create_payement'],
     children: [
       {
         path: '/payment/deposit',
@@ -71,7 +71,7 @@ export default [
           requiresAuth: true,
           permissions: []
         },
-        privilage: ['create_admin'],
+        privilage: ['createpayment'],
       },
       {
         path: '/payment/dispersement',
@@ -100,7 +100,7 @@ export default [
       permissions: []
     },
     type: "Pages",
-    privilage: ['create_users'],
+    privilage: ['create_policies'],
   },
   {
     path: '/insurance',
@@ -111,7 +111,7 @@ export default [
       permissions: [],
     },
     type: "Pages",
-    privilage: ['create_user'],
+    privilage: ['create_insurance'],
   },
     {
     path: '/car_specifications',
@@ -122,7 +122,7 @@ export default [
       permissions: [],
     },
     type: "Pages",
-    privilage: ['create_user'],
+    privilage: ['create_car'],
   },
     {
     path: '/premium',
@@ -133,7 +133,7 @@ export default [
       permissions: [],
     },
     type: "Pages",
-    privilage: ['create_user'],
+    privilage: ['create_premium'],
   },
   {
     path: '/Users',
