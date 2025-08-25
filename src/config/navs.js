@@ -50,7 +50,7 @@ export default [
       permissions: [],
     },
     type: "Pages",
-    privilage: ['create_quations'],
+    privilage: ['create_quotations'],
   },
   {
     path: '/payment',

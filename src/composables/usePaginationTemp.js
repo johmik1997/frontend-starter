@@ -20,6 +20,7 @@ export function usePaginations(options = {}) {
   const searching = ref(false);
   const searchPagination = useTablePagination(perPage.value);
   const pagination = useTablePagination(perPage.value);
+
   function getPaginationData(next = true, current = false) {
     if (searching.value) {
       return JSON.parse(
@@ -61,14 +62,13 @@ export function usePaginations(options = {}) {
         
         if (paginationOptions.value.store && res.success) {
           console.log(res);
-          
-          paginationOptions.value.store.set(res.data?.response || []);
+            paginationOptions.value.store.set(res.data?.response || []);
         }
 
         pagination.totalPages.value = res.data?.totalPages || 1;
         if (
           res.success &&
-          res.data?.response?.length < pagination.limit.value
+          res.data?.length < pagination.limit.value
         ) {
           pagination.done.value = true;
         }
@@ -96,7 +96,7 @@ export function usePaginations(options = {}) {
           searchPagination.totalPages.value = res.data?.totalPages || 1;
           if (
             res?.success &&
-            res.data?.response?.length < searchPagination.limit.value
+            res.data?.length < searchPagination.limit.value
           ) {
             searchPagination.done.value = true;
           }
@@ -170,8 +170,7 @@ export function usePaginations(options = {}) {
       ? searchPagination.page.value
       : pagination.page.value;
   });
-
-  async function send() {
+ async function send() {
     try {
       // Use req.pending instead of pending
       req.pending.value = true;
