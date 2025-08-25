@@ -29,16 +29,6 @@ function handleClickOutside(event) {
   if (dropdownWrapper.value && !dropdownWrapper.value.contains(event.target)) {
     closeDropdown();
   }
-
-  document.addEventListener("click", clieckHandler);
-  return cleanUP(() => {
-    document.removeEventListener("click", clieckHandler);
-  });
-});
-
-function toggle() {
-  
-  openDropdown.value = !openDropdown.value;
 }
 
 // Close on escape key
