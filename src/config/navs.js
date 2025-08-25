@@ -11,16 +11,16 @@ export default [
     },
     type: "Analytics",
   },
-  {
-    path: "/a",
-    icon: icons.report,
-    name: "Report and analytics",
-    meta: {
-      requiresAuth: true,
-      permissions: [],
-    },
-    type: "Analytics",
-  },
+  // {
+  //   path: "/a",
+  //   icon: icons.report,
+  //   name: "Report and analytics",
+  //   meta: {
+  //     requiresAuth: true,
+  //     permissions: [],
+  //   },
+  //   type: "Analytics",
+  // },
   {
     path: '/drafts',
     icon: icons.leeds,

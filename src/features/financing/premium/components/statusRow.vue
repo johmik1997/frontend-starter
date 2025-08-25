@@ -28,7 +28,7 @@ const filteredRows = computed(() => {
     <!-- Show message if no deposited items -->
     <tr v-if="filteredRows.length === 0">
       <td :colspan="rowKeys.length + 2" class="p-3 text-center text-gray-500">
-        No deposited items found
+        No Preimum Payments items found
       </td>
     </tr>
 

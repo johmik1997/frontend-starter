@@ -52,8 +52,11 @@ function openAddDepositModal() {
     <div class="flex text-white rounded-lg  p-6 w-full justify-between">
       <div>
         <h2 class="text-2xl font-bold mb-4">Find Clients Who Committed</h2>
-        <p class="mb-4 text-sm font-light text-[#EFF0F6]">Lorem ipsum dolor sit amet consectetur adipiscing elit. Proin
-          venenatis pellentesque vitae porta<br /> consectetur nunc.</p>
+       <p class="mb-4 text-sm font-light text-[#EFF0F6]">
+  This section displays clients who have committed to making a deposit. You can review their details,
+  track progress, and manage deposit statuses all in one place.
+</p>
+
       </div>
       <div class="flex items-center">
         <button

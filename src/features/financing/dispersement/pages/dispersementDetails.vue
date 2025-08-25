@@ -196,15 +196,11 @@
             <h2 class="pb-2">
               Note
             </h2>
-            <p class="px-2 pb-4 text-sm gap-3 text-[#272833] opacity-60">
-              Lorem ipsum dolor sit amet consectetur. Euismod imperdiet eget fringilla molestie adipiscing nisl. Eget
-              arcu vel eget leo eu ultrices iaculis. Ipsum ipsum dictumst euismod neque mattis platea lectus. Nec in in
-              in cras suscipit arcu. Iaculis purus at facilisis proin. Felis id dignissim congue tristique et fringilla
-              leo fermentum cursus. Consequat pharetra id integer sed cras. Ultricies amet augue quis ornare. Quam etiam
-              ac duis bibendum adipiscing purus sed egestas. Ornare sagittis nisl vestibulum gravida. In sed sem
-              pulvinar imperdiet felis. Ipsum nulla enim etiam orci tristique feugiat. Eu malesuada malesuada urna
-              pretium.
-            </p>
+          <p class="px-2 pb-4 text-sm gap-3 text-[#272833] opacity-60">
+  This deposit has been successfully completed and verified. Please ensure that all client and transaction details are accurate
+  before proceeding with disbursement. Any discrepancies should be reported to the finance team immediately.
+</p>
+
           </div>
 
           <!-- Disbursement Button -->

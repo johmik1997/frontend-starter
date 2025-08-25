@@ -136,18 +136,18 @@ const totalPages = inject("totalPages", 1);
               </template>
             </GenericTableRow>
             
-            <!-- Empty State -->
-            <tr v-if="!rows?.length && !pending" class="empty-state-row">
-              <td :colspan="spec.head.length + 1" class="empty-state-cell">
-                <slot name="placeholder">
-                  <div class="empty-state">
-                    <div class="empty-icon" v-html="icons.no_data" />
-                    <h3 class="empty-title">No Data Available</h3>
-                    <p class="empty-subtitle">{{ placeholder || 'There are no records to display at the moment.' }}</p>
-                  </div>
-                </slot>
-              </td>
-            </tr>
+         <!-- Empty State -->
+<tr v-if="!rows?.length && !pending" class="empty-state-row">
+  <td :colspan="spec.head.length + 1" class="empty-state-cell">
+    <slot name="placeholder">
+      <div class="empty-state">
+        <div class="empty-icon" v-html="icons.no_data" />
+        <h3 class="empty-title">No Data Available</h3>
+        <p class="empty-subtitle">{{ placeholder || 'There are no items to display at the moment.' }}</p>
+      </div>
+    </slot>
+  </td>
+</tr>
           </template>
         </slot>
         

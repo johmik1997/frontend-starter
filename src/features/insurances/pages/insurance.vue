@@ -10,13 +10,13 @@ import { openModal } from "@customizer/modal-x"
 import { useInsurance } from '../store/insuranceStore'
 import { getInsurances } from '../api/insuranceApi'
 import { removeUndefined } from '@/utils/utils'
-import { usePaginations } from '@/composables/usePaginationTemp.js'
+import { usePaginationEmpty } from '@/composables/usePaginationEmpty'
 
 const insurance = useInsurance()
 const searchKey = ref('')
 
 // Pagination setup for the quotations table
-const pagination = usePaginations({
+const pagination = usePaginationEmpty({
   store: insurance,
   cb: (data, config) => getInsurances(
     removeUndefined({
