@@ -19,11 +19,10 @@ const { submit } = useForm('addform')
 const user = useUsers()
 const req = useApiRequest();
 const rolereq = useApiRequest();
-// rolereq.send(() => allRequest({
-//     roles: getAllRole({ page: 1, limit: 500 }),
-//     pharmacy: getAllBranches({ page: 1, limit: 500 })
-// })
-// )
+rolereq.send(() => allRequest({
+    roles: getAllRole({ page: 1, limit: 500 }),
+})
+)
 
 function create({ values }) {
     req.send(
@@ -79,13 +78,13 @@ function create({ values }) {
                         placeholder: 'Select Role',
                     }">
                 </Select>
-                <Select name="userStatus" label="User Status" validation="required"
+                <!-- <Select name="userStatus" label="User Status" validation="required"
                     :options="['ACTIVE', 'HISTORY', 'SUSPENDED', 'PENDING']" :attributes="{
                         type: 'text',
                         placeholder: 'status',
                     }">
-                </Select>
-                <Select name="userType" label="User Type" validation="required"
+                </Select> -->
+                <!-- <Select name="userType" label="User Type" validation="required"
                     :options="['Physician', 'Admin', 'SuperAdmin', 'Cashier', 'Patient', 'Payer', 'StoreKeeper', 'Pharmacist']"
                     :attributes="{
                         type: 'text',
@@ -97,7 +96,7 @@ function create({ values }) {
                     :attributes="{
                         placeholder: 'Select Branch',
                     }">
-                </Select>
+                </Select> -->
             </Form>
             <template #bottom>
                 <div class="p-2  ">

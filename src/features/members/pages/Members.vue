@@ -13,6 +13,7 @@ import { useMembers } from '../store/members';
 import { getMembers } from '../api/membersApi';
 import { usePaginations } from '@/composables/usePaginationTemp';
 import { usePaginationcopy } from '@/composables/usePaginationcopy';
+import TableRowSkeleton from '@/components/TableRowSkeleton.vue';
 const membersStore = useMembers();
 const searchKey = ref('');
 

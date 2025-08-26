@@ -172,57 +172,53 @@ export function usePaginationcopy(options = {}) {
       : pagination.page.value;
   });
 
-  async function send() {
-    try {
-      pending.value = true;
-      
-      const response = await paginationOptions.value.cb(
-        {
-          page: currentPage.value,
-          limit: perPage.value,
-          ...paginationOptions.value.params
-        },
-        paginationOptions.value.config
-      );
-      
-      // Handle paginated response format
-      if (response && response.data && response.data.content) {
-        // Extract pagination metadata
-        const { totalElements, totalPages, size, number } = response.data;
-        
-        // Update pagination state
-        total.value = totalElements || 0;
-        totalPage.value = totalPages || 1;
-        perPage.value = size || perPage.value;
-        currentPage.value = number || 0;
-        
-        // Set the content data to the store
-        if (typeof paginationOptions.value.store.set === 'function') {
-          paginationOptions.value.store.set(response.data);
-        } else {
-          console.error('Store does not have a set method');
-        }
+async function send() {
+  try {
+    req.pending.value = true;
+
+    const response = await paginationOptions.value.cb(
+      {
+        page: page.value,
+        limit: perPage.value,
+        ...paginationOptions.value.params
+      },
+      paginationOptions.value.config
+    );
+
+    if (response && response.data && response.data.content) {
+      const { totalElements, totalPages, size, number } = response.data;
+
+      total.value = totalElements || 0;
+      totalPage.value = totalPages || 1;
+      perPage.value = size || perPage.value;
+      // If you still need to track currentPage separately, define it first.
+      // currentPage.value = number || 0;
+
+      if (typeof paginationOptions.value.store.set === 'function') {
+        paginationOptions.value.store.set(response.data);
       } else {
-        // Handle regular response format
-        const data = response.data || [];
-        total.value = data.length;
-        totalPage.value = Math.ceil(total.value / perPage.value);
-        
-        if (typeof paginationOptions.value.store.set === 'function') {
-          paginationOptions.value.store.set(data);
-        } else {
-          console.error('Store does not have a set method');
-        }
+        console.error('Store does not have a set method');
       }
-      
-      return response;
-    } catch (error) {
-      console.error('Pagination error:', error);
-      return { success: false, error: error.message };
-    } finally {
-      pending.value = false;
+    } else {
+      const data = response.data || [];
+      total.value = data.length;
+      totalPage.value = Math.ceil(total.value / perPage.value);
+
+      if (typeof paginationOptions.value.store.set === 'function') {
+        paginationOptions.value.store.set(data);
+      } else {
+        console.error('Store does not have a set method');
+      }
     }
+
+    return response;
+  } catch (error) {
+    console.error('Pagination error:', error);
+    return { success: false, error: error.message };
+  } finally {
+    req.pending.value = false;
   }
+}
 
   return {
     page,

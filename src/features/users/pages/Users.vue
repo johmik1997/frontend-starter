@@ -71,7 +71,7 @@ function remove(id) {
         'Email',
         'Mobile Phone',
         'Role Name',
-        'User Status',
+      
         'Gender',
         'Actions',
       ],
@@ -81,7 +81,7 @@ function remove(id) {
         'email',
         'mobilePhone',
         'roleName',
-        'userStatus',
+       
         'gender',
       ]
     }" :cells="{
