@@ -2,15 +2,19 @@
 import Table from '@/components/Table.vue';
 import { useUsers } from '../store/userStore';
 import { useApiRequest } from '@/composables/useApiRequest';
-import { getAllUser, removeUserById } from '../Api/UserApi';
+import { getAllUser, removeUserById, verifyUser } from '../Api/UserApi';
 import { toasted } from '@/utils/utils';
 import { openModal } from '@customizer/modal-x';
 import Dropdown from '@/components/Dropdown.vue';
 import BaseIcon from '@/components/base/BaseIcon.vue';
-import { mdiDeleteAlert, mdiDotsVertical, mdiPencil } from '@mdi/js';
+import { mdiDeleteAlert, mdiDotsVertical, mdiPencil, mdiCheckDecagram } from '@mdi/js';
 import { usePaginations } from '@/composables/usePaginationTemp';
+import { ref } from 'vue';
 
 const usersStore = useUsers();
+const verificationCode = ref('');
+const selectedUser = ref(null);
+
 const pagination = usePaginations({
   store: usersStore,
   cb: getAllUser,
@@ -32,11 +36,37 @@ function remove(id) {
         })
     }
   })
-
 }
 
+// Verify user function
+const verifyReq = useApiRequest();
+function openVerifyModal(user) {
+  selectedUser.value = user;
+  openModal('VerificationModal', {
+    title: 'Verify User',
+    message: `Enter verification code sent to ${user.mobilePhone}`,
+    inputLabel: 'Verification Code',
+    inputPlaceholder: 'Enter code here'
+  }, (code) => {
+    if (code) {
+      verifyUserCode(user.mobilePhone, code);
+    }
+  });
+}
 
-
+function verifyUserCode(phoneNumber, code) {
+  verifyReq.send(() => verifyUser(phoneNumber, code),
+    (res) => {
+      if (res.success) {
+        // Update user verification status in the store
+        usersStore.updateVerification(selectedUser.value.userUuid, true);
+        toasted(true, 'User verified successfully');
+      } else {
+        toasted(false, '', res.error || 'Verification failed');
+      }
+    }
+  );
+}
 </script>
 
 <template>
@@ -56,37 +86,35 @@ function remove(id) {
                 fill="white" />
             </svg>
             Add User
-            <!-- <span class="truncate px-3">Add Privilege</span> -->
           </button>
         </slot>
       </div>
     </div>
 
-
-
     <Table :pending="pagination.pending.value" :headers="{
       head: [
-
         'Fullname',
         'Email',
         'Mobile Phone',
         'Role Name',
-      
         'Gender',
+        'Verified',
         'Actions',
       ],
       row: [
-
         'fullname',
         'email',
         'mobilePhone',
         'roleName',
-       
         'gender',
+        'isVerified',
       ]
     }" :cells="{
       fullname: (_, row) => {
         return `${row?.title} ${row?.firstName} ${row?.fatherName} ${row?.grandFatherName}`
+      },
+      isVerified: (_, row) => {
+        return row.isVerified ? 'Yes' : 'No'
       }
     }" :rows="usersStore.users || []">
 
@@ -97,39 +125,18 @@ function remove(id) {
             <BaseIcon :path="mdiPencil" />
             Edit
           </button>
+          <button v-if="!row.isVerified" class="rounded-lg bg-green-600 text-white px-2 py-1 items-center border-gray-300 flex"
+            @click="openVerifyModal(row)">
+            <BaseIcon :path="mdiCheckDecagram" />
+            Verify
+          </button>
           <button class="rounded-lg bg-[#FF4C4C] text-white px-2 py-1 items-center border-gray-300 flex"
             @click="remove(row?.userUuid)">
             <BaseIcon :path="mdiDeleteAlert" />
             Delete
           </button>
-          <!-- <Dropdown top="120%" v-slot="{ setRef, toggleDropdown }">
-            <button @click="toggleDropdown">
-              <BaseIcon :path="mdiDotsVertical" class="bg-black/10 rounded-full" />
-            </button>
-            <div :ref="setRef">
-              <div class="flex flex-col *:text-left gap-2 p-2 bg-white shadow-lg w-40">
-                <button class="rounded-lg  bg-gray-600 text-white px-2 py-1 border-gray-300 flex gap-1"
-                  @click='$router.push("/edit_user/" + row?.userUuid)'>
-                  <BaseIcon :path="mdiPencil" />
-                  Edit
-                </button>
-                <button class="rounded-lg bg-[#FF4C4C] text-white px-2 py-1 border-gray-300 flex gap-1"
-                  @click="remove(row?.userUuid)">
-                  <BaseIcon :path="mdiDeleteAlert" />
-                  Delete
-                </button>
-              </div>
-            </div>
-
-          </Dropdown> -->
         </div>
-
-
       </template>
     </Table>
-
   </div>
-
-
-
 </template>

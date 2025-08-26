@@ -7,6 +7,9 @@ const path = "/users";
 export function CreateUser(data) {
   return api.addAuthenticationHeader().post(`${path}/signUp`, data);
 }
+export const verifyUser = (phoneNumber, code) => {
+  return api.post(`${path}/EnterVerificationCode?phoneNumber=${phoneNumber}&code=${code}`);
+};
 export function getAllUser(query = {}) {
   const qr = getQueryFormObject(query);
   return api.addAuthenticationHeader().get(`${path}/all${qr}`);
