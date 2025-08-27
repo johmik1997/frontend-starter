@@ -35,6 +35,20 @@ export const useUsers = defineStore("allUserStore", () => {
 
     users.value[idx].userStatus = status;
   }
+  // In your userStore.js
+updateVerification(userUuid, isVerified) {
+  const user = this.users.find(u => u.userUuid === userUuid);
+  if (user) {
+    user.isVerified = isVerified;
+  }
+}
+// In your userStore.js
+updateVerification(userUuid, isVerified) {
+  const user = this.users.find(u => u.userUuid === userUuid);
+  if (user) {
+    user.isVerified = isVerified;
+  }
+}
 
   return {
     users,
@@ -44,5 +58,6 @@ export const useUsers = defineStore("allUserStore", () => {
     updateStatus,
     set,
     add,
+    updateVerification,
   };
 });
