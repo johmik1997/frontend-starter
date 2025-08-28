@@ -2,6 +2,7 @@ import Quatation from "../features/quatation/pages/quatation.vue";
 import Drafts from "../features/drfats/pages/drafts.vue";
 import Details from "@/features/quatation/pages/details.vue";
 import QuotationIndex from "../features/quatation/pages/QuotationIndex.vue";
+import CreateNewQuatationClientSide from "@/features/quatation/pages/createNewQuatationClientSide.vue";
 
 export default [
   {
@@ -33,6 +34,15 @@ export default [
 	path: '/drafts',
 	name: 'drafts',
 	component: Drafts,
+	meta: {
+  requiresAuth: true,
+  permissions: []
+}
+},
+{
+	path: '/createQuotation',
+	name: 'CreateQuotation',
+	component: CreateNewQuatationClientSide,
 	meta: {
   requiresAuth: true,
   permissions: []

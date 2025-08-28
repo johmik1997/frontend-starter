@@ -52,6 +52,18 @@ export default [
     type: "Pages",
     privilage: ['create_quotations'],
   },
+    {
+    path: '/createQuotation',
+    icon: icons.quotation,
+    name: 'Create Quotations',
+    meta: {
+      requiresAuth: true,
+      permissions: [],
+    },
+    type: "Pages",
+    privilage: ['create_quotations'],
+  },
+  
   {
     path: '/payment',
     icon: icons.payment,
@@ -91,17 +103,17 @@ export default [
       }
     ]
   },
-  {
-    path: '/policies',
-    icon: icons.policies,
-    name: 'policies',
-    meta: {
-      requiresAuth: true,
-      permissions: []
-    },
-    type: "Pages",
-    privilage: ['create_policies'],
-  },
+  // {
+  //   path: '/policies',
+  //   icon: icons.policies,
+  //   name: 'policies',
+  //   meta: {
+  //     requiresAuth: true,
+  //     permissions: []
+  //   },
+  //   type: "Pages",
+  //   privilage: ['create_policies'],
+  // },
   {
     path: '/insurance',
     icon: icons.transfer,
