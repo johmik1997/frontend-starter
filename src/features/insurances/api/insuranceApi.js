@@ -11,7 +11,7 @@ export function registerInsurance(data) {
   formData.append('accountNumber', data.accountNumber);
   
   return api.addAuthenticationHeader().post(
-    `${path}/registerInsurance?insuranceName=${encodeURIComponent(data.insuranceName)}&accountNumber=${encodeURIComponent(data.accountNumber)}`,
+    `${path}/registerInsurance`, // Remove query parameters from URL
     formData,
     {
       headers: {

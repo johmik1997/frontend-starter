@@ -10,11 +10,11 @@ import Form from "@/components/new_form_builder/Form.vue";
 import { Input } from "@/components/new_form_elements";
 import { CreateUser } from "@/features/users/Api/UserApi";
 import { useApiRequest } from "@/composables/useApiRequest";
-import { closeModal } from "@customizer/modal-x";
+import { closeModal, openModal } from "@customizer/modal-x";
 import InputEmail from "@/components/new_form_elements/inputEmail.vue";
 import icons from "@/utils/icons";
 import { getAllInsurances, getCategoriesByInsurance } from "@/features/roles/Api/RoleApi";
-import { CreateClient, getAllcar } from "../api/customersApi";
+import { CreateClient, getAllcar, saveCarLibre } from "../api/customersApi";
 import { v4 as uuidv4 } from 'uuid';
 import { getValidators } from '@/components/new_form_builder/util/validators.js';
 import { useQuotation } from '../store/Quotation';
@@ -36,6 +36,7 @@ const personalDetails = ref({
 const carRequests = ref([]);
 const bankAccount = ref('');
 const step = ref(1);
+const createdQuotation = ref(null); // Store the created quotation response
 
 // Dynamic step title
 const stepTitle = computed(() => {
@@ -44,6 +45,7 @@ const stepTitle = computed(() => {
     case 2: return 'Insurance Selection';
     case 3: return 'Vehicle Details';
     case 4: return 'Bank Account Information';
+    case 5: return 'Upload Libre Images';
     default: return 'Add Client';
   }
 });
@@ -299,7 +301,7 @@ const nextStep = (event) => {
 };
 
 const prevStep = () => {
-  if (step.value > 1) {
+  if (step.value > 1 && step.value !== 5) { // Don't allow going back from libre step
     step.value--;
   }
 };
@@ -456,7 +458,7 @@ const deleteVehicle = (event, index) => {
   carRequests.value.splice(index, 1);
 };
 
-// Form submission
+// Form submission - updated to handle libre upload
 const submitForm = async () => {
   try {
     if (!isValidBankAccount()) {
@@ -480,14 +482,18 @@ const submitForm = async () => {
     if (response.success) {
       console.log('Success response data:', response.data);
       
-      // Add the response data directly to the store
+      createdQuotation.value = response.data; // Store the response
       quotationStore.add(response.data);
-      
-      // Force refresh the quotation list
       await quotationStore.fetchQuotations();
       
       toasted(true, "Client Created Successfully!");
-      closeModal();
+      
+      // Move to libre upload step if there are vehicles
+      if (response.data.carResponseList && response.data.carResponseList.length > 0) {
+        step.value = 5; // Move to libre upload step
+      } else {
+        closeModal();
+      }
     } else {
       console.error('Error response:', response.error);
       toasted(false, "Error", response.error || "Failed to create client");
@@ -496,6 +502,104 @@ const submitForm = async () => {
     console.error('Error creating client:', error);
     toasted(false, "Error", "An unexpected error occurred");
   }
+};
+
+// Libre upload functionality
+const currentCarIndex = ref(0);
+const frontLibre = ref(null);
+const backLibre = ref(null);
+const frontLibrePreview = ref(null);
+const backLibrePreview = ref(null);
+const isSubmittingLibre = ref(false);
+
+const currentCar = computed(() => {
+  if (createdQuotation.value?.carResponseList && createdQuotation.value.carResponseList[currentCarIndex.value]) {
+    return createdQuotation.value.carResponseList[currentCarIndex.value];
+  }
+  return null;
+});
+
+const hasValidImages = computed(() => {
+  return frontLibre.value && backLibre.value;
+});
+
+const handleFrontLibreUpload = (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    frontLibre.value = file;
+    frontLibrePreview.value = URL.createObjectURL(file);
+  }
+};
+
+const handleBackLibreUpload = (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    backLibre.value = file;
+    backLibrePreview.value = URL.createObjectURL(file);
+  }
+};
+
+const submitLibreImages = async () => {
+  if (!frontLibre.value || !backLibre.value) {
+    toasted(false, '', 'Please upload both front and back libre images');
+    return;
+  }
+
+  isSubmittingLibre.value = true;
+  const carUuid = currentCar.value?.carUuid;
+
+  if (!carUuid) {
+    toasted(false, '', 'Car UUID is missing');
+    isSubmittingLibre.value = false;
+    return;
+  }
+  
+  const formData = new FormData();
+  formData.append('Front_libre', frontLibre.value);
+  formData.append('back_libre', backLibre.value);
+  
+  try {
+    const response = await saveCarLibre(carUuid, formData);
+    
+    if (response.success || response.status === 200) {
+      toasted(true, 'Libre images uploaded successfully');
+      
+      // Check if there are more cars to upload
+      if (currentCarIndex.value < createdQuotation.value.carResponseList.length - 1) {
+        // Move to next car
+        currentCarIndex.value++;
+        clearLibreInputs();
+      } else {
+        // All cars processed, close modal
+        closeModal();
+      }
+    } else {
+      throw new Error(response.error || 'Failed to upload libre images');
+    }
+  } catch (error) {
+    console.error('Error uploading libre images:', error);
+    toasted(false, '', error.message || 'Failed to upload libre images');
+  } finally {
+    isSubmittingLibre.value = false;
+  }
+};
+
+const skipLibreUpload = () => {
+  if (currentCarIndex.value < createdQuotation.value.carResponseList.length - 1) {
+    // Move to next car
+    currentCarIndex.value++;
+    clearLibreInputs();
+  } else {
+    // All cars processed, close modal
+    closeModal();
+  }
+};
+
+const clearLibreInputs = () => {
+  frontLibre.value = null;
+  backLibre.value = null;
+  frontLibrePreview.value = null;
+  backLibrePreview.value = null;
 };
 
 // Add bank account validation
@@ -628,7 +732,7 @@ onMounted(() => {
           <div class="flex items-center gap-4">
             <button 
               @click="prevStep" 
-              v-if="step > 1"
+              v-if="step > 1 && step !== 5"
               class="flex items-center justify-center p-2 rounded-full hover:bg-gray-100 transition-colors"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -637,7 +741,7 @@ onMounted(() => {
             </button>
             <div>
               <h2 class="font-bold text-xl text-gray-800">{{ stepTitle }}</h2>
-              <p class="text-sm text-gray-500">Step {{ step }} of 4</p>
+              <p class="text-sm text-gray-500">Step {{ step }} of 5</p>
             </div>
           </div>
           
@@ -645,13 +749,13 @@ onMounted(() => {
           <div class="flex items-center gap-2">
             <div class="flex items-center gap-1">
               <div 
-                v-for="i in 4" 
+                v-for="i in 5" 
                 :key="i"
                 class="w-8 h-2 rounded-full transition-all duration-300"
                 :class="i <= step ? 'bg-primary' : 'bg-gray-200'"
               ></div>
             </div>
-            <span class="text-xs text-gray-500 ml-2">{{ Math.round((step / 4) * 100) }}%</span>
+            <span class="text-xs text-gray-500 ml-2">{{ Math.round((step / 5) * 100) }}%</span>
           </div>
         </div>
       </template>
@@ -1036,14 +1140,106 @@ onMounted(() => {
               </Button>
             </div>
           </div>
-       
-      </Form>
+
+          <!-- Step 5: Libre Upload -->
+          <div v-if="step === 5" class="space-y-6">
+            <div class="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-xl border border-green-100">
+              <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                  <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/>
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="text-lg font-semibold text-gray-800">Upload Libre Images</h3>
+                  <p class="text-sm text-gray-600">
+                    Vehicle {{ currentCarIndex + 1 }} of {{ createdQuotation?.carResponseList?.length || 0 }}: 
+                    {{ currentCar?.carName }} {{ currentCar?.carModel }}
+                  </p>
+                </div>
+              </div>
+
+              <!-- Car Info -->
+              <div class="mb-6 p-4 bg-white rounded-lg border">
+                <h4 class="font-medium text-gray-800 mb-2">Vehicle Details</h4>
+                <div class="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                  <p><span class="font-medium">Make:</span> {{ currentCar?.carName }}</p>
+                  <p><span class="font-medium">Model:</span> {{ currentCar?.carModel }}</p>
+                  <p><span class="font-medium">Type:</span> {{ currentCar?.carType }}</p>
+                  <p><span class="font-medium">Plate:</span> {{ currentCar?.plateNumber }}</p>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Front Libre Upload -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Front Libre</label>
+                  <div class="flex items-center justify-center w-full">
+                    <label class="w-full flex flex-col items-center px-4 py-6 bg-white rounded-lg border-2 border-dashed border-gray-300 cursor-pointer hover:bg-gray-50 transition-colors">
+                      <div v-if="frontLibrePreview" class="mb-2">
+                        <img :src="frontLibrePreview" class="h-32 object-contain rounded" />
+                      </div>
+                      <div v-else class="mb-2">
+                        <svg class="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/>
+                        </svg>
+                      </div>
+                      <span class="text-sm text-gray-500 text-center">
+                        {{ frontLibrePreview ? 'Change Front Page' : 'Upload Front Page' }}
+                      </span>
+                      <span class="text-xs text-gray-400 mt-1">PNG, JPG up to 10MB</span>
+                      <input type="file" class="hidden" @change="handleFrontLibreUpload" accept="image/*" />
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Back Libre Upload -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Back Libre</label>
+                  <div class="flex items-center justify-center w-full">
+                    <label class="w-full flex flex-col items-center px-4 py-6 bg-white rounded-lg border-2 border-dashed border-gray-300 cursor-pointer hover:bg-gray-50 transition-colors">
+                      <div v-if="backLibrePreview" class="mb-2">
+                        <img :src="backLibrePreview" class="h-32 object-contain rounded" />
+                      </div>
+                      <div v-else class="mb-2">
+                        <svg class="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/>
+                        </svg>
+                      </div>
+                      <span class="text-sm text-gray-500 text-center">
+                        {{ backLibrePreview ? 'Change Back Page' : 'Upload Back Page' }}
+                      </span>
+                      <span class="text-xs text-gray-400 mt-1">PNG, JPG up to 10MB</span>
+                      <input type="file" class="hidden" @change="handleBackLibreUpload" accept="image/*" />
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Progress indicator for multiple cars -->
+              <div v-if="createdQuotation?.carResponseList?.length > 1" class="mt-6 p-4 bg-blue-50 rounded-lg">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-sm font-medium text-blue-800">Upload Progress</span>
+                  <span class="text-sm text-blue-600">
+                    {{ currentCarIndex + 1 }} / {{ createdQuotation.carResponseList.length }}
+                  </span>
+                </div>
+                <div class="w-full bg-blue-200 rounded-full h-2">
+                  <div 
+                    class="bg-blue-500 h-2 rounded-full transition-all duration-300" 
+                    :style="{ width: `${((currentCarIndex + 1) / createdQuotation.carResponseList.length) * 100}%` }"
+                  ></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Form>
       </template>
 
       <template #bottom>
         <div class="flex justify-between items-center p-6 bg-gray-50 border-t border-gray-200">
           <!-- Save as Draft button -->
-          <div v-if="step !== 4">
+          <div v-if="step !== 4 && step !== 5">
             <Button 
               @click="saveDraft" 
               type="secondary" 
@@ -1060,44 +1256,70 @@ onMounted(() => {
           
           <!-- Navigation buttons -->
           <div class="flex items-center gap-3">
-            <Button 
-              v-if="step > 1 && step !== 4" 
-              @click="prevStep" 
-              type="secondary" 
-              size="lg"
-              class="px-8"
-            >
-              <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"/>
-              </svg>
-              Back
-            </Button>
-            
-            <Button 
-              v-if="step < 4" 
-              @click="nextStep" 
-              type="primary" 
-              size="lg"
-              class="px-8"
-            >
-              Continue
-              <svg class="w-4 h-4 ml-2" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
-              </svg>
-            </Button>
-            
-            <Button 
-              v-if="step === 4" 
-              @click="submitForm" 
-              type="primary" 
-              size="lg"
-              class="px-8"
-            >
-              <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-              </svg>
-              Submit Application
-            </Button>
+            <!-- Libre step buttons -->
+            <div v-if="step === 5" class="flex items-center gap-3">
+              <Button 
+                @click="skipLibreUpload" 
+                type="secondary" 
+                size="lg"
+                class="px-8"
+              >
+                {{ currentCarIndex < createdQuotation?.carResponseList?.length - 1 ? 'Skip This Vehicle' : 'Skip & Finish' }}
+              </Button>
+              
+              <Button 
+                @click="submitLibreImages" 
+                type="primary" 
+                size="lg"
+                class="px-8"
+                :pending="isSubmittingLibre"
+                :disabled="!hasValidImages"
+              >
+                {{ currentCarIndex < createdQuotation?.carResponseList?.length - 1 ? 'Upload & Next' : 'Upload & Finish' }}
+              </Button>
+            </div>
+
+            <!-- Regular navigation buttons -->
+            <template v-else>
+              <Button 
+                v-if="step > 1 && step !== 4" 
+                @click="prevStep" 
+                type="secondary" 
+                size="lg"
+                class="px-8"
+              >
+                <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                </svg>
+                Back
+              </Button>
+              
+              <Button 
+                v-if="step < 4" 
+                @click="nextStep" 
+                type="primary" 
+                size="lg"
+                class="px-8"
+              >
+                Continue
+                <svg class="w-4 h-4 ml-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                </svg>
+              </Button>
+              
+              <Button 
+                v-if="step === 4" 
+                @click="submitForm" 
+                type="primary" 
+                size="lg"
+                class="px-8"
+              >
+                <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                </svg>
+                Submit Application
+              </Button>
+            </template>
           </div>
         </div>
       </template>

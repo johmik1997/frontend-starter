@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, onMounted, computed } from 'vue';
+import { ref, watch, onMounted, computed, reactive } from 'vue';
 import Button from '@/components/Button.vue';
 import Select from '@/components/new_form_elements/Select.vue';
 import { allRequest, toasted } from "@/utils/utils";
@@ -7,23 +7,29 @@ import ModalParent from "@/components/new_form_builder/ModalParent.vue";
 import NewFormParent from "@/components/NewFormParent.vue";
 import Form from "@/components/new_form_builder/Form.vue";
 import { Input } from "@/components/new_form_elements";
-import { CreateClient, getAllcar } from "../api/customersApi";
+import { RegisterClient, getAllcar } from "../api/customersApi";
 import { v4 as uuidv4 } from 'uuid';
 import { useApiRequest } from "@/composables/useApiRequest";
-import { closeModal } from "@customizer/modal-x";
+import { closeModal, openModal } from "@customizer/modal-x";
 import { getAllInsurances, getCategoriesByInsurance } from "@/features/roles/Api/RoleApi";
 import { useQuotation } from '../store/Quotation';
 import { useAuth } from '@/stores/auth';
 
 const auth = useAuth();
 const quotationStore = useQuotation();
-
+// console.log(auth.auth?.user.userUuid);
 const props = defineProps(['data']);
 const editingIndex = ref(null);
 
 const carRequests = ref([]);
 const bankAccount = ref('');
 const step = ref(1);
+const createdQuotation = ref(null); // Store the created quotation response
+
+// Add missing personalDetails reactive object
+const personalDetails = reactive({
+  insuranceUuid: ''
+});
 
 const stepTitle = computed(() => {
   switch (step.value) {
@@ -39,6 +45,9 @@ watch(() => props.data?.props?.data?.props?.data, (newData) => {
     carRequests.value = [...(newData.carRequests || [])];
     bankAccount.value = newData.bankAccount || '';
     step.value = newData.step || 1;
+    if (newData.insuranceUuid) {
+      personalDetails.insuranceUuid = newData.insuranceUuid;
+    }
   }
 }, { immediate: true, deep: true });
 
@@ -168,15 +177,23 @@ const isValidVehicle = () => {
 // Navigation
 const nextStep = () => {
   if (step.value === 1) {
+    if (!personalDetails.insuranceUuid) {
+      toasted(false, "", "Please select an insurance provider!");
+      return;
+    }
     step.value = 2;
   } else if (step.value === 2) {
-    step.value = 3;
-  } else if (step.value === 3) {
     if (carRequests.value.length === 0) {
       toasted(false, "", "Please add at least one vehicle!");
       return;
     }
-    step.value = 4;
+    step.value = 3;
+  } else if (step.value === 3) {
+    if (!isValidBankAccount()) {
+      return;
+    }
+    // Remove step 4 logic since we only have 3 steps
+    submitForm();
   }
 };
 
@@ -186,7 +203,8 @@ const prevStep = () => {
 
 // Vehicle management
 const addVehicle = () => {
-  newVehicle.value.buyingPrice = parseFloat(newVehicle.value.buyingPrice);
+  // Ensure buyingPrice is a number
+  newVehicle.value.buyingPrice = parseFloat(newVehicle.value.buyingPrice) || 0;
 
   handleCategorySelection();
 
@@ -225,6 +243,7 @@ const clearNewVehicle = () => {
   selectedFinalCategory.value = '';
 };
 
+// Fix event parameter issues
 const editVehicle = (index) => {
   const v = carRequests.value[index];
   newVehicle.value = { ...v };
@@ -247,7 +266,7 @@ const editVehicle = (index) => {
 
 const deleteVehicle = (index) => carRequests.value.splice(index, 1);
 
-// Submission
+// Bank account validation
 const isValidBankAccount = () => {
   if (!bankAccount.value?.trim()) {
     toasted(false, "", "Please enter your bank account number");
@@ -256,11 +275,12 @@ const isValidBankAccount = () => {
   return true;
 };
 
+// Submission
 const submitForm = async () => {
-  if (!isValidBankAccount()) return;
-
   const requestData = {
-    userUuid: auth.userUuid,
+    userUuid: auth.auth?.user.userUuid,
+    insuranceUuid: personalDetails.insuranceUuid,
+    bankAccount: bankAccount.value,
     carRequests: carRequests.value.map(vehicle => ({
       ...vehicle,
       buyingPrice: parseFloat(vehicle.buyingPrice) || 0,
@@ -270,18 +290,46 @@ const submitForm = async () => {
   };
 
   try {
-    const response = await CreateClient(requestData);
+    const response = await RegisterClient(requestData);
     if (response.success) {
+      createdQuotation.value = response.data; // Store the response
       quotationStore.add(response.data);
       await quotationStore.fetchQuotations();
       toasted(true, "Client Created Successfully!");
-      closeModal();
+      
+      // Show libre upload modal for each car
+      if (response.data.carResponseList && response.data.carResponseList.length > 0) {
+        showLibreUploadModal(response.data.carResponseList[0]);
+      } else {
+        closeModal();
+      }
     } else {
       toasted(false, "Error", response.error || "Failed to create client");
     }
   } catch (error) {
+    console.error("Submission error:", error);
     toasted(false, "Error", "An unexpected error occurred");
   }
+};
+
+// Libre upload functionality
+const showLibreUploadModal = (carData) => {
+  openModal('UploadLibreModal', {
+    props: {
+      draftData: {
+        carUuid: carData.carUuid,
+        carName: carData.carName,
+        carModel: carData.carModel,
+        libreFrontPage: null,
+        libreBackPage: null
+      }
+    }
+  });
+};
+
+const handleLibreUploadSuccess = () => {
+  toasted(true, 'Libre images uploaded successfully');
+  closeModal();
 };
 
 // Draft saving
@@ -296,6 +344,7 @@ const saveDraft = () => {
       data: {
         carRequests: carRequests.value,
         bankAccount: bankAccount.value,
+        insuranceUuid: personalDetails.insuranceUuid,
         step: step.value
       }
     };
@@ -303,6 +352,7 @@ const saveDraft = () => {
     localStorage.setItem(DRAFTS_STORAGE_KEY, JSON.stringify(existingDrafts));
     toasted(true, "Draft saved successfully!");
   } catch (error) {
+    console.error("Error saving draft:", error);
     toasted(false, "Error saving draft");
   }
 };
@@ -444,7 +494,7 @@ onMounted(() => {
                 <div
                   class="w-20 h-20 mb-4 flex items-center justify-center bg-white rounded-xl p-3 border shadow-sm group-hover:shadow-md transition-shadow">
                   <img
-                    :src="insurance.profile ? `data:image/jpeg;base64,${insurance.profile}` : '@/assets/default-insurance-logo.png'"
+                    :src="insurance.profile ? `data:image/jpeg;base64,${insurance.profile}` : require('@/assets/default-insurance-logo.png')"
                     :alt="insurance.insuranceName" class="max-w-full max-h-full object-contain" />
                 </div>
 
@@ -532,7 +582,7 @@ onMounted(() => {
                   :attributes="{ placeholder: 'Select engine number' }" />
 
                 <div class="flex justify-end pt-4">
-                  <Button @click="addVehicle" type="primary" size="md" class="px-8">
+                  <Button @click.prevent="addVehicle" type="primary" size="md" class="px-8">
                     {{ editingIndex !== null ? 'Update Vehicle' : 'Add Vehicle' }}
                   </Button>
                 </div>
@@ -582,10 +632,10 @@ onMounted(() => {
                         </div>
                       </div>
                       <div class="flex flex-col gap-2 ml-4">
-                        <Button @click="(e) => editVehicle(e, index)" type="secondary" size="sm" class="text-xs">
+                        <Button @click="editVehicle(index)" type="secondary" size="sm" class="text-xs">
                           Edit
                         </Button>
-                        <Button @click="(e) => deleteVehicle(e, index)" type="danger" size="sm" class="text-xs">
+                        <Button @click="deleteVehicle(index)" type="danger" size="sm" class="text-xs">
                           Delete
                         </Button>
                       </div>
@@ -633,11 +683,6 @@ onMounted(() => {
                 }" class="bg-white" />
               </div>
             </div>
-            <div class="flex justify-between mt-4">
-              <Button @click="prevStep" class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded">
-                Back
-              </Button>
-            </div>
           </div>
         </Form>
       </template>
@@ -660,7 +705,7 @@ onMounted(() => {
 
           <!-- Navigation -->
           <div class="flex items-center gap-3">
-            <Button v-if="step > 1" @click="prevStep" type="secondary" size="lg" class="px-8">
+            <Button v-if="step > 1" @click.prevent="prevStep" type="secondary" size="lg" class="px-8">
               <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd"
                   d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
@@ -678,7 +723,7 @@ onMounted(() => {
               </svg>
             </Button>
 
-            <Button v-if="step === 3" @click="submitForm" type="primary" size="lg" class="px-8">
+            <Button v-if="step === 3" @click="nextStep" type="primary" size="lg" class="px-8">
               <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd"
                   d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"

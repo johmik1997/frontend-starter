@@ -37,6 +37,9 @@ export function getCustomersbyId(id, config) {
 export function CreateClient(data) {
   return api.addAuthenticationHeader().post(`/cars/registerClientsCar`, data);
 }
+export function RegisterClient(data) {
+  return api.addAuthenticationHeader().post(`/cars/registerCar`, data);
+}
 export function getAllPayment(query = {}) {
   const qr = getQueryFormObject(query);
   return api.addAuthenticationHeader().get(`${path}/searchPayment${qr}`);
@@ -55,6 +58,12 @@ export function updateCarDetails(carUuid, data) {
     .put(`/cars/updateCar/${carUuid}`, data);
 }
 
-
+export function saveCarLibre(carUuid, formData) {
+  return api.addAuthenticationHeader().post(`/cars/saveCarLibre/${carUuid}`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
+}
 
 

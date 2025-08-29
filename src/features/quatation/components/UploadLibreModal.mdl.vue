@@ -4,7 +4,7 @@ import { closeModal } from "@customizer/modal-x";
 import ModalParent from "@/components/new_form_builder/ModalParent.vue";
 import BaseIcon from "@/components/base/BaseIcon.vue";
 import { mdiClose } from "@mdi/js";
-import { saveCarLibre } from '@/features/financing/dispersement/api/dispersementApi';
+import { saveCarLibre } from '../api/customersApi'; // Use local API
 import { toasted } from '@/utils/utils';
 import Button from "@/components/Button.vue";
 
@@ -26,29 +26,15 @@ const frontLibre = ref(null);
 const backLibre = ref(null);
 const frontLibrePreview = ref(null);
 const backLibrePreview = ref(null);
-const originalFrontLibre = ref(null);
-const originalBackLibre = ref(null);
 const isSubmitting = ref(false);
 
 // Computed properties for Button state
 const hasValidImages = computed(() => {
-  return (frontLibre.value || originalFrontLibre.value) && 
-         (backLibre.value || originalBackLibre.value);
-});
-
-const isUpdateMode = computed(() => {
-  return Boolean(originalFrontLibre.value || originalBackLibre.value);
+  return frontLibre.value && backLibre.value;
 });
 
 onMounted(() => {
-  if (draftData.value?.libreFrontPage) {
-    frontLibrePreview.value = draftData.value.libreFrontPage;
-    originalFrontLibre.value = draftData.value.libreFrontPage;
-  }
-  if (draftData.value?.libreBackPage) {
-    backLibrePreview.value = draftData.value.libreBackPage;
-    originalBackLibre.value = draftData.value.libreBackPage;
-  }
+  console.log('Modal opened with data:', draftData.value);
 });
 
 const handleFrontLibreUpload = (event) => {
@@ -67,76 +53,33 @@ const handleBackLibreUpload = (event) => {
   }
 };
 
-const base64ToBlob = async (base64String) => {
-  if (!base64String) return null;
-  
-  // If the string already contains the data URL prefix, remove it
-  const base64WithoutPrefix = base64String.includes('base64,') 
-    ? base64String.split('base64,')[1] 
-    : base64String;
-
-  try {
-    // Convert base64 to binary
-    const response = await fetch(`data:image/jpeg;base64,${base64WithoutPrefix}`);
-    const blob = await response.blob();
-    return blob;
-  } catch (error) {
-    console.error('Error converting base64 to blob:', error);
-    return null;
-  }
-};
-
 const submitLibreImages = async () => {
+  if (!frontLibre.value || !backLibre.value) {
+    toasted(false, '', 'Please upload both front and back libre images');
+    return;
+  }
+
   isSubmitting.value = true;
   const carUuid = draftData.value.carUuid;
   console.log('Car UUID in submit:', carUuid);
 
   if (!carUuid) {
     toasted(false, '', 'Car UUID is missing');
-    return;
-  }
-
-  // Check if at least one image is being updated
-  if (!frontLibre.value && !backLibre.value && !originalFrontLibre.value && !originalBackLibre.value) {
-    toasted(false, '', 'Please upload at least one image');
+    isSubmitting.value = false;
     return;
   }
   
   const formData = new FormData();
+  formData.append('Front_libre', frontLibre.value);
+  formData.append('back_libre', backLibre.value);
   
   try {
-    // Handle front libre
-    if (frontLibre.value) {
-      // New file upload
-      formData.append('Front_libre', frontLibre.value);
-    } else if (originalFrontLibre.value) {
-      // Convert existing base64 image to blob
-      const frontBlob = await base64ToBlob(originalFrontLibre.value);
-      if (frontBlob) {
-        formData.append('Front_libre', frontBlob, 'front_libre.jpg');
-      }
-    }
-    
-    // Handle back libre
-    if (backLibre.value) {
-      // New file upload
-      formData.append('back_libre', backLibre.value);
-    } else if (originalBackLibre.value) {
-      // Convert existing base64 image to blob
-      const backBlob = await base64ToBlob(originalBackLibre.value);
-      if (backBlob) {
-        formData.append('back_libre', backBlob, 'back_libre.jpg');
-      }
-    }
-    
     const response = await saveCarLibre(carUuid, formData);
     
     if (response.success || response.status === 200) {
       toasted(true, 'Libre images uploaded successfully');
       emit('updateSuccess'); // Emit event on success
-      
       closeModal();
-       
     } else {
       throw new Error(response.error || 'Failed to upload libre images');
     }
@@ -155,7 +98,7 @@ const submitLibreImages = async () => {
       <!-- Header -->
       <div class="flex justify-between items-center p-4 border-b">
         <h2 class="text-lg font-semibold">
-          {{ isUpdateMode ? 'Update' : 'Upload' }} Libre Images
+          Upload Libre Images
         </h2>
         <Button
           @click="closeModal()"
@@ -167,6 +110,13 @@ const submitLibreImages = async () => {
 
       <!-- Content -->
       <div class="p-4">
+        <!-- Car Info -->
+        <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+          <p class="text-sm font-medium text-gray-700">
+            Vehicle: {{ draftData.carName }} {{ draftData.carModel }}
+          </p>
+        </div>
+
         <!-- Front Libre Upload -->
         <div class="mb-4">
           <label class="block text-sm font-medium text-gray-700 mb-2">Front Libre</label>
@@ -205,19 +155,21 @@ const submitLibreImages = async () => {
         <Button 
           @click="closeModal()" 
           class="bg-gray-200 text-gray-800 px-4 py-2 rounded-md text-sm">
-          Cancel
+          Skip for Now
         </Button>
         <Button 
           @click="submitLibreImages" 
           class="bg-primary text-white px-4 py-2 rounded-md text-sm"
           :pending="isSubmitting"
           :disabled="!hasValidImages">
-          {{ isUpdateMode ? 'Update' : 'Upload' }} Images
+          Upload Images
         </Button>
       </div>
     </div>
   </ModalParent>
 </template>
+
+
 
 
 
