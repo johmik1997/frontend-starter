@@ -17,6 +17,8 @@ import Dashboard from '@/features/dashboard/pages/Dashboard.vue'
 import { useAuth } from '@/stores/auth'
 import carSpecificationsRoutes from './carSpecifications.routes'
 import premiumRoutes from './premium.routes'
+import SignUp from '@/pages/signUp.vue'
+
 
 const routes = [
   {
@@ -51,7 +53,7 @@ const routes = [
     ],
   },
   { path: "/login", name: "Login", component: Login },
- 
+  { path: "/signUp", name: "SignUp", component: SignUp },
  
 ];
 

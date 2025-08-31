@@ -10,6 +10,7 @@ export default [
       permissions: [],
     },
     type: "Analytics",
+    privilage: ['read_user'],
   },
   // {
   //   path: "/a",
@@ -29,7 +30,8 @@ export default [
       requiresAuth: true,
       permissions: []
     },
-    type: "Pages"
+    type: "Pages",
+    privilage: ['save_car_images', 'create_quotations'],
   },
   {
     path: '/clients',
@@ -39,7 +41,8 @@ export default [
       requiresAuth: true,
       permissions: []
     },
-    type: "Pages"
+    type: "Pages",
+    privilage: ['read_user'],
   },
   {
     path: '/quatation',
@@ -61,7 +64,7 @@ export default [
       permissions: [],
     },
     type: "Pages",
-    privilage: ['create_quotations'],
+    privilage: ['save_car_images'],
   },
   
   {
@@ -155,8 +158,9 @@ export default [
       requiresAuth: true,
       permissions: []
     },
-    type: "Settings"
-  },  
+    type: "Settings",
+    privilage: ['create_user'],
+  },
   {
     path: '/privileges',
     name: 'Privileges',
@@ -165,7 +169,8 @@ export default [
       requiresAuth: true,
       permissions: []
     },
-    type: "Settings"
+    type: "Settings",
+    privilage: ['create_privilege'],
   },
   {
     path: '/roles',
@@ -175,7 +180,8 @@ export default [
       requiresAuth: true,
       permissions: []
     },
-    type: "Settings"
+    type: "Settings",
+    privilage: ['create-role'],
   }
 ];
 

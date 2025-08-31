@@ -1,0 +1,107 @@
+<script setup>
+import Input from '@/components/new_form_elements/Input.vue';
+import InputPassword from '@/components/new_form_elements/InputPassword.vue';
+import Select from '@/components/new_form_elements/Select.vue';
+import Form from '@/components/new_form_builder/Form.vue';
+import { useForm } from '@/components/new_form_builder/useForm';
+
+import { useApiRequest } from '@/composables/useApiRequest';
+import { toasted, allRequest } from '@/utils/utils';
+import { useRouter } from 'vue-router';
+import { ref, watch } from 'vue';
+import { getAllRole } from '@/features/roles/Api/RoleApi';
+import { CreateUser } from '@/features/users/Api/UserApi';
+
+const { submit } = useForm('signup-form');
+
+const router = useRouter();
+const signupReq = useApiRequest();
+const rolereq = useApiRequest();
+const clientRoleUuid = ref(null);
+
+rolereq.send(() =>
+  allRequest({
+    roles: getAllRole({ page: 1, limit: 500 }),
+  })
+);
+
+watch(
+  () => rolereq.response.value?.roles?.content,
+  (roles) => {
+    if (roles?.length) {
+      const client = roles.find((r) => r.roleName?.toLowerCase() === 'client');
+      if (client) {
+        clientRoleUuid.value = client.roleUuid;
+      }
+    }
+  },
+  { immediate: true }
+);
+
+function handleSignup({ values }) {
+  values.userType = 'Client';
+  values.roleUuid = clientRoleUuid.value;
+
+  signupReq.send(
+    () => CreateUser(values),
+    (res) => {
+      if (res.success) {
+        toasted(true, 'Signup successful');
+        router.push('/login');
+      } else {
+        toasted(false, "",res.error || 'Signup failed');
+      }
+    }
+  );
+}
+</script>
+
+<template>
+  <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#3C3C9E] to-[#5A5AB2] py-10 px-5">
+    <div class="bg-white shadow-2xl rounded-xl p-10 max-w-5xl w-full">
+      <!-- Header -->
+      <div class="mb-6 text-center">
+        <h2 class="text-3xl font-bold text-[#3C3C9E]">Create an Account</h2>
+        <p class="text-gray-600 mt-2">Sign up to get started with your insurance management</p>
+      </div>
+
+      <!-- Form -->
+      <Form id="signup-form" :inner="false" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Input name="email" validation="required|email" label="Email" :attributes="{ placeholder: 'Enter your email' }" />
+        <InputPassword name="password" validation="required|min:6" label="Password" :attributes="{ placeholder: 'Secure password' }" />
+        <Select name="title" label="Title" validation="required" :options="['mr.', 'ms.', 'dr.', 'prof.']" />
+
+        <Input name="firstName" validation="required|alpha" label="First Name" :attributes="{ placeholder: 'First name' }" />
+        <Input name="fatherName" validation="required|alpha" label="Father Name" :attributes="{ placeholder: 'Father name' }" />
+        <Input name="grandFatherName" validation="required|alpha" label="Grandfather Name" :attributes="{ placeholder: 'Grandfather name' }" />
+
+        <Select name="gender" label="Gender" validation="required" :options="['Male', 'Female']" />
+        <Input name="mobilePhone" label="Mobile Phone" validation="required|phone" :attributes="{ placeholder: '09XXXXXXXX' }" />
+
+        <!-- Hidden fields -->
+        <input type="hidden" name="userType" value="Client" />
+        <input type="hidden" name="roleUuid" :value="clientRoleUuid" />
+
+        <!-- Submit Button -->
+        <div class="col-span-full mt-4 flex justify-end">
+          <button
+            type="button"
+            @click.prevent="submit(handleSignup)"
+            class="bg-[#3C3C9E] hover:bg-[#2a2a82] text-white font-semibold px-8 py-3 rounded-lg shadow transition"
+            :disabled="!clientRoleUuid || signupReq.pending.value"
+          >
+            Sign Up
+          </button>
+        </div>
+      </Form>
+
+      <!-- Already have an account -->
+      <div class="text-center mt-6 text-sm text-gray-600">
+        Already have an account?
+        <router-link to="/login" class="text-[#3C3C9E] font-medium hover:underline">
+          Login here
+        </router-link>
+      </div>
+    </div>
+  </div>
+</template>

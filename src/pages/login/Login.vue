@@ -1,41 +1,51 @@
 <script setup>
 import icons from "@/utils/icons";
 import LoginForm from "./components/LoginForm.vue";
+import { useRouter } from "vue-router";
+
+const router = useRouter();
+
+function goToSignup() {
+  router.push("/signUp"); // Make sure /signup route exists
+}
 </script>
 
 <template>
-  <div class="h-full w-full relative gap-4 overflow-hidden login bg-[#3C3C9E]">
+  <div class="h-screen w-full relative overflow-hidden bg-[#3C3C9E]">
+    <!-- Background Mask -->
     <img 
-  src="@/assets/rectangle2.svg" 
-  alt="" 
-  class="absolute top-0 left-0 w-auto h-auto object-cover rotate-30 fade-mask"
-/>
-    <div class="grid grid-cols-2 h-full">
-      <div class="p-20 py-48 flex flex-col gap-4">
-        <p class="font-degular text-[45px] leading-[45px] tracking-[4%] gap-4 text-white font-normal">
+      src="@/assets/rectangle2.svg" 
+      alt="Background Shape" 
+      class="absolute top-0 left-0 w-auto h-auto object-cover rotate-30 fade-mask"
+    />
+
+    <!-- Main Layout -->
+    <div class="grid grid-cols-2 h-full relative z-10">
+      <!-- Left Content -->
+      <div class="p-20 flex flex-col justify-center gap-6">
+        <p class="font-degular text-[48px] text-white font-bold leading-tight">
           Flexible Premium Financing for Your Vehicle Insurance
         </p>
-        <p class="font-degular text-[18px] leading-[28px] tracking-[0.2px] font-normal text-white">
-          Make your car insurance more affordable with our premium financing solutions. Spread your insurance costs into manageable monthly payments while enjoying comprehensive coverage. Our platform makes it easy to manage your vehicle insurance premiums with flexible payment plans tailored to your needs.
+        <p class="text-white text-[18px] leading-relaxed max-w-[500px]">
+          Make your car insurance more affordable with our premium financing solutions. Spread your insurance costs into manageable monthly payments while enjoying comprehensive coverage.
         </p>
+        <button 
+          class="mt-4 w-fit px-6 py-3 bg-white text-[#3C3C9E] font-semibold rounded-lg shadow hover:bg-gray-200 transition"
+          @click="goToSignup"
+        >
+          Don’t have an account? Sign Up
+        </button>
       </div>
+
+      <!-- Right Content -->
       <LoginForm />
     </div>
   </div>
 </template>
 
 <style scoped>
-.login {
-
-  background-size: cover;
-  background-position: center;
-}
 .fade-mask {
   mask-image: linear-gradient(to right, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.1) 30%, rgba(0, 0, 0, 1) 100%);
   -webkit-mask-image: linear-gradient(to right, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.1) 30%, rgba(0, 0, 0, 1) 100%);
 }
-
-
-
 </style>
-
