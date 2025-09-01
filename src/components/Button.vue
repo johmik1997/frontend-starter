@@ -27,7 +27,7 @@ const props = defineProps({
       $style?.[type],
       noTransition ? 'transition-none' : ''
     ]"
-    class="px-4 py-1 flex items-center justify-center rounded capitalize"
+    class=" py-1 flex items-center justify-center rounded capitalize"
   >
     <slot v-if="!pending"></slot>
     <i class="m-auto" v-else v-html="icons.spinner" />

@@ -99,20 +99,20 @@ const goBack = () => {
              class="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-50">
           <!-- Mobile-only icons -->
           <div class="sm:hidden border-b border-gray-100">
-            <button class="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2">
+            <button class="w-36 px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2">
               <i v-html="icons.notification" />
               <span>Notifications</span>
             </button>
-            <button class="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2">
+            <button class="w-36 px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2">
               <i v-html="icons.message" />
               <span>Messages</span>
             </button>
           </div>
           
           <!-- Common menu items -->
-          <button class="w-full px-4 py-2 text-left hover:bg-gray-50">Profile</button>
-          <button class="w-full px-4 py-2 text-left hover:bg-gray-50">Settings</button>
-          <button  @click="logout()" class="w-full px-4 py-2 text-left hover:bg-gray-50 text-red-600">Logout</button>
+          <button class="w-36 px-4 py-2 text-left hover:bg-gray-50">Profile</button>
+          <button class="w-36 px-4 py-2 text-left hover:bg-gray-50">Settings</button>
+          <button  @click="logout()" class=" px-4 w-36 py-2 text-left hover:bg-red-50 text-red-600">Logout</button>
         </div>
       </div>
     </div>

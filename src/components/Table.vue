@@ -93,104 +93,193 @@ const totalPages = inject("totalPages", 1);
 </script>
 <template>
   <div class="modern-table-container">
-    <!-- Table Card -->
-    <div class="table-card">
-      <DataTable
-        :firstCol="props.firstCol"
-        class="modern-table"
-        :headers="spec.head"
-      >
-        <template v-if="firstCol" #headerFirst>
-          <slot name="headerFirst" />
-        </template>
-        <slot name="row">
-          <template v-if="rowCom">
-            <component
-              :is="rowCom"
-              v-bind="{
-                cells: cells,
-                headKeys: spec.head,
-                rowData: rows,
-                rowKeys: spec.row,
-              }"
-            />
-          </template>
-
-          <template v-else>
-            <GenericTableRow
-              @row="(row) => emit('row', row)"
-              :firstCol="props.firstCol"
-              :head-keys="spec.head"
-              :row-data="rows"
-              :row-keys="spec.row"
-              :cells="cells"
-            >
-              <template v-if="firstCol" #select="{ row }">
-                <slot name="select" :row="row" />
-              </template>
-              <template #actions="{ row }">
-                <slot name="actions" :row="row" />
-              </template>
-              <template #reason="{ row }">
-                <slot name="reason" :row="row" />
-              </template>
-            </GenericTableRow>
-            
-         <!-- Empty State -->
-<tr v-if="!rows?.length && !pending" class="empty-state-row">
-  <td :colspan="spec.head.length + 1" class="empty-state-cell">
-    <slot name="placeholder">
-      <div class="empty-state">
-        <div class="empty-icon" v-html="icons.no_data" />
-        <h3 class="empty-title">No Data Available</h3>
-        <p class="empty-subtitle">{{ placeholder || 'There are no items to display at the moment.' }}</p>
+    <!-- Mobile Card View (visible on small screens) -->
+    <div class="block lg:hidden space-y-4">
+      <!-- Loading State for Mobile -->
+      <div v-if="pending" class="space-y-4">
+        <div v-for="num in 3" :key="num" class="bg-white rounded-lg p-4 shadow-sm border animate-pulse">
+          <div class="space-y-3">
+            <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+            <div class="h-3 bg-gray-200 rounded w-1/2"></div>
+            <div class="h-3 bg-gray-200 rounded w-2/3"></div>
+          </div>
+        </div>
       </div>
-    </slot>
-  </td>
-</tr>
-          </template>
+
+      <!-- Mobile Cards -->
+      <div v-else-if="rows?.length" class="space-y-4">
+        <div 
+          v-for="(row, index) in rows" 
+          :key="index"
+          class="bg-white rounded-lg p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+          @click="emit('row', row)"
+        >
+          <div class="space-y-3">
+            <!-- Display key fields -->
+            <div v-for="(key, keyIndex) in spec.row.slice(0, 3)" :key="keyIndex" class="flex justify-between items-start">
+              <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                {{ spec.head[keyIndex] || key }}
+              </span>
+              <span class="text-sm font-medium text-gray-900 text-right flex-1 ml-2">
+                <template v-if="cells && cells[key]">
+                  <component :is="cells[key]" :row="row" :key="key" />
+                </template>
+                <template v-else>
+                  {{ row[key] || '-' }}
+                </template>
+              </span>
+            </div>
+            
+            <!-- Actions -->
+            <div class="pt-2 border-t border-gray-100">
+              <slot name="actions" :row="row" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State for Mobile -->
+      <div v-else class="bg-white rounded-lg p-8 text-center shadow-sm border border-gray-100">
+        <slot name="placeholder">
+          <div class="empty-state">
+            <div class="empty-icon mx-auto mb-4" v-html="icons.no_data" />
+            <h3 class="empty-title text-lg font-semibold text-gray-700 mb-2">No Data Available</h3>
+            <p class="empty-subtitle text-gray-500">{{ placeholder || 'There are no items to display at the moment.' }}</p>
+          </div>
         </slot>
-        
-        <!-- Loading State -->
-        <template v-if="pending">
-          <component
-            :cols="spec.head.length + 1"
-            :key="num"
-            v-for="num in 8"
-            :is="Fallback"
-          />
-        </template>
-      </DataTable>
+      </div>
     </div>
 
-    <!-- Modern Pagination -->
-    <div v-if="showPagination && totalPages > 1" class="pagination-container">
-      <div class="pagination-info">
-        <span class="page-info">Page {{ page }} of {{ totalPages }}</span>
+    <!-- Desktop Table View (hidden on small screens) -->
+    <div class="hidden lg:block table-card">
+      <div class="overflow-x-auto">
+        <DataTable
+          :firstCol="props.firstCol"
+          class="modern-table"
+          :headers="spec.head"
+        >
+          <template v-if="firstCol" #headerFirst>
+            <slot name="headerFirst" />
+          </template>
+          <slot name="row">
+            <template v-if="rowCom">
+              <component
+                :is="rowCom"
+                v-bind="{
+                  cells: cells,
+                  headKeys: spec.head,
+                  rowData: rows,
+                  rowKeys: spec.row,
+                }"
+              />
+            </template>
+
+            <template v-else>
+              <GenericTableRow
+                @row="(row) => emit('row', row)"
+                :firstCol="props.firstCol"
+                :head-keys="spec.head"
+                :row-data="rows"
+                :row-keys="spec.row"
+                :cells="cells"
+              >
+                <template v-if="firstCol" #select="{ row }">
+                  <slot name="select" :row="row" />
+                </template>
+                <template #actions="{ row }">
+                  <slot name="actions" :row="row" />
+                </template>
+                <template #reason="{ row }">
+                  <slot name="reason" :row="row" />
+                </template>
+              </GenericTableRow>
+              
+              <!-- Empty State for Desktop -->
+              <tr v-if="!rows?.length && !pending" class="empty-state-row">
+                <td :colspan="spec.head.length + 1" class="empty-state-cell">
+                  <slot name="placeholder">
+                    <div class="empty-state">
+                      <div class="empty-icon" v-html="icons.no_data" />
+                      <h3 class="empty-title">No Data Available</h3>
+                      <p class="empty-subtitle">{{ placeholder || 'There are no items to display at the moment.' }}</p>
+                    </div>
+                  </slot>
+                </td>
+              </tr>
+            </template>
+          </slot>
+          
+          <!-- Loading State for Desktop -->
+          <template v-if="pending">
+            <component
+              :cols="spec.head.length + 1"
+              :key="num"
+              v-for="num in 8"
+              :is="Fallback"
+            />
+          </template>
+        </DataTable>
       </div>
-      
-      <div class="pagination-controls">
+    </div>
+
+    <!-- Responsive Pagination -->
+    <div v-if="showPagination && totalPages > 1" class="pagination-container">
+      <!-- Mobile Pagination -->
+      <div class="flex lg:hidden items-center justify-between w-full">
         <button 
           @click="previousPage"
           :disabled="page <= 1"
-          class="pagination-btn pagination-btn-prev"
+          class="pagination-btn-mobile"
+          :class="{ 'opacity-50 cursor-not-allowed': page <= 1 }"
         >
-          <svg class="pagination-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
           </svg>
-          <span>Previous</span>
         </button>
+        
+        <span class="text-sm font-medium text-gray-700">{{ page }} / {{ totalPages }}</span>
         
         <button 
           @click="nextPage"
           :disabled="page >= totalPages"
-          class="pagination-btn pagination-btn-next"
+          class="pagination-btn-mobile"
+          :class="{ 'opacity-50 cursor-not-allowed': page >= totalPages }"
         >
-          <span>Next</span>
-          <svg class="pagination-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
           </svg>
         </button>
+      </div>
+
+      <!-- Desktop Pagination -->
+      <div class="hidden lg:flex items-center justify-between w-full">
+        <div class="pagination-info">
+          <span class="page-info">Page {{ page }} of {{ totalPages }}</span>
+        </div>
+        
+        <div class="pagination-controls">
+          <button 
+            @click="previousPage"
+            :disabled="page <= 1"
+            class="pagination-btn pagination-btn-prev"
+          >
+            <svg class="pagination-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            <span>Previous</span>
+          </button>
+          
+          <button 
+            @click="nextPage"
+            :disabled="page >= totalPages"
+            class="pagination-btn pagination-btn-next"
+          >
+            <span>Next</span>
+            <svg class="pagination-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -211,6 +300,11 @@ const totalPages = inject("totalPages", 1);
   overflow: visible !important;
 }
 
+/* Mobile pagination buttons */
+.pagination-btn-mobile {
+  @apply p-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors;
+}
+
 /* Empty State Styles */
 .empty-state-row {
   @apply bg-gray-50/50;
@@ -225,20 +319,20 @@ const totalPages = inject("totalPages", 1);
 }
 
 .empty-icon {
-  @apply w-20 h-20 text-gray-300;
+  @apply w-16 h-16 lg:w-20 lg:h-20 text-gray-300;
 }
 
 .empty-title {
-  @apply text-xl font-semibold text-gray-700;
+  @apply text-lg lg:text-xl font-semibold text-gray-700;
 }
 
 .empty-subtitle {
-  @apply text-gray-500 text-center leading-relaxed;
+  @apply text-sm lg:text-base text-gray-500 text-center leading-relaxed;
 }
 
 /* Pagination Styles */
 .pagination-container {
-  @apply flex items-center justify-between px-6 py-4 bg-white rounded-xl border border-gray-100 shadow-sm;
+  @apply flex items-center justify-between px-4 lg:px-6 py-3 lg:py-4 bg-white rounded-xl border border-gray-100 shadow-sm;
 }
 
 .pagination-info {
@@ -254,7 +348,7 @@ const totalPages = inject("totalPages", 1);
 }
 
 .pagination-btn {
-  @apply flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-lg border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+  @apply flex items-center space-x-2 px-3 lg:px-4 py-2 text-sm font-medium rounded-lg border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
 }
 
 .pagination-btn:not(:disabled) {
@@ -279,7 +373,7 @@ const totalPages = inject("totalPages", 1);
 
 /* Global table improvements */
 :deep(.modern-table table) {
-  @apply w-full border-collapse;
+  @apply w-full border-collapse min-w-full;
 }
 
 :deep(.modern-table thead) {
@@ -287,7 +381,7 @@ const totalPages = inject("totalPages", 1);
 }
 
 :deep(.modern-table th) {
-  @apply px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200;
+  @apply px-3 lg:px-6 py-3 lg:py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200;
 }
 
 :deep(.modern-table tbody tr) {
@@ -299,7 +393,7 @@ const totalPages = inject("totalPages", 1);
 }
 
 :deep(.modern-table td) {
-  @apply px-6 py-4 text-sm text-gray-900;
+  @apply px-3 lg:px-6 py-3 lg:py-4 text-xs lg:text-sm text-gray-900;
 }
 
 /* Row hover effects */
@@ -315,6 +409,16 @@ const totalPages = inject("totalPages", 1);
 :deep(.modern-table .skeleton-row td) {
   @apply py-4;
 }
-</style>
 
+/* Mobile responsive adjustments */
+@media (max-width: 1024px) {
+  .modern-table-container {
+    @apply space-y-3;
+  }
+  
+  .pagination-container {
+    @apply px-4 py-3;
+  }
+}
+</style>
 

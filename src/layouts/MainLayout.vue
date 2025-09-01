@@ -255,12 +255,12 @@ onMounted(() => {
     <!-- Mobile Menu Button -->
     <button 
       @click="toggleMobileMenu"
-      class="lg:hidden fixed left-1 z-50 p-2 my-1 rounded-lg bg-gray-100 shadow-lg"
+      class="lg:hidden fixed top-4 left-4 z-50 p-3 rounded-lg bg-white shadow-lg border border-gray-200"
     >
       <svg 
         xmlns="http://www.w3.org/2000/svg" 
-        class="h-3 w-5 text-[#3C3C9E]" 
-        :class="{ 'transform rotate-90': isMobileMenuOpen }"
+        class="h-5 w-5 text-[#3C3C9E] transition-transform duration-300" 
+        :class="{ 'rotate-90': isMobileMenuOpen }"
         fill="none" 
         viewBox="0 0 24 24" 
         stroke="currentColor"
@@ -276,63 +276,79 @@ onMounted(() => {
 
     <!-- Sidebar -->
     <div 
-      class="__scrollable-hidden fixed lg:relative w-[20%] border-r text-white bg-[#3C3C9E] overflow-y-scroll h-full transition-transform duration-300 ease-in-out z-40"
-      :class="{ '-translate-x-full lg:translate-x-0': !isMobileMenuOpen }"
+      class="__scrollable-hidden fixed lg:relative w-full sm:w-80 lg:w-[20%] border-r text-white bg-[#3C3C9E] overflow-y-scroll h-full transition-transform duration-300 ease-in-out z-40"
+      :class="{ 
+        '-translate-x-full lg:translate-x-0': !isMobileMenuOpen,
+        'translate-x-0': isMobileMenuOpen 
+      }"
     >
-      <div class="p-4 px-2 h-12 flex gap-4 items-center sticky top-0 bg-[#3C3C9E] z-10">
-        <i v-html="icons.cbhi_logo" />
-        <span class="font-bold text-lg"></span>
+      <!-- Logo Header -->
+      <div class="p-4 px-6 h-16 flex gap-4 items-center sticky top-0 bg-[#3C3C9E] z-10 border-b border-white/10">
+        <i v-html="icons.cbhi_logo" class="w-8 h-8" />
+       
+        <!-- Close button for mobile -->
+        <button 
+          @click="toggleMobileMenu"
+          class="lg:hidden ml-auto p-1 rounded hover:bg-white/10"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
       </div>
-      <div class="flex flex-col justify-start !p-2 !px-4 gap-4 mb-44">
+
+      <!-- Navigation -->
+      <div class="flex flex-col justify-start p-4 px-6 gap-6 pb-20">
         <!-- Loop through grouped navigation items -->
-        <div v-for="(navItems, category) in grouped" :key="category" class="flex flex-col gap-2">
+        <div v-for="(navItems, category) in grouped" :key="category" class="flex flex-col gap-3">
           <!-- Category Header -->
-          <h3 class="text-sm font-semibold opacity-70 pt-2">{{ category }}</h3>
+          <h3 class="text-xs font-semibold opacity-70 uppercase tracking-wider pt-4 first:pt-0">{{ category }}</h3>
           
           <!-- Navigation Items -->
           <div v-for="nav in navItems" :key="nav.name" class="flex flex-col">
             <!-- Parent Nav Item -->
             <div v-if="shouldShowNavItem(nav)" 
-                 class="flex rounded transition-all duration-200 ease-linear w-[86%] hover:text-[#3C3C9E] hover:bg-white"
+                 class="flex rounded-lg transition-all duration-200 ease-linear hover:text-[#3C3C9E] hover:bg-white"
                  :class="{ 
-                   'bg-[#FFFFFF4D] text-white': isRouteActive(nav.path) && nav.children && nav.path !== '/payment',
-                   'bg-[#EFFFFF4D] text-white font-semibold': isRouteActive(nav.path) && nav.path === '/payment'
+                   'bg-white/10 text-white': isRouteActive(nav.path) && nav.children && nav.path !== '/payment',
+                   'bg-white/20 text-white font-semibold': isRouteActive(nav.path) && nav.path === '/payment'
                  }">
               <RouterLink
                 v-if="!nav.children"
                 :to="nav.path"
-                class="w-full"
+                class="w-full rounded-lg"
                 :class="{
-                  'bg-white text-[#3C3C9E]': isRouteActive(nav.path),
+                  'bg-white text-[#3C3C9E] shadow-sm': isRouteActive(nav.path),
                   'router-link-active': isRouteActive(nav.path)
                 }"
+                @click="isMobileMenuOpen = false"
               >
-                <Button class="w-full flex-1 max-w-full flex gap-2 !justify-start items-center pl-3 nav-button">
-                  <div class="grid place-items-center rounded">
-                    <span v-html="nav.icon" />
+                <div class="w-full flex gap-3 items-center px-4 py-3 rounded-lg">
+                  <div class="grid place-items-center w-5 h-5 flex-shrink-0">
+                    <span v-html="nav.icon" class="w-5 h-5" />
                   </div>
-                  <span class="text-sm truncate">{{ nav.name }}</span>
-                </Button>
+                  <span class="text-sm font-medium truncate">{{ nav.name }}</span>
+                </div>
               </RouterLink>
               
               <!-- Dropdown Toggle Button -->
               <div
                 v-else
-                class="flex-1 max-w-full flex  !justify-between items-center py-2  pl-3 pr-2 cursor-pointer"
+                class="flex-1 flex justify-between items-center px-4 py-3 cursor-pointer rounded-lg"
                 :class="{
-                  'bg-white text-[#3C3C9E]': isRouteActive(nav.path) && nav.path !== '/payment',
-                  'bg-[#FFFFFF4D] text-white hover:bg-white hover:text-[#3C3C9E] font-semibold': isRouteActive(nav.path) && nav.path === '/payment'
+                  'bg-white text-[#3C3C9E] shadow-sm': isRouteActive(nav.path) && nav.path !== '/payment',
+                  'bg-white/10 text-white hover:bg-white hover:text-[#3C3C9E] font-semibold': isRouteActive(nav.path) && nav.path === '/payment'
                 }"
                 @click.stop="(event) => toggleDropdown(nav.path, event)"
               >
-                <div class="flex gap-2 items-center">
-                  <div class="grid place-items-center rounded">
-                    <span v-html="nav.icon" />
+                <div class="flex gap-3 items-center">
+                  <div class="grid place-items-center w-5 h-5 flex-shrink-0">
+                    <span v-html="nav.icon" class="w-5 h-5" />
                   </div>
-                  <span class="text-sm truncate">{{ nav.name }}</span>
+                  <span class="text-sm font-medium truncate">{{ nav.name }}</span>
                 </div>
                 <i
-                  class="transition-transform duration-200"
+                  class="transition-transform duration-200 w-4 h-4 flex-shrink-0"
                   :class="{ 'rotate-180': isDropdownOpen(nav.path) }"
                   v-html="icons.down"
                 />
@@ -342,30 +358,30 @@ onMounted(() => {
             <!-- Child Nav Items -->
             <div
               v-if="nav.children"
-              class="overflow-hidden transition-all pt-2 duration-200"
+              class="overflow-hidden transition-all duration-300 ease-in-out mt-2"
               :style="{ 
-                height: isDropdownOpen(nav.path) ? `${nav.children.length * 40}px` : '0px'
+                height: isDropdownOpen(nav.path) ? `${nav.children.length * 44}px` : '0px'
               }"
             >
               <RouterLink
                 v-for="child in nav.children"
                 :key="child.name"
                 :to="child.path"
-                class="block ml-10 text-left child-link h-10 flex items-center"
+                class="block ml-8 text-left child-link h-11 flex items-center rounded-lg"
                 :class="{
-                  'bg-white text-[#3C3C9E]': isRouteActive(child.path),
+                  'bg-white text-[#3C3C9E] shadow-sm': isRouteActive(child.path),
                   'router-link-active': isRouteActive(child.path)
                 }"
-                @click.stop
+                @click="isMobileMenuOpen = false"
               >
                 <div 
-                  class="flex items-center w-full !justify-start text-left py-1.5 hover:text-[#3C3C9E] hover:bg-white cursor-pointer"
+                  class="flex items-center w-full justify-start text-left px-4 py-2 hover:text-[#3C3C9E] hover:bg-white/10 cursor-pointer rounded-lg transition-colors"
                   :class="{
                     'bg-white text-[#3C3C9E]': isRouteActive(child.path),
                     'font-semibold': isRouteActive(child.path)
                   }"
                 >
-                  <span class="flex text-left pl-5 items-center justify-start">{{ child.name }}</span>
+                  <span class="text-sm">{{ child.name }}</span>
                 </div>
               </RouterLink>
             </div>
@@ -382,16 +398,21 @@ onMounted(() => {
     ></div>
 
     <!-- Main content -->
-    <div class="flex flex-col py-2 px-6 w-full lg:w-[80%]">
-      <div class="navbar-height flex items-center">
+    <div class="flex flex-col w-full lg:w-[80%] min-h-screen">
+      <!-- Navbar -->
+      <div class="navbar-height flex items-center px-4 sm:px-6 py-2 bg-white border-b border-gray-200">
         <NavBar 
           v-model="search" 
           class="w-full" 
           :title="$route.name"
         />
       </div>
-      <div class="__scrollable-hidden h-[calc(100%-var(--navbar-height))] bg-base-clr2 w-full overflow-y-scroll">
-        <RouterView :search="search" :inputData="inputData" />
+      
+      <!-- Main Content Area -->
+      <div class="__scrollable-hidden flex-1 bg-base-clr2 overflow-y-auto">
+        <div class="p-4 sm:p-6">
+          <RouterView :search="search" :inputData="inputData" />
+        </div>
       </div>
     </div>
   </div>
@@ -412,7 +433,7 @@ onMounted(() => {
 /* Mobile-specific styles */
 @media (max-width: 1024px) {
   .navbar-height {
-    padding-left: 3rem; /* Space for mobile menu button */
+    padding-left: 4rem; /* Space for mobile menu button */
   }
 }
 
@@ -432,7 +453,7 @@ onMounted(() => {
 
 /* Child link styling */
 .child-link {
-  transition: none !important;
+  transition: all 0.2s ease !important;
 }
 
 /* Add touch scrolling for mobile */
@@ -441,11 +462,22 @@ onMounted(() => {
     -webkit-overflow-scrolling: touch;
   }
 }
+
+/* Responsive sidebar adjustments */
+@media (max-width: 640px) {
+  .navbar-height {
+    padding-left: 3.5rem;
+  }
+}
+
+/* Ensure proper mobile menu positioning */
+@media (max-width: 1024px) {
+  .fixed.z-40 {
+    top: 0;
+    left: 0;
+    bottom: 0;
+  }
+}
 </style>
-
-
-
-
-
 
 

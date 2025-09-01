@@ -10,14 +10,20 @@ import { toasted, allRequest } from '@/utils/utils';
 import { useRouter } from 'vue-router';
 import { ref, watch } from 'vue';
 import { getAllRole } from '@/features/roles/Api/RoleApi';
-import { CreateUser } from '@/features/users/Api/UserApi';
+import { CreateUser, verifyUser } from '@/features/users/Api/UserApi';
 
 const { submit } = useForm('signup-form');
 
 const router = useRouter();
 const signupReq = useApiRequest();
+const verifyReq = useApiRequest();
 const rolereq = useApiRequest();
 const clientRoleUuid = ref(null);
+
+// Verification modal state
+const showVerificationModal = ref(false);
+const verificationCode = ref("");
+const userPhoneNumber = ref("");
 
 rolereq.send(() =>
   allRequest({
@@ -39,7 +45,7 @@ watch(
 );
 
 function handleSignup({ values }) {
-  values.userType = 'Client';
+  values.userType = 'Insurance';
   values.roleUuid = clientRoleUuid.value;
 
   signupReq.send(
@@ -47,12 +53,46 @@ function handleSignup({ values }) {
     (res) => {
       if (res.success) {
         toasted(true, 'Signup successful');
-        router.push('/login');
+        // Show verification modal
+        userPhoneNumber.value = values.mobilePhone;
+        showVerificationModal.value = true;
       } else {
-        toasted(false, "",res.error || 'Signup failed');
+        toasted(false, "", res.error || 'Signup failed');
       }
     }
   );
+}
+
+function submitVerification() {
+  if (!verificationCode.value.trim()) {
+    toasted(false, "", "Please enter verification code");
+    return;
+  }
+
+  verifyReq.send(
+    () => verifyUser(userPhoneNumber.value, verificationCode.value),
+    (res) => {
+      if (res.success) {
+        toasted(true, "Account verified successfully");
+        closeVerificationModal();
+        router.push('/login');
+      } else {
+        toasted(false, "", res.error || "Verification failed");
+      }
+    }
+  );
+}
+
+function skipVerification() {
+  toasted(true, "You can verify your account later from the login page");
+  closeVerificationModal();
+  router.push('/login');
+}
+
+function closeVerificationModal() {
+  showVerificationModal.value = false;
+  verificationCode.value = "";
+  userPhoneNumber.value = "";
 }
 </script>
 
@@ -66,7 +106,7 @@ function handleSignup({ values }) {
       </div>
 
       <!-- Form -->
-      <Form id="signup-form" :inner="false" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <Form id="signup-form" :inner="false"  class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Input name="email" validation="required|email" label="Email" :attributes="{ placeholder: 'Enter your email' }" />
         <InputPassword name="password" validation="required|min:6" label="Password" :attributes="{ placeholder: 'Secure password' }" />
         <Select name="title" label="Title" validation="required" :options="['mr.', 'ms.', 'dr.', 'prof.']" />
@@ -79,7 +119,7 @@ function handleSignup({ values }) {
         <Input name="mobilePhone" label="Mobile Phone" validation="required|phone" :attributes="{ placeholder: '09XXXXXXXX' }" />
 
         <!-- Hidden fields -->
-        <input type="hidden" name="userType" value="Client" />
+        <input type="hidden" name="userType" value="Insurance" />
         <input type="hidden" name="roleUuid" :value="clientRoleUuid" />
 
         <!-- Submit Button -->
@@ -90,7 +130,8 @@ function handleSignup({ values }) {
             class="bg-[#3C3C9E] hover:bg-[#2a2a82] text-white font-semibold px-8 py-3 rounded-lg shadow transition"
             :disabled="!clientRoleUuid || signupReq.pending.value"
           >
-            Sign Up
+            <span v-if="signupReq.pending.value">Signing Up...</span>
+            <span v-else>Sign Up</span>
           </button>
         </div>
       </Form>
@@ -101,6 +142,64 @@ function handleSignup({ values }) {
         <router-link to="/login" class="text-[#3C3C9E] font-medium hover:underline">
           Login here
         </router-link>
+      </div>
+    </div>
+
+    <!-- Verification Modal -->
+    <div v-if="showVerificationModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-xl w-full max-w-md shadow-lg p-6">
+        <!-- Close Button -->
+        <button
+          @click="closeVerificationModal"
+          class="absolute top-4 right-4 text-gray-600 hover:text-gray-900"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        <!-- Title -->
+        <h3 class="text-lg font-bold text-gray-800 mb-4 py-2 border-b">
+          Verify Your Account
+        </h3>
+
+        <!-- Message -->
+        <p class="text-gray-600 text-sm leading-relaxed mb-4">
+          Account created successfully! Please enter the verification code sent to your phone number: <strong>{{ userPhoneNumber }}</strong>
+        </p>
+
+        <!-- Verification Code Input -->
+        <div class="mb-5">
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            Verification Code
+          </label>
+          <input
+            type="text"
+            v-model="verificationCode"
+            placeholder="Enter verification code"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            @keyup.enter="submitVerification"
+          />
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex justify-end gap-4 mt-2 pb-2">
+          <button
+            @click="skipVerification"
+            class="bg-gray-500 text-white px-6 py-2 text-sm font-medium hover:bg-gray-600 rounded-md"
+          >
+            Skip for Now
+          </button>
+          <button
+            @click="submitVerification"
+            :disabled="!verificationCode.trim() || verifyReq.pending.value"
+            :class="{'bg-blue-400 cursor-not-allowed': !verificationCode.trim(), 'bg-[#2E3365] hover:bg-[#1E224D]': verificationCode.trim()}"
+            class="text-white px-6 py-2 text-sm font-medium rounded-md transition-colors"
+          >
+            <span v-if="verifyReq.pending.value">Verifying...</span>
+            <span v-else>Verify</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>

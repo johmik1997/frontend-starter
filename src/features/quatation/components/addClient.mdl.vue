@@ -726,59 +726,59 @@ onMounted(() => {
 
 <template>
   <ModalParent>
-    <NewFormParent class="px-6 py-4 max-w-5xl" size="lg">
+    <NewFormParent class="px-3 sm:px-6 py-3 sm:py-4 w-full max-w-6xl" size="lg">
       <template #title>
         <div class="flex items-center justify-between w-full">
-          <div class="flex items-center gap-4">
+          <div class="flex items-center gap-2 sm:gap-4">
             <button 
               @click="prevStep" 
               v-if="step > 1 && step !== 5"
-              class="flex items-center justify-center p-2 rounded-full hover:bg-gray-100 transition-colors"
+              class="flex items-center justify-center p-1.5 sm:p-2 rounded-full hover:bg-gray-100 transition-colors"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg width="16" height="16" sm:width="20" sm:height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </button>
             <div>
-              <h2 class="font-bold text-xl text-gray-800">{{ stepTitle }}</h2>
-              <p class="text-sm text-gray-500">Step {{ step }} of 5</p>
+              <h2 class="font-bold text-lg sm:text-xl text-gray-800 truncate">{{ stepTitle }}</h2>
+              <p class="text-xs sm:text-sm text-gray-500">Step {{ step }} of 5</p>
             </div>
           </div>
           
           <!-- Progress Bar -->
-          <div class="flex items-center gap-2">
-            <div class="flex items-center gap-1">
+          <div class="flex items-center gap-1 sm:gap-2">
+            <div class="flex items-center gap-0.5 sm:gap-1">
               <div 
                 v-for="i in 5" 
                 :key="i"
-                class="w-8 h-2 rounded-full transition-all duration-300"
+                class="w-4 sm:w-8 h-1.5 sm:h-2 rounded-full transition-all duration-300"
                 :class="i <= step ? 'bg-primary' : 'bg-gray-200'"
               ></div>
             </div>
-            <span class="text-xs text-gray-500 ml-2">{{ Math.round((step / 5) * 100) }}%</span>
+            <span class="text-xs text-gray-500 ml-1 sm:ml-2 hidden sm:inline">{{ Math.round((step / 5) * 100) }}%</span>
           </div>
         </div>
       </template>
       
       <template #default>
-         <Form class="gap-5 mt-3 p-6 " id="addform">
+         <Form class="gap-3 sm:gap-5 mt-2 sm:mt-3 p-2 sm:p-6" id="addform">
         
           <!-- Step 1: Personal Details -->
-          <div v-if="step === 1" class="space-y-6">
-            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-100">
-              <div class="flex items-center gap-3 mb-4">
-                <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
-                  <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+          <div v-if="step === 1" class="space-y-4 sm:space-y-6">
+            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-3 sm:p-6 rounded-xl border border-blue-100">
+              <div class="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                <div class="w-8 h-8 sm:w-10 sm:h-10 bg-primary rounded-full flex items-center justify-center">
+                  <svg class="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
                   </svg>
                 </div>
                 <div>
-                  <h3 class="text-lg font-semibold text-gray-800">Personal Information</h3>
-                  <p class="text-sm text-gray-600">Please provide your basic information to get started</p>
+                  <h3 class="text-base sm:text-lg font-semibold text-gray-800">Personal Information</h3>
+                  <p class="text-xs sm:text-sm text-gray-600">Please provide your basic information to get started</p>
                 </div>
               </div>
               
-              <Form class="grid grid-cols-1 md:grid-cols-2 gap-6" id="addform">
+              <Form class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6" id="addform">
                 <input v-model="personalDetails.userUuid" type="hidden" name="userUuid" />
                 
                 <Input
@@ -807,18 +807,12 @@ onMounted(() => {
                   v-model="personalDetails.email"
                   name="email"
                   validation="required|email"
-                  label="Email Address"
+                  label="Email"
                   :attributes="{ 
                     placeholder: 'Enter your email address',
                     type: 'email'
                   }"
-                >
-                  <template #right>
-                    <div class="flex items-center text-gray-400">
-                      <i v-html="icons.email" class="w-5 h-5" />
-                    </div>
-                  </template>
-                </Input>
+                />
                 
                 <Input
                   v-model="personalDetails.mobilePhone"
@@ -826,19 +820,24 @@ onMounted(() => {
                   validation="required|phone"
                   label="Mobile Phone"
                   :attributes="{ 
-                    placeholder: '+251 9XX XXX XXX',
-                    title: 'Valid formats: +2519XXXXXXXX or 09XXXXXXXX'
+                    placeholder: '09XXXXXXXX',
+                    type: 'tel'
                   }"
-                >
-                  <template #left>
-                    <div class="flex items-center text-gray-400">
-                      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
-                      </svg>
-                    </div>
-                  </template>
-                </Input>
+                />
               </Form>
+            </div>
+            
+            <!-- Navigation Buttons -->
+            <div class="flex justify-between items-center pt-3 sm:pt-4">
+              <div></div>
+              <Button 
+                @click="nextStep" 
+                type="secondary" 
+                size="md"
+                class="px-4 sm:px-6 py-2 text-sm sm:text-base"
+              >
+                Next Step
+              </Button>
             </div>
           </div>
 

@@ -9,24 +9,23 @@ function goToSignup() {
   router.push("/signUp"); // Make sure /signup route exists
 }
 </script>
-
 <template>
-  <div class="h-screen w-full relative overflow-hidden bg-[#3C3C9E]">
-    <!-- Background Mask -->
+  <div class="min-h-screen w-full relative overflow-auto bg-[#3C3C9E]">
+    <!-- Background Mask (Hidden on Mobile) -->
     <img 
       src="@/assets/rectangle2.svg" 
       alt="Background Shape" 
-      class="absolute top-0 left-0 w-auto h-auto object-cover rotate-30 fade-mask"
+      class="absolute top-0 left-0 w-auto h-auto object-cover rotate-30 fade-mask hidden md:block"
     />
 
     <!-- Main Layout -->
-    <div class="grid grid-cols-2 h-full relative z-10">
-      <!-- Left Content -->
-      <div class="p-20 flex flex-col justify-center gap-6">
-        <p class="font-degular text-[48px] text-white font-bold leading-tight">
+    <div class="grid grid-cols-1 md:grid-cols-2 min-h-screen relative z-10">
+      <!-- Left Content (Hidden on Mobile) -->
+      <div class="hidden md:flex p-10 md:p-20 flex-col justify-center gap-6">
+        <p class="font-degular text-3xl md:text-[48px] text-white font-bold leading-tight">
           Flexible Premium Financing for Your Vehicle Insurance
         </p>
-        <p class="text-white text-[18px] leading-relaxed max-w-[500px]">
+        <p class="text-white text-base md:text-[18px] leading-relaxed max-w-[500px]">
           Make your car insurance more affordable with our premium financing solutions. Spread your insurance costs into manageable monthly payments while enjoying comprehensive coverage.
         </p>
         <button 
@@ -38,7 +37,9 @@ function goToSignup() {
       </div>
 
       <!-- Right Content -->
-      <LoginForm />
+      <div class="flex items-center justify-center p-4 sm:p-10">
+        <LoginForm />
+      </div>
     </div>
   </div>
 </template>
