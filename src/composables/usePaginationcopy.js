@@ -63,7 +63,7 @@ export function usePaginationcopy(options = {}) {
         if (paginationOptions.value.store && res.success) {
           console.log(res);
           
-          paginationOptions.value.store.set(res.data?.content || []);
+          paginationOptions.value.store.set(res.data?.content || res.data || []);
         }
 
         pagination.totalPages.value = res.data?.totalPages || 1;

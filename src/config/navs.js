@@ -31,7 +31,7 @@ export default [
       permissions: []
     },
     type: "Pages",
-    privilage: ['save_car_images', 'create_quotations'],
+    privilage: ['create_car', 'create_car_collection'],
   },
   {
     path: '/clients',
@@ -53,7 +53,7 @@ export default [
       permissions: [],
     },
     type: "Pages",
-    privilage: ['create_quotations'],
+    privilage: ['create_car'],
   },
     {
     path: '/createQuotation',
@@ -64,7 +64,7 @@ export default [
       permissions: [],
     },
     type: "Pages",
-    privilage: ['save_car_images'],
+    privilage: ['create_car_collection'],
   },
   
   {
@@ -137,7 +137,7 @@ export default [
       permissions: [],
     },
     type: "Pages",
-    privilage: ['create_car'],
+    privilage: ['create_specification'],
   },
     {
     path: '/premium',
@@ -181,7 +181,7 @@ export default [
       permissions: []
     },
     type: "Settings",
-    privilage: ['create-role'],
+    privilage: ['create_role'],
   }
 ];
 

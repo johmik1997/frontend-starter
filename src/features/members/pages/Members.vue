@@ -241,7 +241,14 @@ onMounted(async () => {
       head: ['#', 'Client Name', 'Registered date', 'Vehicle Detail', 'Phone Number', 'Policy Status', 'actions'],
       row: ['id', 'clientName', 'RegisteredDate', 'Vehicle', 'phoneNumber', 'status']
     }" :rowCom="Status_row" :rows="membersStore.members" :Fallback="TableRowSkeleton">
-
+ <template #actions="{ row }">
+          <Button
+        @click.prevent="openModal('SendSMS', { userUuid: row.userUuid })"
+        className="rounded-[4px] px-[14px] py-[8px] bg-primary text-white"
+      >
+        Send SMS
+      </Button>
+        </template>
     </Table>
 
   </DefaultPage>

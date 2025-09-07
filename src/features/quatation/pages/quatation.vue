@@ -75,20 +75,46 @@ function viewDetails(quotationUuid) {
     <!-- Header actions -->
     <template #more>
       <div class="flex gap-2 justify-end items-center ">
-        <Button @click="openAddClientModal" type="primary" class="flex items-center gap-2">
+        <Button @click="openAddClientModal" type="primary" class="flex items-center px-2 gap-2">
           <i v-html="icons.add"></i> New Quotations
         </Button>
       </div>
     </template>
 
     <!-- Quotations table -->
-    <Table :pending="pagination.pending.value" :headers="{
-      head: ['Customer Name', 'Inspection Date', 'Vehicle Detail', 'Insurance', 'Premium', 'Status', 'actions'],
-      row: ['customerName', 'quotationDate', 'VehicleDetail', 'insurance', 'quotationAmount', 'quotationStatus'],
-    }" :rowCom="Status_row" :rows="quotationStore.quotations" :Fallback="TableRowSkeleton">
-      <!-- Custom cell renderers -->
+<Table
+  :pending="pagination.pending.value"
+  :headers="{
+    head: ['Customer Name', 'Inspection Date', 'Vehicle Detail', 'Insurance', 'Premium', 'Status', 'actions'],
+    row: ['customerName', 'quotationDate', 'VehicleDetail', 'insurance', 'quotationAmount', 'quotationStatus'],
+  }"
+  :rows="quotationStore.quotations"
+  :rowCom="Status_row"
+  :Fallback="TableRowSkeleton"
+>
 
-    </Table>
+   <template #actions="{ row }">
+           <div class="flex flex-col sm:flex-row gap-1 sm:gap-2">
+           <Button 
+          v-if="row?.quotationStatus === 'PENDING'"
+          @click="$router.push(`/quatation/details/${row.quotationUuid}`)" 
+          class="rounded-[4px]  bg-primary text-white gap-2"
+        >
+        <i v-html="icons.open"></i>
+          Open
+        </Button>
+        <Button 
+           v-else
+          @click="$router.push(`/quatation/details/${row.quotationUuid}`)" 
+          class="rounded-[4px]  bg-[#EBE7FF] text-primary gap-2"
+        >
+        <i v-html="icons.eye"></i>View
+        </Button>
+        </div>
+        </template>
+</Table>
+
+  
   </DefaultPage>
 </template>
 

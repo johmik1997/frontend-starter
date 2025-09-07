@@ -68,17 +68,25 @@ function create({ values }) {
           :attributes="{ placeholder: 'Enter Grandfather Name' }" />
         
         <Select name="gender" label="Gender" validation="required"
-          :options="['Female', 'Male']" :attributes="{ placeholder: 'Select Gender' }" />
+          :options="['Female', 'Male']" :attributes="{ placeholder: 'Select Gender',
+            required
+           }" />
         
         <Input name="mobilePhone" label="Mobile Phone" validation="required|phone"
           :attributes="{ placeholder: 'Enter Mobile Phone' }" />
-        
+        <Select name="userType" label="User Type" validation="required"
+          :options="['Admin', 'Client', 'Insurance', 'Bank', 'Agent']"
+          :attributes="{ placeholder: 'Select User Type',
+            required
+           }" />
         <Select :obj="true" name="roleUuid" label="Role" validation="required"
           :options="(rolereq.response.value?.roles?.content || []).map(role => ({
             label: role.roleName,
             value: role.roleUuid,
           }))"
-          :attributes="{ placeholder: 'Select Role' }" />
+          :attributes="{ placeholder: 'Select Role',
+            required
+           }" />
       </Form>
 
       <template #bottom>

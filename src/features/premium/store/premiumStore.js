@@ -33,6 +33,22 @@ export const usePremium = defineStore('premium', () => {
   function setPremiums(newPremiums) {
     premiums.value = newPremiums;
   }
+function set(data) {
+    console.log('Setting store data:', data)
+    
+    // Handle both cases:
+    // 1. When receiving full response object with content property
+    // 2. When receiving just the content array directly
+    if (data && data.content && Array.isArray(data.content)) {
+        premiums.value = data.content;
+    } else if (Array.isArray(data)) {
+        premiums.value = data;
+    } else if (data && typeof data === 'object') {
+        premiums.value = [data];
+    } else {
+        premiums.value = [];
+    }
+}
 
   return {
     premiums,
@@ -41,6 +57,7 @@ export const usePremium = defineStore('premium', () => {
     update,
     remove,
     setPremiums,
-    getAll
+    getAll,
+    set
   };
 });

@@ -11,7 +11,7 @@ export default [
     component: QuotationIndex,
     meta: {
       requiresAuth: true,
-      privileges: ['create_user','View_card'],
+      privileges: ['create_car','View_quotation'],
     },
     children: [
       {
@@ -25,7 +25,7 @@ export default [
         props: true,
         meta: {
           requiresAuth: true,
-          privileges: ['create_user','View_card'],
+          privileges: ['create_quotations','View_quotations'],
         }
       },
     ]
@@ -45,7 +45,7 @@ export default [
 	component: CreateNewQuatationClientSide,
 	meta: {
   requiresAuth: true,
-  permissions: []
+  privileges: ['create_car_collection'],
 }
 }
 ]

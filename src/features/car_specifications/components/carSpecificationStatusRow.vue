@@ -143,17 +143,36 @@ function handleDeleteWithClose(row) {
     </td>  
     
     <td class="p-3" v-if="headKeys.includes('Actions') || headKeys.includes('actions')">  
-      <div class="dropdown-container relative w-full">
+      <div class="flex flex-col sm:flex-row gap-2">
         <!-- Dropdown toggle button - full width -->
-        <button 
-          @click.stop="toggleDropdown($event, row.uuid || row.id)"
-          class="inline-flex items-center justify-center p-2 w-full text-sm font-medium text-center text-gray-500 hover:text-gray-800 rounded-lg hover:bg-gray-100 focus:outline-none"
-          type="button"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-          </svg>
-        </button>
+        <!-- <button 
+              @click.stop="handleViewWithClose(row)"
+              class="block w-full text-start py-2 text-sm text-gray-700 hover:bg-gray-100"
+            >
+              <div class="flex items-start justify-start pl-4 gap-4">
+                <i v-html="icons.eye" />
+                View Details
+              </div>
+            </button> -->
+            
+            <!-- Edit option -->
+            <button 
+              @click.stop="handleEditWithClose(row)"
+              class="bg-gray-600 text-white px-3 py-1 rounded flex items-center gap-1 justify-center"
+            >
+              <i v-html="icons.edit" />
+              <span class=" sm:inline">Edit</span>
+            </button>
+            
+            <!-- Delete option -->
+            <button 
+              @click.stop="handleDeleteWithClose(row)"
+              :disabled="req.pending.value"
+              class="bg-[#FF4C4C] text-white px-3 py-1 rounded flex items-center gap-1 justify-center"
+            >
+              <i v-html="icons.trash" />
+              <span class=" sm:inline">Delete</span>
+            </button>
 
         <!-- Dropdown menu -->
         <div 
@@ -162,38 +181,7 @@ function handleDeleteWithClose(row) {
         >
           <div class="py-1" role="none">
             <!-- View option -->
-            <button 
-              @click.stop="handleViewWithClose(row)"
-              class="block w-full text-start py-2 text-sm text-gray-700 hover:bg-gray-100"
-            >
-              <div class="flex items-start justify-start pl-4 gap-4">
-                <i v-html="icons.eye" />
-                View Details
-              </div>
-            </button>
-            
-            <!-- Edit option -->
-            <button 
-              @click.stop="handleEditWithClose(row)"
-              class="block w-full text-start py-2 text-sm text-gray-700 hover:bg-gray-100"
-            >
-              <div class="flex items-start justify-start pl-4 gap-4">
-                <i v-html="icons.edit" />
-                Edit
-              </div>
-            </button>
-            
-            <!-- Delete option -->
-            <button 
-              @click.stop="handleDeleteWithClose(row)"
-              :disabled="req.pending.value"
-              class="block w-full text-start py-2 text-sm text-red-600 hover:bg-gray-100"
-            >
-              <div class="flex items-start justify-start pl-4 gap-4">
-                <i v-html="icons.trash" />
-                {{ req.pending.value ? 'Deleting...' : 'Delete' }}
-              </div>
-            </button>
+           
           </div>
         </div>
       </div>

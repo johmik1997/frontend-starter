@@ -50,7 +50,7 @@ console.log(props.selectPrivilege);
     />
 
     <!-- Select Privileges (Full width) -->
-    <div class="sm:col-span-1 lg:col-span-3">
+    <div class="sm:col-span-2 lg:col-span-3">
       <SelectPrivilegeInput
         label="Select Privileges"
         validation="required"

@@ -18,6 +18,7 @@ import { CreateClient, getAllcar, saveCarLibre } from "../api/customersApi";
 import { v4 as uuidv4 } from 'uuid';
 import { getValidators } from '@/components/new_form_builder/util/validators.js';
 import { useQuotation } from '../store/Quotation';
+// import SearchAndSelectInput from "@/components/new_form_elements/SearchAndSelectInput.vue";
 
 const quotationStore = useQuotation();
 
@@ -722,6 +723,64 @@ watch(() => newVehicle.value.carModel, (newValue) => {
 onMounted(() => {
   loadCarMakes();
 });
+
+// Add these reactive stores
+const carMakesStore = ref(null);
+const carTypesStore = ref(null);
+const carModelsStore = ref(null);
+
+// Add these search functions
+const searchCarMakes = async (params, config) => {
+  try {
+    // Replace with your actual API endpoint
+    const response = await fetch(`/api/car-makes?search=${params.search}`, config);
+    const data = await response.json();
+    
+    return {
+      success: true,
+      data: data.map(item => ({
+        id: item.id || item.name, // Use appropriate ID field
+        name: item.name || item
+      }))
+    };
+  } catch (error) {
+    return { success: false, data: [] };
+  }
+};
+
+const searchCarTypes = async (params, config) => {
+  try {
+    const response = await fetch(`/api/car-types?search=${params.search}`, config);
+    const data = await response.json();
+    
+    return {
+      success: true,
+      data: data.map(item => ({
+        id: item.id || item.name,
+        name: item.name || item
+      }))
+    };
+  } catch (error) {
+    return { success: false, data: [] };
+  }
+};
+
+const searchCarModels = async (params, config) => {
+  try {
+    const response = await fetch(`/api/car-models?search=${params.search}&carName=${newVehicle.carName}`, config);
+    const data = await response.json();
+    
+    return {
+      success: true,
+      data: data.map(item => ({
+        id: item.id || item.name,
+        name: item.name || item
+      }))
+    };
+  } catch (error) {
+    return { success: false, data: [] };
+  }
+};
 </script>
 
 <template>

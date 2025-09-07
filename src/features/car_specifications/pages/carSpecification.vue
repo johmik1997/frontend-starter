@@ -25,10 +25,48 @@ const pagination = usePaginationcopy({
     })
   ),
 })
+function editCarSpec(row) {
+  console.log('=== EDIT BUTTON CLICKED ===');
+  console.log('Row data:', row);
+  console.log('Row type:', typeof row);
+  console.log('Row keys:', Object.keys(row || {}));
+  console.log('===========================');
+  
+  openModal('EditCarSpecification', {
+    props: {
+      data: row
+    }
+  });
+}
+
+function deleteCarSpec(row) {
+  if (confirm('Are you sure you want to delete this car specification?')) {
+    req.send(
+      () => deleteCarSpecification(row.id || row.uuid),
+      (res) => {
+        if (res.success) {
+          carSpecStore.remove(row.id || row.uuid);
+          toasted(true, 'Car Specification deleted successfully!');
+        } else {
+          toasted(false, 'Error', res.error);
+        }
+      }
+    );
+  }
+}
 
 // Function to open the add car specification modal
 function openAddCarSpecModal() {
   openModal('AddCarSpecification')
+}
+function handleEditWithClose(row) {
+  closeAllDropdowns();
+  editCarSpec(row);
+}
+
+function handleDeleteWithClose(row) {
+  closeAllDropdowns();
+  deleteCarSpec(row);
 }
 </script>
 
@@ -55,6 +93,50 @@ function openAddCarSpecModal() {
       :rows="carSpecStore.carSpecifications || []"
       :Fallback="TableRowSkeleton"
     >
+      <template #actions="{ row }">
+           <div class="flex flex-col sm:flex-row gap-2">
+        <!-- Dropdown toggle button - full width -->
+        <!-- <button 
+              @click.stop="handleViewWithClose(row)"
+              class="block w-full text-start py-2 text-sm text-gray-700 hover:bg-gray-100"
+            >
+              <div class="flex items-start justify-start pl-4 gap-4">
+                <i v-html="icons.eye" />
+                View Details
+              </div>
+            </button> -->
+            
+            <!-- Edit option -->
+            <button 
+              @click.stop="handleEditWithClose(row)"
+              class="bg-gray-600 text-white px-3 py-1 rounded flex items-center gap-1 justify-center"
+            >
+              <i v-html="icons.edit" />
+              <span class=" sm:inline">Edit</span>
+            </button>
+            
+            <!-- Delete option -->
+            <button 
+              @click.stop="handleDeleteWithClose(row)"
+              :disabled="req.pending.value"
+              class="bg-[#FF4C4C] text-white px-3 py-1 rounded flex items-center gap-1 justify-center"
+            >
+              <i v-html="icons.trash" />
+              <span class=" sm:inline">Delete</span>
+            </button>
+
+        <!-- Dropdown menu -->
+        <div 
+          :id="`dropdown-${row.uuid || row.id}`"
+          class="dropdown-menu hidden absolute right-0 z-10 w-full bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+        >
+          <div class="py-1" role="none">
+            <!-- View option -->
+           
+          </div>
+        </div>
+      </div>
+        </template>
     </Table>
   </DefaultPage>
 </template>

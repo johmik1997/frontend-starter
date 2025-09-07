@@ -89,10 +89,10 @@ const showPublicServiceOptions = computed(() => premiumData.value.commercialType
 onMounted(() => {
   console.log('Edit Premium Modal - actualData:', actualData);
   
-  // Populate form with existing data
+  // Properly map the API data to your form structure
   premiumData.value = {
-    car_type: actualData?.car_type || '',
-    rate: actualData?.rate ? (actualData.rate * 100) : 0, // Convert to percentage
+    car_type: actualData?.carType || '',
+    rate: actualData?.premiumRate ? (actualData.premiumRate * 100) : 0,
     privateType: actualData?.privateType || '',
     commercialType: actualData?.commercialType || '',
     goodsCarryingType: actualData?.goodsCarryingType || '',
@@ -102,7 +102,6 @@ onMounted(() => {
     publicServiceType: actualData?.publicServiceType || ''
   };
 });
-
 function resetSubCategories() {
   premiumData.value.privateType = '';
   premiumData.value.commercialType = '';
@@ -134,11 +133,12 @@ function submitForm(event) {
     rate: parseFloat(premiumData.value.rate) / 100 // Convert percentage to decimal
   };
 
+  // Use premiumUuid instead of premiumRateUuid
   req.send(
-    () => editPremiumRate(actualData.premiumRateUuid || actualData.id, formData),
+    () => editPremiumRate(actualData.premiumUuid, formData),
     (res) => {
       if (res.success) {
-        premiumStore.update(actualData.premiumRateUuid || actualData.id, res.data);
+        premiumStore.update(actualData.premiumUuid, res.data);
         toasted(true, 'Premium Rate Updated Successfully!');
         closeModal();
       } else {
@@ -152,8 +152,9 @@ function submitForm(event) {
 <template>
   <ModalParent>
     <NewFormParent title="Edit Premium Rate" size="lg" class="px-6 py-4 max-w-4xl">
-      <template #content>
-        <Form>
+      <template #default>
+          
+        <Form id="editPremiumForm" :inner="false" v-slot="{ submit }" class="space-y-6">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- Car Type -->
             <Select
@@ -266,14 +267,14 @@ function submitForm(event) {
 
       <template #bottom>
         <div class="flex justify-end gap-3">
-          <Button @click="closeModal" type="secondary">
+          <Button @click="closeModal" type="secondary" class="flex items-center gap-2 px-2 my-2">
             Cancel
           </Button>
           <Button
             @click="submitForm"
             :pending="req.pending.value"
             type="primary"
-            class="flex items-center gap-2"
+            class="flex items-center gap-2 px-2 my-2"
             :attributes="{ type: 'button' }"
           >
             <i v-html="icons.save" class="w-4 h-4"></i>

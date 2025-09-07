@@ -62,7 +62,7 @@ export function usePaginations(options = {}) {
         
         if (paginationOptions.value.store && res.success) {
           console.log(res);
-            paginationOptions.value.store.set(res.data?.response || []);
+            paginationOptions.value.store.set(res.data?.response || res.data || []);
         }
 
         pagination.totalPages.value = res.data?.totalPages || 1;

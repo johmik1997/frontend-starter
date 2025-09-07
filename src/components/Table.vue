@@ -1,6 +1,6 @@
 <script setup>
 import DataTable from "./DataTable.vue";
-import { inject, ref, useAttrs, watch } from "vue";
+import { inject, ref, useAttrs, watch, computed } from "vue";
 import GenericTableRow from "./GenericTableRow.vue";
 import icons from "@/utils/icons";
 import TableRowSkeleton from "./TableRowSkeleton.vue";
@@ -13,6 +13,10 @@ const emit = defineEmits([
   "action:suspend",
   "action:edit",
   "bottom",
+  "page-change",
+  "next-page",
+  "prev-page",
+  "page-size-change"
 ]);
 
 const props = defineProps({
@@ -39,7 +43,37 @@ const props = defineProps({
     default: TableRowSkeleton
   },
   pending: Boolean,
+  // Pagination props
+  pagination: {
+    type: Object,
+    default: () => ({})
+  },
+  // Current page for external control
+  currentPage: {
+    type: Number,
+    default: 1
+  }
 });
+
+// Computed properties for pagination
+const currentPage = computed(() => {
+  return props.pagination?.number !== undefined ? props.pagination.number + 1 : props.currentPage;
+});
+
+const totalPages = computed(() => {
+  return props.pagination?.totalPages || 1;
+});
+
+const totalElements = computed(() => {
+  return props.pagination?.totalElements || props.rows?.length || 0;
+});
+
+const pageSize = computed(() => {
+  return props.pagination?.size || props.pagination?.pageSize || 25;
+});
+
+// Selected page size
+const selectedPageSize = ref(pageSize.value);
 
 function toUpper(str) {
   let words = str.split(" ");
@@ -84,12 +118,65 @@ function getUrl(blob) {
 
 watch(props, () => {
   format();
+  // Update selected page size if it changes from parent
+  if (props.pagination?.size !== undefined) {
+    selectedPageSize.value = props.pagination.size;
+  }
 });
 
-const nextPage = inject("next", () => {});
-const previousPage = inject("previous", () => {});
-const page = inject("page", 1);
-const totalPages = inject("totalPages", 1);
+// Check if there's data to show
+const hasData = computed(() => {
+  return props.rows?.length > 0;
+});
+
+// Pagination functions
+function goToNextPage() {
+  if (currentPage.value < totalPages.value) {
+    emit('next-page');
+    emit('page-change', currentPage.value + 1);
+  }
+}
+
+function goToPrevPage() {
+  if (currentPage.value > 1) {
+    emit('prev-page');
+    emit('page-change', currentPage.value - 1);
+  }
+}
+
+function goToPage(page) {
+  if (page >= 1 && page <= totalPages.value) {
+    emit('page-change', page);
+  }
+}
+
+function changePageSize(size) {
+  selectedPageSize.value = size;
+  emit('page-size-change', size);
+}
+
+// Helper function to generate number ranges
+function range(start, end) {
+  const result = [];
+  for (let i = start; i <= end; i++) {
+    result.push(i);
+  }
+  return result;
+}
+
+// Generate page numbers for pagination
+const pageNumbers = computed(() => {
+  const pages = [];
+  const maxVisiblePages = 5;
+  const startPage = Math.max(1, currentPage.value - Math.floor(maxVisiblePages / 2));
+  const endPage = Math.min(totalPages.value, startPage + maxVisiblePages - 1);
+  
+  for (let i = startPage; i <= endPage; i++) {
+    pages.push(i);
+  }
+  
+  return pages;
+});
 </script>
 <template>
   <div class="modern-table-container">
@@ -222,64 +309,116 @@ const totalPages = inject("totalPages", 1);
       </div>
     </div>
 
-    <!-- Responsive Pagination -->
-    <div v-if="showPagination && totalPages > 1" class="pagination-container">
-      <!-- Mobile Pagination -->
-      <div class="flex lg:hidden items-center justify-between w-full">
-        <button 
-          @click="previousPage"
-          :disabled="page <= 1"
-          class="pagination-btn-mobile"
-          :class="{ 'opacity-50 cursor-not-allowed': page <= 1 }"
+    <!-- Enhanced Pagination with the requested format -->
+    <div
+      v-if="!pending && showPagination && hasData"
+      class="flex justify-between p-4 items-center flex-wrap gap-4 bg-white rounded-lg border border-gray-100 mt-4"
+    >
+      <div class="flex gap-5 items-center">
+        <span class="text-gray-600">Show</span>
+        <select
+          @change="changePageSize(parseInt($event.target.value))"
+          class="px-3 py-2 rounded-md bg-gray-100 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          v-model="selectedPageSize"
         >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-        
-        <span class="text-sm font-medium text-gray-700">{{ page }} / {{ totalPages }}</span>
-        
-        <button 
-          @click="nextPage"
-          :disabled="page >= totalPages"
-          class="pagination-btn-mobile"
-          :class="{ 'opacity-50 cursor-not-allowed': page >= totalPages }"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
+          <option value="25">25</option>
+          <option value="50">50</option>
+          <option value="75">75</option>
+          <option value="100">100</option>
+        </select>
+        <span class="text-gray-600">entries</span>
       </div>
 
-      <!-- Desktop Pagination -->
-      <div class="hidden lg:flex items-center justify-between w-full">
-        <div class="pagination-info">
-          <span class="page-info">Page {{ page }} of {{ totalPages }}</span>
-        </div>
-        
-        <div class="pagination-controls">
-          <button 
-            @click="previousPage"
-            :disabled="page <= 1"
-            class="pagination-btn pagination-btn-prev"
+      <div class="text-gray-600">
+        Showing {{ rows?.length || 0 }} of {{ totalElements || 0 }} records
+      </div>
+
+      <div class="flex gap-2 items-center justify-center flex-wrap">
+        <button
+          @click="goToPrevPage"
+          class="pagination-button"
+          :disabled="currentPage === 1 || pending"
+        >
+          <i v-html="icons.chevron_left"></i>
+        </button>
+
+        <template v-if="totalPages <= 7">
+          <button
+            v-for="pageNum in totalPages"
+            :key="pageNum"
+            @click="goToPage(pageNum)"
+            class="pagination-button"
+            :class="{ 'active-page': currentPage === pageNum }"
           >
-            <svg class="pagination-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-            </svg>
-            <span>Previous</span>
+            {{ pageNum }}
           </button>
-          
-          <button 
-            @click="nextPage"
-            :disabled="page >= totalPages"
-            class="pagination-btn pagination-btn-next"
+        </template>
+
+        <template v-else>
+          <button
+            @click="goToPage(1)"
+            class="pagination-button"
+            :class="{ 'active-page': currentPage === 1 }"
           >
-            <span>Next</span>
-            <svg class="pagination-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-            </svg>
+            1
           </button>
-        </div>
+
+          <template v-if="currentPage < 4">
+            <button
+              v-for="pageNum in range(2, 4)"
+              :key="pageNum"
+              @click="goToPage(pageNum)"
+              class="pagination-button"
+              :class="{ 'active-page': currentPage === pageNum }"
+            >
+              {{ pageNum }}
+            </button>
+            <span class="px-2">...</span>
+          </template>
+
+          <template v-else-if="currentPage > totalPages - 3">
+            <span class="px-2">...</span>
+            <button
+              v-for="pageNum in range(totalPages - 3, totalPages - 1)"
+              :key="pageNum"
+              @click="goToPage(pageNum)"
+              class="pagination-button"
+              :class="{ 'active-page': currentPage === pageNum }"
+            >
+              {{ pageNum }}
+            </button>
+          </template>
+
+          <template v-else>
+            <span class="px-2">...</span>
+            <button
+              v-for="pageNum in [currentPage - 1, currentPage, currentPage + 1]"
+              :key="pageNum"
+              @click="goToPage(pageNum)"
+              class="pagination-button"
+              :class="{ 'active-page': currentPage === pageNum }"
+            >
+              {{ pageNum }}
+            </button>
+            <span class="px-2">...</span>
+          </template>
+
+          <button
+            @click="goToPage(totalPages)"
+            class="pagination-button"
+            :class="{ 'active-page': currentPage === totalPages }"
+          >
+            {{ totalPages }}
+          </button>
+        </template>
+
+        <button
+          @click="goToNextPage"
+          class="pagination-button"
+          :disabled="currentPage === totalPages || pending"
+        >
+          <i v-html="icons.chevron_right"></i>
+        </button>
       </div>
     </div>
   </div>
@@ -300,9 +439,21 @@ const totalPages = inject("totalPages", 1);
   overflow: visible !important;
 }
 
-/* Mobile pagination buttons */
-.pagination-btn-mobile {
-  @apply p-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors;
+/* Pagination button styles */
+.pagination-button {
+  @apply w-8 h-8 flex items-center justify-center rounded-md border border-gray-300 text-sm font-medium transition-colors duration-200;
+}
+
+.pagination-button:not(:disabled) {
+  @apply text-gray-700 bg-white hover:bg-gray-100;
+}
+
+.pagination-button:disabled {
+  @apply text-gray-400 bg-gray-50 cursor-not-allowed;
+}
+
+.pagination-button.active-page {
+  @apply bg-blue-500 text-white border-blue-500;
 }
 
 /* Empty State Styles */
@@ -328,47 +479,6 @@ const totalPages = inject("totalPages", 1);
 
 .empty-subtitle {
   @apply text-sm lg:text-base text-gray-500 text-center leading-relaxed;
-}
-
-/* Pagination Styles */
-.pagination-container {
-  @apply flex items-center justify-between px-4 lg:px-6 py-3 lg:py-4 bg-white rounded-xl border border-gray-100 shadow-sm;
-}
-
-.pagination-info {
-  @apply flex items-center space-x-4;
-}
-
-.page-info {
-  @apply text-sm font-medium text-gray-700;
-}
-
-.pagination-controls {
-  @apply flex items-center space-x-3;
-}
-
-.pagination-btn {
-  @apply flex items-center space-x-2 px-3 lg:px-4 py-2 text-sm font-medium rounded-lg border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
-}
-
-.pagination-btn:not(:disabled) {
-  @apply text-gray-700 bg-white border-gray-300 hover:bg-gray-50 hover:border-gray-400 focus:ring-blue-500;
-}
-
-.pagination-btn:disabled {
-  @apply text-gray-400 bg-gray-50 border-gray-200 cursor-not-allowed;
-}
-
-.pagination-btn-prev:not(:disabled):hover .pagination-icon {
-  @apply -translate-x-1;
-}
-
-.pagination-btn-next:not(:disabled):hover .pagination-icon {
-  @apply translate-x-1;
-}
-
-.pagination-icon {
-  @apply w-4 h-4 transition-transform duration-200;
 }
 
 /* Global table improvements */
@@ -415,10 +525,5 @@ const totalPages = inject("totalPages", 1);
   .modern-table-container {
     @apply space-y-3;
   }
-  
-  .pagination-container {
-    @apply px-4 py-3;
-  }
 }
 </style>
-

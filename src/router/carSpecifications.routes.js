@@ -9,7 +9,7 @@ export default [
     component: carSpecificationIndex,
     meta: {
       requiresAuth: true,
-      privileges: ['create_user','View_card'],
+      privileges: ['create_specification','View_specification'],
     },
     children: [
       {
@@ -23,7 +23,7 @@ export default [
         props: true,
         meta: {
           requiresAuth: true,
-          privileges: ['create_user','View_card'],
+          privileges: ['create_specification','View_specification'],
         }
       }
     ]

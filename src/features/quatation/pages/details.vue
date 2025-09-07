@@ -210,7 +210,7 @@
               <span class="text-xs sm:text-sm font-normal text-[#2B3674]">Quotation</span>
               <div v-if="!isEditing1">
                 <Button class="text-xs sm:text-sm bg-[#F6F6FF] items-center text-[#272833] W-4" @click="toggleEdit1">
-                  ETB {{ quotation.amount }} <i v-if="!isEditing && customerId.customers?.quotationStatus == 'PENDING'"
+                ETB {{ Number(quotation.amount).toFixed(2) }} <i v-if="!isEditing && customerId.customers?.quotationStatus == 'PENDING'"
                     class="pl-2" v-html="icons.pencil" />
                 </Button>
               </div>
@@ -228,7 +228,10 @@
             <div class="flex flex-col sm:flex-row sm:justify-between gap-2 sm:gap-0">
               <span class="text-xs sm:text-sm font-normal text-[#2B3674]">Deposit</span>
               <div class="text-xs sm:text-sm bg-[#F6F6FF] items-center text-[#272833] p-2">
-                ETB {{ quotation.deposit }}
+               
+                
+ETB {{ Number(quotation.deposit).toFixed(2) }}
+
               </div>
             </div>
 
@@ -236,7 +239,7 @@
             <div class="flex flex-col sm:flex-row sm:justify-between gap-2 sm:gap-0">
               <span class="text-xs sm:text-sm font-normal text-[#2B3674]">Monthly Repayment</span>
               <div class="text-xs sm:text-sm bg-[#F6F6FF] items-center text-[#272833] p-2">
-                ETB {{ quotation.premium }}
+            ETB {{ Number(quotation.premium).toFixed(2) }}
               </div>
             </div>
           </div>

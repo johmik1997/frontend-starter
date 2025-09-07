@@ -45,6 +45,14 @@ function openAddDepositModal() {
     }
   })
 }
+function openapproveDepositModal(row) {
+  console.log('Row data being passed:', row); // Add this debug log
+  openModal('approveDeposit', {
+    props: {
+      data: row  // Simplify the data structure
+    }
+  });
+}
 </script>
 
 <template>
@@ -81,6 +89,16 @@ function openAddDepositModal() {
       head: ['Customer Names', 'Deposit Date', 'Account Number', 'Insurance', 'Amount', 'Status', 'actions'],
       row: ['customerName', 'depositDate', 'accountNumber', 'insurance', 'quotationAmount', 'quotationStatus'],
     }" :rowCom="Status_row" :rows="quotationStore.quotations || []" :Fallback="TableRowSkeleton">
+     <template #actions="{ row }">
+           <div class="flex flex-col sm:flex-row gap-1 sm:gap-2">
+         <Button v-if="row?.quotationStatus === 'REQUESTED'"  @click="openapproveDepositModal(row)"   className=" w-14 rounded-[4px] px-[14px] py-[8px] bg-green-500 text-white">
+            Approve
+          </Button>
+          <Button v-else  @click="$router.push(`/depositDetails/${row.quotationUuid}`)" className="w-14 rounded-[4px] px-[14px] py-[8px] bg-primary text-white">
+            Open
+          </Button>
+        </div>
+        </template>
     </Table>
   </DefaultPage>
 </template>

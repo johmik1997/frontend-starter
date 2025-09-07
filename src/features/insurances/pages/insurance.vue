@@ -11,7 +11,9 @@ import { useInsurance } from '../store/insuranceStore'
 import { getInsurances } from '../api/insuranceApi'
 import { removeUndefined } from '@/utils/utils'
 import { usePaginationEmpty } from '@/composables/usePaginationEmpty'
+import { useRouter } from 'vue-router';
 
+const router = useRouter();
 const insurance = useInsurance()
 const searchKey = ref('')
 
@@ -45,6 +47,9 @@ function openAddInsuranceModal() {
     }
   })
 }
+const handleNavigate = (insuranceUuid) => {
+  router.push(`/insurance/detail/${insuranceUuid}`);
+};
 </script>
 
 <template>
@@ -52,7 +57,7 @@ function openAddInsuranceModal() {
     <!-- Header actions -->
     <template #more>
       <div class="flex gap-2 justify-end items-center">
-        <Button @click="openAddInsuranceModal" type="primary" class="flex items-center gap-2">
+        <Button @click="openAddInsuranceModal" type="primary" class="flex items-center px-2 gap-2">
           Add New Insurance
         </Button>
       </div>
@@ -63,6 +68,14 @@ function openAddInsuranceModal() {
       head: ['Logo', 'Insurance Name', 'Registration Date', 'Status', 'actions'],
       row: ['profile', 'insuranceName', 'registrationDate', 'quotationStatus'],
     }" :rowCom="Status_row" :rows="insurance.insurances || []" :Fallback="TableRowSkeleton">
+     <template #actions="{ row }">
+             <Button 
+          @click="handleNavigate(row.insuranceUuid)" 
+          class="rounded-[4px] bg-primary text-white"
+        >
+          Open
+        </Button>
+        </template>
     </Table>
   </DefaultPage>
 </template>
