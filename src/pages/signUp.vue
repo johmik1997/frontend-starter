@@ -107,19 +107,19 @@ function closeVerificationModal() {
 
       <!-- Form -->
       <Form id="signup-form" :inner="false"  class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Input name="email" validation="required|email" label="Email" :attributes="{ placeholder: 'Enter your email' }" />
-        <InputPassword name="password" validation="required|min:6" label="Password" :attributes="{ placeholder: 'Secure password' }" />
-        <Select name="title" label="Title" validation="required" :options="['mr.', 'ms.', 'dr.', 'prof.']" />
+        <Input name="email"  label="Email" :attributes="{ placeholder: 'Enter your email' }" />
+        <InputPassword name="password" validation="required|min:6" label="Password" :attributes="{ placeholder: 'Secure password', required: true }" />
+        <Select name="title" label="Title" validation="required" :options="['mr.', 'ms.', 'dr.', 'prof.']" :attributes="{ placeholder: 'Select your title', required: true }" />
 
-        <Input name="firstName" validation="required|alpha" label="First Name" :attributes="{ placeholder: 'First name' }" />
-        <Input name="fatherName" validation="required|alpha" label="Father Name" :attributes="{ placeholder: 'Father name' }" />
-        <Input name="grandFatherName" validation="required|alpha" label="Grandfather Name" :attributes="{ placeholder: 'Grandfather name' }" />
+        <Input name="firstName" validation="required|alpha" label="First Name" :attributes="{ placeholder: 'First name' , required: true }" />
+        <Input name="fatherName" validation="required|alpha" label="Father Name" :attributes="{ placeholder: 'Father name', required: true }" />
+        <Input name="grandFatherName"  label="Grandfather Name" :attributes="{ placeholder: 'Grandfather name' }" />
 
-        <Select name="gender" label="Gender" validation="required" :options="['Male', 'Female']" />
-        <Input name="mobilePhone" label="Mobile Phone" validation="required|phone" :attributes="{ placeholder: '09XXXXXXXX' }" />
+        <Select name="gender" label="Gender" validation="required" :options="['Male', 'Female']" :attributes="{ placeholder: 'Select your gender', required: true }" />
+        <Input name="mobilePhone" label="Mobile Phone" validation="required|phone" :attributes="{ placeholder: '09XXXXXXXX', required: true }" />
 
         <!-- Hidden fields -->
-        <input type="hidden" name="userType" value="Insurance" />
+        <input type="hidden" name="userType" value="CLIENT" />
         <input type="hidden" name="roleUuid" :value="clientRoleUuid" />
 
         <!-- Submit Button -->
