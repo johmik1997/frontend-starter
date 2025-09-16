@@ -10,9 +10,9 @@
       <NewFormLayout v-slot="{ submit }" id="login-form">
         <div class="flex flex-col gap-5">
           <Input
-            label="Email"
+            label="Email/Phone Number"
             name="email"
-            validation="required|email"
+            validation="required"
             :attributes="{ placeholder: 'Email' }"
           />
           <InputPassword
