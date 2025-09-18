@@ -167,7 +167,7 @@ const submitForm = async () => {
 
 <template>
   <ModalParent>
-    <NewFormParent class="px-4 py-2" size="xs" title="Making Deposits">
+    <NewFormParent class="px-4 py-2" size="lg" title="Making Deposits">
       <template #default>
         <div class="gap-5 mt-3 p-6">
           <!-- Step 1: Search and Select Client -->

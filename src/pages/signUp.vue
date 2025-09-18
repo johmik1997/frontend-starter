@@ -10,7 +10,7 @@ import { toasted, allRequest } from '@/utils/utils';
 import { useRouter } from 'vue-router';
 import { ref, watch } from 'vue';
 import { getAllRole } from '@/features/roles/Api/RoleApi';
-import { CreateUser, verifyUser } from '@/features/users/Api/UserApi';
+import { CreateUser, verifyUser, sendVerificationCode } from '@/features/users/Api/UserApi';
 
 const { submit } = useForm('signup-form');
 
@@ -83,6 +83,19 @@ function submitVerification() {
   );
 }
 
+function sendVerification() {
+ 
+  verifyReq.send(
+    () => sendVerificationCode(userPhoneNumber.value),
+    (res) => {
+      if (res.success) {
+        toasted(res.success, "Verification Code Sent successfully",res.error);
+      } else {
+        toasted(false, "", res.error || "Verification failed");
+      }
+    }
+  );
+}
 function skipVerification() {
   toasted(true, "You can verify your account later from the login page");
   closeVerificationModal();
@@ -189,6 +202,12 @@ function closeVerificationModal() {
             class="bg-gray-500 text-white px-6 py-2 text-sm font-medium hover:bg-gray-600 rounded-md"
           >
             Skip for Now
+          </button>
+           <button
+            @click="sendVerification"
+            class="bg-blue-300 text-gray px-6 py-2 text-sm font-medium hover:bg-blue-400 rounded-md"
+          >
+            Send Code Again
           </button>
           <button
             @click="submitVerification"
