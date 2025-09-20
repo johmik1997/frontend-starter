@@ -1,44 +1,106 @@
 <script setup>
-import { provide, ref, watch } from "vue";
-import icons from "@/utils/icons";
+import { ref, onMounted, watch } from "vue";
 import { useAuth } from "@/stores/auth";
-import { useRouter } from 'vue-router';
+import { useRouter } from "vue-router";
+import icons from "@/utils/icons";
+import imageSrc from "@/assets/img/profile.png";
 
-const router = useRouter();
-function logout() {
-  localStorage.removeItem("userDetail");
-  window.location.href = "/login";
-}
+// Define props
 const props = defineProps({
   modelValue: {
     type: String,
   },
   title: {
-    Type: String,
+    type: String,
   },
 });
 
+// Initialize store and router
+const authStore = useAuth();
+const router = useRouter();
+const isScrolled = ref(false);
+
+// Default profile picture
+const profilePicture = ref(imageSrc);
+
+// Check if user data is available
+const user = authStore?.auth?.user || { name: "Birhane Araya", role: "Marketing Administrator" };
+
+// Process the profile image
+async function processProfilePicture() {
+  // Log the entire authStore object to inspect
+  console.log("authStore:", authStore);
+  console.log("authStore.auth:", authStore.auth);
+  console.log("authStore.auth.user:", authStore.auth?.user);
+  
+  const profilePic = authStore.auth?.user?.profilePicture; // Use profilePicture from user
+
+  // Log the profilePicture to inspect it
+  console.log("Profile Picture:", profilePic);
+
+  if (profilePic) {
+    // If profilePic is a valid base64 string, use it
+    if (!profilePic.startsWith("data:image/")) {
+      profilePicture.value = `data:image/png;base64,${profilePic}`;
+    } else {
+      profilePicture.value = profilePic;
+    }
+  } else {
+    // If no profilePic is available, fallback to the default image
+    profilePicture.value = imageSrc;
+  }
+}
+
+// Handle image load error and fallback to default image
+function handleImageError() {
+  profilePicture.value = imageSrc;
+}
+
+// Handle logout functionality
+function logout() {
+  localStorage.removeItem("userDetail");
+  window.location.href = "/login";
+}
+
+onMounted(() => {
+  // Process the profile picture when component is mounted
+  processProfilePicture();
+  // Handle scroll event to toggle navbar style
+  window.addEventListener('scroll', () => {
+    isScrolled.value = window.scrollY > 10;
+  });
+});
+
+// Watch for changes in input data (if any)
 const inputData = ref("");
 const emit = defineEmits(["update:modelValue"]);
-const showUserMenu = ref(false);
-
-const auth = useAuth();
-const user = auth?.auth?.user || { name: "Birhane Araya", role: "Marketing Administrator" };
-
 watch(inputData, () => {
   emit("update:modelValue", inputData.value);
 });
 
+// Toggle user menu dropdown visibility
+const showUserMenu = ref(false);
 const toggleUserMenu = () => {
   showUserMenu.value = !showUserMenu.value;
 };
 
+// Navigate to previous page (back button)
 const goBack = () => {
   router.go(-1);
 };
+
+// Navigate to Profile or Settings page
+const navigateTo = (page) => {
+  if (page === "profile") {
+    router.push('/profile'); 
+  } else if (page === "settings") {
+    router.push('/SettingsPage'); 
+  }
+};
 </script>
+
 <template>
-  <div class="flex justify-between items-center  bg-gray-50 relative">
+  <div class="flex justify-between items-center bg-gray-50 relative">
     <!-- Left Side - Back Button and Title -->
     <div class="flex items-center gap-2 sm:gap-4">
       <button 
@@ -79,16 +141,22 @@ const goBack = () => {
           @click="toggleUserMenu"
           class="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-lg transition-colors"
         >
+           <div class="relative">
+            <div class="w-9 h-9 rounded-full overflow-hidden border-2 border-white shadow">
+              <img
+                :src="profilePicture || imageSrc"
+                alt="User avatar"
+                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                @error="handleImageError"
+              />
+            </div>
+            <span class="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white animate-ping"></span>
+          </div>
           <!-- User Info - Hidden on mobile -->
           <div class="hidden sm:block text-right">
             <p class="font-Poppin text-sm">{{ user.name }}</p>
             <p class="text-xs text-gray-500">{{ user.role }}</p>
           </div>
-          
-          <!-- Mobile User Icon -->
-          <!-- <div class="sm:hidden w-8 h-8 rounded-full bg-primary text-white grid place-items-center">
-            {{ user.name.charAt(0) }}
-          </div> -->
           
           <i v-html="icons.down" class="transition-transform duration-200" 
              :class="{ 'rotate-180': showUserMenu }" />
@@ -110,8 +178,8 @@ const goBack = () => {
           </div>
           
           <!-- Common menu items -->
-          <button class="w-36 px-4 py-2 text-left hover:bg-gray-50">Profile</button>
-          <button class="w-36 px-4 py-2 text-left hover:bg-gray-50">Settings</button>
+          <button @click="navigateTo('profile')" class="w-36 px-4 py-2 text-left hover:bg-gray-50">Profile</button>
+          <button @click="navigateTo('settings')" class="w-36 px-4 py-2 text-left hover:bg-gray-50">Settings</button>
           <button  @click="logout()" class=" px-4 w-36 py-2 text-left hover:bg-red-50 text-red-600">Logout</button>
         </div>
       </div>
@@ -137,5 +205,3 @@ const goBack = () => {
   }
 }
 </style>
-
-

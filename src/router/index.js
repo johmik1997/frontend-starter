@@ -2,7 +2,7 @@ import MainLayout from '@/layouts/MainLayout.vue'
 import quatationRoutes from './quatation.routes'
 import insuranceRoutes from './insurance.routes'
 import paymentRoutes from './payment.routes'
-import subcitiesRoutes from './subcities.routes'
+import subcitiesRoutes from './profile.routes'
 import ketenaRoutes from './ketena.routes'
 import { createRouter, createWebHistory } from "vue-router";
 import HomeView from "../views/HomeView.vue";
@@ -10,9 +10,8 @@ import membersRoutes from "./members.routes";
 import rolesRoutes from "./roles.routes";
 import usersRoutes from "./users.routes";
 import privilagesRoutes from "./privilages.routes";
-import branchesRoutes from "./branches.routes";
 import Login from "@/pages/login/Login.vue";
-import subcityRoutes from "./subcity.routes";
+import profileRoutes from "./profile.routes";
 import Dashboard from '@/features/dashboard/pages/Dashboard.vue'
 import { useAuth } from '@/stores/auth'
 import carSpecificationsRoutes from './carSpecifications.routes'
@@ -41,8 +40,7 @@ const routes = [
       ...rolesRoutes,
       ...privilagesRoutes,
       ...usersRoutes,
-      ...branchesRoutes,
-      ...subcityRoutes,
+      ...profileRoutes,
       ...quatationRoutes,
       ...paymentRoutes,
       ...subcitiesRoutes,

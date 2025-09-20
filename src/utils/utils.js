@@ -431,3 +431,42 @@ export const hospitals = [
   "Biras Hospital",
 ];
 
+export async function convertBase64Image(
+  base64String,
+  outputFormat = "image/png",
+  quality = 0.92
+) {
+  return new Promise((resolve, reject) => {
+    try {
+      const isBase64 = /^[A-Za-z0-9+/]*={0,2}$/.test(base64String);
+      if (!isBase64) {
+        return reject(new Error("Invalid Base64 string"));
+      }
+
+      if (!base64String.startsWith("data:image/")) {
+        base64String = `data:image/png;base64,${base64String}`;
+      }
+
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+
+        const convertedData = canvas.toDataURL(outputFormat, quality);
+        resolve(convertedData);
+      };
+
+      img.onerror = () => {
+        reject(new Error("Failed to load image"));
+      };
+
+      img.src = base64String;
+    } catch (error) {
+      reject(error);
+    }
+  });
+}

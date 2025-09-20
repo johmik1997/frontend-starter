@@ -6,30 +6,39 @@ const backendApiUrl = import.meta.env.v_API_URL;
 
 export default class ApiService {
   api;
+
   _initApi(baseURL) {
     this.api = axios.create({
-      // withCredentials: true,
       baseURL,
-      // timeout: 3000,
-      validateStatus: (status) => {
-        return status >= 200 && status < 300;
-      },
-      headers: {
-        "Content-Type": "application/json",
-      },
+      validateStatus: (status) => status >= 200 && status < 300,
     });
   }
 
   constructor(baseURL) {
-    if (baseURL) this._initApi(baseURL);
-    else this._initApi(backendApiUrl);
+    this._initApi(baseURL || backendApiUrl);
   }
+
   /**
-   *
-   * @param {string} url
-   * @param {Object} config
-   * @returns
+   * Adds bearer token from auth store to headers
    */
+  addAuthenticationHeader() {
+    const authStore = useAuth();
+    this.api.defaults.headers.common.Authorization = `Bearer ${authStore.auth?.accessToken}`;
+    return this;
+  }
+
+  /**
+   * Helper to conditionally set Content-Type
+   */
+  _getHeaders(data, configHeaders = {}) {
+    const isFormData = data instanceof FormData;
+
+    return {
+      ...configHeaders,
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
+    };
+  }
+
   async get(url, config = {}) {
     return await responseHandler(
       this.api({
@@ -41,28 +50,34 @@ export default class ApiService {
   }
 
   async post(url, data, config = {}) {
-    console.log('sdfsdf');
-
     return await responseHandler(
       this.api({
         ...config,
         url,
         data,
         method: "post",
+        headers: this._getHeaders(data, config.headers),
       })
     );
   }
 
-  async put(url, data, config = {}) {
-    return await responseHandler(
-      this.api({
-        ...config,
-        url,
-        data,
-        method: "put",
-      })
-    );
-  }
+async put(url, data, config = {}) {
+  const headers = this._getHeaders(data, config.headers);
+  console.log("[ApiService.put] URL:", url);
+  console.log("[ApiService.put] Headers:", headers);
+  console.log("[ApiService.put] Data instance of FormData?", data instanceof FormData);
+  
+  return await responseHandler(
+    this.api({
+      ...config,
+      url,
+      data,
+      method: "put",
+      headers,
+    })
+  );
+}
+
 
   async patch(url, data, config = {}) {
     return await responseHandler(
@@ -71,6 +86,7 @@ export default class ApiService {
         url,
         data,
         method: "patch",
+        headers: this._getHeaders(data, config.headers),
       })
     );
   }
@@ -84,12 +100,4 @@ export default class ApiService {
       })
     );
   }
-
-  addAuthenticationHeader() {
-    const authStore = useAuth();
-    this.api.defaults.headers.common.Authorization = `Bearer ${authStore.auth?.accessToken}`;
-    return this;
-  }
 }
-
-
