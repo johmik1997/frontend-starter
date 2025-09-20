@@ -179,7 +179,7 @@ const navigateTo = (page) => {
           
           <!-- Common menu items -->
           <button @click="navigateTo('profile')" class="w-36 px-4 py-2 text-left hover:bg-gray-50">Profile</button>
-          <button @click="navigateTo('settings')" class="w-36 px-4 py-2 text-left hover:bg-gray-50">Settings</button>
+          <!-- <button @click="navigateTo('settings')" class="w-36 px-4 py-2 text-left hover:bg-gray-50">Settings</button> -->
           <button  @click="logout()" class=" px-4 w-36 py-2 text-left hover:bg-red-50 text-red-600">Logout</button>
         </div>
       </div>
