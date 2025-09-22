@@ -10,7 +10,7 @@ export default [
     component: PremiumIndex,
     meta: {
       requiresAuth: true,
-      privileges: ['create_user','View_card'],
+      privileges: ['create_user','View_card','create_premium'],
     },
     children: [
       {
@@ -24,7 +24,7 @@ export default [
         props: true,
         meta: {
           requiresAuth: true,
-          privileges: ['create_user','View_card'],
+          privileges: ['create_user','View_card','create_premium'],
         }
       }
     ]

@@ -9,7 +9,7 @@ export default [
     component: InsuranceIndex,
     meta: {
       requiresAuth: true,
-      privileges: ['create_user','View_card'],
+      privileges: ['create_user','View_card','create_insurance'],
     },
     children: [
       {
@@ -23,7 +23,7 @@ export default [
         props: true,
         meta: {
           requiresAuth: true,
-          privileges: ['create_user','View_card'],
+          privileges: ['create_user','View_card','create_insurance'],
         }
       }
     ]
