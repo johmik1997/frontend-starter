@@ -13,7 +13,7 @@ import Form from '@/new_form_builder/Form.vue';
         <InputPassword name="password" label="Password" validation="required|pass"
         :attributes="{ placeholder: 'Password' }" />
         <Select name="title" label="Title" validation="required" :value="user?.title || ''"
-            :options="['mr.', 'ms.', 'dr.', 'prof']" :attributes="{
+            :options="['Mr.', 'Ms.', 'Dr.', 'Prof.']" :attributes="{
                 type: 'text',
                 placeholder: 'title',
             }">

@@ -55,7 +55,7 @@ function create({ values }) {
           :attributes="{ placeholder: 'Password' }" />
         
         <Select name="title" label="Title" validation="required" 
-          :options="['mr.', 'ms.', 'dr.', 'prof']"
+          :options="['Mr.', 'Ms.', 'Dr.', 'Prof']"
           :attributes="{ placeholder: 'Title' }" />
         
         <Input name="firstName" validation="required|alpha" label="First Name"

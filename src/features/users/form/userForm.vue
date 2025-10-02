@@ -29,7 +29,7 @@ console.log(props.roles);
             placeholder: 'Enter User Email',
         }" />
         <Select name="title" label="Title" :value="user?.title || ''"
-            :options="['mr.', 'ms.', 'dr.', 'prof']" :attributes="{
+            :options="['Mr.', 'Ms.', 'Dr.', 'Prof.']" :attributes="{
                 type: 'text',
                 placeholder: 'title',
               
