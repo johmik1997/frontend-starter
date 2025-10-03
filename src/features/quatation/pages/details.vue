@@ -1,298 +1,431 @@
 <template>
-  <div class="mx-auto p-3 sm:p-6  bg-white">
-    <header
-      class="flex flex-col  sm:flex-row items-start sm:items-center mb-4 pb-5 ml-2 sm:ml-5 border-b justify-between gap-2">
-      <div class="flex items-center gap-2">
-        <i class="pl-2" v-html="icons.pro" />
-        <h1 class="text-sm sm:text-md font-semibold">{{ customerId.customers?.clientFirstName }} {{
-          customerId.customers?.clientFatherName }} {{ customerId.customers?.clientGrandFatherName }}</h1>
+  <div class="mx-auto p-3 sm:p-6 bg-white min-h-screen">
+    <!-- Header Section -->
+    <header class="flex flex-col sm:flex-row items-start sm:items-center mb-6 pb-5 ml-2 sm:ml-5 border-b border-gray-200 justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <i class="pl-2 text-blue-600" v-html="icons.pro" />
+        <h1 class="text-lg sm:text-xl font-bold text-gray-800">
+          {{ customerId.customers?.clientFirstName }} 
+          {{ customerId.customers?.clientFatherName }} 
+          {{ customerId.customers?.clientGrandFatherName }}
+        </h1>
       </div>
-      <p class="text-sm">Suzuki Dezire 2024 - Code 3</p>
+      <p class="text-sm text-gray-600 bg-blue-50 px-3 py-1 rounded-full font-medium">
+        Suzuki Dezire 2024 - Code 3
+      </p>
     </header>
 
-    <div class="bg-[rgb(246,246,255)] p-2 sm:p-4 flex flex-col lg:flex-row w-full h-full gap-4">
+    <!-- Main Content -->
+    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 sm:p-6 flex flex-col lg:flex-row w-full h-full gap-6 rounded-xl">
       <!-- Client Info Section -->
-      <section class="mb-4 p-3 bg-white pt-5 w-full lg:w-1/3">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-sm font-bold">Client Info</h2>
-          <button v-if="!isEditing && customerId.customers?.quotationStatus == 'PENDING'" @click="toggleEdit"
-            class="text-primary">
+      <section class="mb-4 p-5 bg-white rounded-xl shadow-sm w-full lg:w-1/3 border border-gray-100">
+        <div class="flex justify-between items-center mb-5 pb-3 border-b border-gray-100">
+          <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+            <i class="text-blue-600" v-html="icons.user"></i>
+            Client Info
+          </h2>
+          <button 
+            v-if="!isEditing && customerId.customers?.quotationStatus == 'PENDING'" 
+            @click="toggleEdit"
+            class="text-blue-600 hover:text-blue-800 transition-colors duration-200 p-2 rounded-lg hover:bg-blue-50"
+          >
             <i v-html="icons.pencil" />
           </button>
-          <button v-if="isEditing" @click="cancelEdit" class="text-gray-600">
+          <button 
+            v-if="isEditing" 
+            @click="cancelEdit" 
+            class="text-gray-500 hover:text-gray-700 transition-colors duration-200 p-2 rounded-lg hover:bg-gray-100"
+          >
             <i v-html="icons.close" />
           </button>
         </div>
 
         <!-- View Mode -->
-        <div v-if="!isEditing">
-          <div class="grid grid-cols-2 gap-2 sm:gap-4 pt-2">
-            <div class="py-1 text-xs sm:text-sm font-normal text-[#2B3674]">First Name</div>
-            <div class="py-1 text-xs sm:text-sm">{{ customerId.customers?.clientFirstName }}</div>
+        <div v-if="!isEditing" class="space-y-4">
+          <div class="grid grid-cols-2 gap-4 pt-2">
+            <div class="text-sm font-medium text-gray-600">First Name</div>
+            <div class="text-sm text-gray-800 font-semibold">{{ customerId.customers?.clientFirstName }}</div>
 
-            <div class="py-1 text-xs sm:text-sm font-normal text-[#2B3674]">Last Name</div>
-            <div class="py-1 text-xs sm:text-sm">{{ customerId.customers?.clientFatherName }}</div>
+            <div class="text-sm font-medium text-gray-600">Last Name</div>
+            <div class="text-sm text-gray-800 font-semibold">{{ customerId.customers?.clientFatherName }}</div>
 
-            <div class="py-1 text-xs sm:text-sm font-normal text-[#2B3674]">Email</div>
-            <div class="py-1 text-xs sm:text-sm break-all">{{ customerId.customers?.clientEmail }}</div>
+            <div class="text-sm font-medium text-gray-600">Email</div>
+            <div class="text-sm text-gray-800 font-semibold break-all">{{ customerId.customers?.clientEmail }}</div>
 
-            <div class="py-1 text-xs sm:text-sm font-normal text-[#2B3674]">Phone Number</div>
-            <div class="py-1 text-xs sm:text-sm">{{ customerId.customers?.clientPhoneNumber }}</div>
+            <div class="text-sm font-medium text-gray-600">Phone Number</div>
+            <div class="text-sm text-gray-800 font-semibold">{{ customerId.customers?.clientPhoneNumber }}</div>
           </div>
 
-          <h2 class="text-sm font-bold mb-2 border-b pt-8">Vehicle details</h2>
-          <div class="grid grid-cols-2 gap-2 sm:gap-4 pt-2">
-            <div class="py-1 text-xs sm:text-sm font-normal text-[#2B3674]">Vehicle Make</div>
-            <div class="py-1 text-xs sm:text-sm">{{ customerId.customers?.carName }}</div>
+          <h2 class="text-lg font-bold mb-3 pt-6 pb-2 border-t border-gray-100 flex items-center gap-2">
+            <i class="text-blue-600" v-html="icons.car"></i>
+            Vehicle details
+          </h2>
+          <div class="grid grid-cols-2 gap-4 pt-2">
+            <div class="text-sm font-medium text-gray-600">Vehicle Make</div>
+            <div class="text-sm text-gray-800 font-semibold">{{ customerId.customers?.carName }}</div>
 
-            <div class="py-1 text-xs sm:text-sm font-normal text-[#2B3674]">carType</div>
-            <div class="py-1 text-xs sm:text-sm">{{ customerId.customers?.carType }}</div>
-            <div class="py-1 text-xs sm:text-sm font-normal text-[#2B3674]">Vehicle Model</div>
-            <div class="py-1 text-xs sm:text-sm">{{ customerId.customers?.carModel }}</div>
-            <div class="py-1 text-xs sm:text-sm font-normal text-[#2B3674]">Engine Number</div>
-            <div class="py-1 text-xs sm:text-sm">{{ customerId.customers?.engine_No }}</div>
-            <div class="py-1 text-xs sm:text-sm font-normal text-[#2B3674]">Vehicle Type</div>
-            <div class="py-1 text-xs sm:text-sm">{{ customerId.customers?.category1 }}</div>
+            <div class="text-sm font-medium text-gray-600">Car Type</div>
+            <div class="text-sm text-gray-800 font-semibold">{{ customerId.customers?.carType }}</div>
 
-            <div class="py-1 text-xs sm:text-sm font-normal text-[#2B3674]">Category</div>
-            <div class="py-1 text-xs sm:text-sm">{{ customerId.customers?.category2 || '-' }}</div>
+            <div class="text-sm font-medium text-gray-600">Vehicle Model</div>
+            <div class="text-sm text-gray-800 font-semibold">{{ customerId.customers?.carModel }}</div>
 
-            <div v-if="customerId.customers?.category3" class="py-1 text-xs sm:text-sm font-normal text-[#2B3674]">Sub
-              Category</div>
-            <div v-if="customerId.customers?.category3" class="py-1 text-xs sm:text-sm">{{
-              customerId.customers?.category3 }}</div>
-            {{ console.log(customerId.customers?.category3) }}
-            <div v-if="customerId.customers?.category4" class="py-1 text-xs sm:text-sm font-normal text-[#2B3674]">Final
-              Category</div>
-            <div v-if="customerId.customers?.category4" class="py-1 text-xs sm:text-sm">{{
-              customerId.customers?.category4 }}</div>
+            <div class="text-sm font-medium text-gray-600">Engine Number</div>
+            <div class="text-sm text-gray-800 font-semibold">{{ customerId.customers?.engine_No }}</div>
+
+            <div class="text-sm font-medium text-gray-600">Vehicle Type</div>
+            <div class="text-sm text-gray-800 font-semibold">{{ customerId.customers?.category1 }}</div>
+
+            <div class="text-sm font-medium text-gray-600">Category</div>
+            <div class="text-sm text-gray-800 font-semibold">{{ customerId.customers?.category2 || '-' }}</div>
+
+            <div v-if="customerId.customers?.category3" class="text-sm font-medium text-gray-600">Sub Category</div>
+            <div v-if="customerId.customers?.category3" class="text-sm text-gray-800 font-semibold">
+              {{ customerId.customers?.category3 }}
+            </div>
+
+            <div v-if="customerId.customers?.category4" class="text-sm font-medium text-gray-600">Final Category</div>
+            <div v-if="customerId.customers?.category4" class="text-sm text-gray-800 font-semibold">
+              {{ customerId.customers?.category4 }}
+            </div>
           </div>
         </div>
 
         <!-- Edit Mode -->
-        <div v-if="isEditing" class="space-y-4">
+        <div v-if="isEditing" class="space-y-5">
           <!-- Vehicle Make -->
-          <Select v-model="editedData.carName" label="Vehicle Make" :options="carMakes" :attributes="{
-            placeholder: 'Select Vehicle Make',
-            class: 'w-[90%] mx-3 mt-1 text-sm'
-          }">
+          <Select 
+            v-model="editedData.carName" 
+            label="Vehicle Make" 
+            :options="carMakes" 
+            :attributes="{
+              placeholder: 'Select Vehicle Make',
+              class: 'w-full mt-1 text-sm border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+            }"
+          >
             <template #label>
-              Vehicle Make <span class="text-red-500">*</span>
+              <span class="flex items-center gap-1">
+                Vehicle Make <span class="text-red-500">*</span>
+              </span>
             </template>
           </Select>
 
           <!-- Car Type -->
-          <Select v-model="editedData.carType" label="Car Type" :options="carTypes" :disabled="!editedData.carName"
+          <Select 
+            v-model="editedData.carType" 
+            label="Car Type" 
+            :options="carTypes" 
+            :disabled="!editedData.carName"
             :attributes="{
               placeholder: 'Select Car Type',
-              class: 'w-[90%] mx-3 mt-1 text-sm'
-            }">
+              class: 'w-full mt-1 text-sm border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+            }"
+          >
             <template #label>
-              Car Type <span class="text-red-500">*</span>
+              <span class="flex items-center gap-1">
+                Car Type <span class="text-red-500">*</span>
+              </span>
             </template>
           </Select>
 
           <!-- Car Model -->
-          <Select v-model="editedData.carModel" label="Car Model" :options="carModels" :disabled="!editedData.carType"
+          <Select 
+            v-model="editedData.carModel" 
+            label="Car Model" 
+            :options="carModels" 
+            :disabled="!editedData.carType"
             :attributes="{
               placeholder: 'Select Car Model',
-              class: 'w-[90%] mx-3 mt-1 text-sm'
-            }">
+              class: 'w-full mt-1 text-sm border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+            }"
+          >
             <template #label>
-              Car Model <span class="text-red-500">*</span>
+              <span class="flex items-center gap-1">
+                Car Model <span class="text-red-500">*</span>
+              </span>
             </template>
           </Select>
 
           <!-- Engine Number -->
-          <Select v-model="editedData.engine_No" label="Engine Number" :options="engineNumbers"
-            :disabled="!editedData.carModel" :attributes="{
+          <Select 
+            v-model="editedData.engine_No" 
+            label="Engine Number" 
+            :options="engineNumbers"
+            :disabled="!editedData.carModel" 
+            :attributes="{
               placeholder: 'Select Engine Number',
-              class: 'w-[90%] mx-3 mt-1 text-sm'
-            }">
+              class: 'w-full mt-1 text-sm border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+            }"
+          >
             <template #label>
-              Engine Number <span class="text-red-500">*</span>
+              <span class="flex items-center gap-1">
+                Engine Number <span class="text-red-500">*</span>
+              </span>
             </template>
           </Select>
 
           <!-- Vehicle Year -->
-          <Input v-model="editedData.makeYear" label="Vehicle Year" :validation="'required'" :attributes="{
-            type: 'text',
-            placeholder: 'Enter Vehicle Year',
-          }">
-          <template #label>
-            Vehicle Year <span class="text-red-500">*</span>
-          </template>
+          <Input 
+            v-model="editedData.makeYear" 
+            label="Vehicle Year" 
+            :validation="'required'" 
+            :attributes="{
+              type: 'text',
+              placeholder: 'Enter Vehicle Year',
+              class: 'w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+            }"
+          >
+            <template #label>
+              <span class="flex items-center gap-1">
+                Vehicle Year <span class="text-red-500">*</span>
+              </span>
+            </template>
           </Input>
 
           <!-- Plate Code -->
-          <Input v-model="editedData.plateNumber" label="Plate Code" :validation="'required'" :attributes="{
-            type: 'text',
-            placeholder: 'Enter Plate Code',
-          }">
-          <template #label>
-            Plate Code <span class="text-red-500">*</span>
-          </template>
+          <Input 
+            v-model="editedData.plateNumber" 
+            label="Plate Code" 
+            :validation="'required'" 
+            :attributes="{
+              type: 'text',
+              placeholder: 'Enter Plate Code',
+              class: 'w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+            }"
+          >
+            <template #label>
+              <span class="flex items-center gap-1">
+                Plate Code <span class="text-red-500">*</span>
+              </span>
+            </template>
           </Input>
 
           <!-- Buying Price -->
-          <Input v-model="editedData.buyingPrice" label="Buying Price" :validation="'required'" :attributes="{
-            type: 'text',
-            placeholder: 'Enter Buying Price',
-          }">
-          <template #label>
-            Buying Price <span class="text-red-500">*</span>
-          </template>
+          <Input 
+            v-model="editedData.buyingPrice" 
+            label="Buying Price" 
+            :validation="'required'" 
+            :attributes="{
+              type: 'text',
+              placeholder: 'Enter Buying Price',
+              class: 'w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+            }"
+          >
+            <template #label>
+              <span class="flex items-center gap-1">
+                Buying Price <span class="text-red-500">*</span>
+              </span>
+            </template>
           </Input>
+
           <!-- Category Selection Section -->
-          <div v-if="isEditing" class="space-y-4">
+          <div class="space-y-4 pt-2">
             <!-- Main Category -->
-            <Select v-model="selectedMainCategory" label="Vehicle Type" :options="getMainCategories()" required
-              :attributes="{ placeholder: 'Select Vehicle Type', class: 'w-[90%] mx-3 mt-1 text-sm' }">
+            <Select 
+              v-model="selectedMainCategory" 
+              label="Vehicle Type" 
+              :options="getMainCategories()" 
+              required
+              :attributes="{ 
+                placeholder: 'Select Vehicle Type', 
+                class: 'w-full mt-1 text-sm border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+              }"
+            >
               <template #label>
-                Vehicle Type <span class="text-red-500">*</span>
+                <span class="flex items-center gap-1">
+                  Vehicle Type <span class="text-red-500">*</span>
+                </span>
               </template>
             </Select>
 
             <!-- Sub Category -->
-            <Select v-if="getSubCategories().length" v-model="selectedSubCategory" label="Category"
-              :options="getSubCategories()" required
-              :attributes="{ placeholder: 'Select Category', class: 'w-[90%] mx-3 mt-1 text-sm' }">
+            <Select 
+              v-if="getSubCategories().length" 
+              v-model="selectedSubCategory" 
+              label="Category"
+              :options="getSubCategories()" 
+              required
+              :attributes="{ 
+                placeholder: 'Select Category', 
+                class: 'w-full mt-1 text-sm border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+              }"
+            >
               <template #label>
-                Category <span class="text-red-500">*</span>
+                <span class="flex items-center gap-1">
+                  Category <span class="text-red-500">*</span>
+                </span>
               </template>
             </Select>
 
             <!-- Sub Sub Category -->
-            <Select v-if="getSubSubCategories().length" v-model="selectedSubSubCategory" label="Sub Category"
-              :options="getSubSubCategories()" required
-              :attributes="{ placeholder: 'Select Sub Category', class: 'w-[90%] mx-3 mt-1 text-sm' }">
+            <Select 
+              v-if="getSubSubCategories().length" 
+              v-model="selectedSubSubCategory" 
+              label="Sub Category"
+              :options="getSubSubCategories()" 
+              required
+              :attributes="{ 
+                placeholder: 'Select Sub Category', 
+                class: 'w-full mt-1 text-sm border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+              }"
+            >
               <template #label>
-                Sub Category <span class="text-red-500">*</span>
+                <span class="flex items-center gap-1">
+                  Sub Category <span class="text-red-500">*</span>
+                </span>
               </template>
             </Select>
 
             <!-- Final Category -->
-            <Select v-if="getFinalCategories().length" v-model="selectedFinalCategory" label="Final Category"
-              :options="getFinalCategories()" required
-              :attributes="{ placeholder: 'Select Final Category', class: 'w-[90%] mx-3 mt-1 text-sm' }">
+            <Select 
+              v-if="getFinalCategories().length" 
+              v-model="selectedFinalCategory" 
+              label="Final Category"
+              :options="getFinalCategories()" 
+              required
+              :attributes="{ 
+                placeholder: 'Select Final Category', 
+                class: 'w-full mt-1 text-sm border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+              }"
+            >
               <template #label>
-                Final Category <span class="text-red-500">*</span>
+                <span class="flex items-center gap-1">
+                  Final Category <span class="text-red-500">*</span>
+                </span>
               </template>
             </Select>
           </div>
 
-          <!-- Display current categories when not editing -->
-          <div v-else class="space-y-2">
-            <p>Vehicle Type: {{ selectedMainCategory }}</p>
-            <p v-if="selectedSubCategory">Category: {{ selectedSubCategory }}</p>
-            <p v-if="selectedSubSubCategory">Sub Category: {{ selectedSubSubCategory }}</p>
-            <p v-if="selectedFinalCategory">Final Category: {{ selectedFinalCategory }}</p>
-          </div>
-
-          <div class="flex border-b-2 text-center items-center justify-center pt-6">
-            <Button v-if="customerId.customers?.quotationStatus == 'PENDING'"
-              class="flex justify-center  bg-[#3C3C9E] text-center w-full mx-2 items-center text-white  rounded text-sm"
-              @click="saveChanges" :pending="isSubmit">
-              Save Changes
+          <div class="flex border-t-2 border-gray-100 pt-6">
+            <Button 
+              v-if="customerId.customers?.quotationStatus == 'PENDING'"
+              class="flex justify-center bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-center w-full items-center text-white rounded-lg text-sm font-medium py-3 transition-all duration-200 shadow-md hover:shadow-lg"
+              @click="saveChanges" 
+              :pending="isSubmit"
+            >
+              <i v-if="!isSubmit" class="mr-2" v-html="icons.save"></i>
+              {{ isSubmit ? 'Saving...' : 'Save Changes' }}
             </Button>
           </div>
         </div>
       </section>
 
       <!-- Right Section Container -->
-      <section class="w-full lg:w-3/5 flex flex-col gap-4">
+      <section class="w-full lg:w-3/5 flex flex-col gap-6">
         <!-- Quotation Details Section -->
-        <section class="w-full p-3 bg-white pt-5">
-          <h2 class="text-sm font-bold mb-2 border-b">Quotation Details</h2>
-          <div class="flex flex-col gap-4 pt-2">
+        <section class="w-full p-5 bg-white rounded-xl shadow-sm border border-gray-100">
+          <h2 class="text-lg font-bold mb-4 pb-3 border-b border-gray-100 flex items-center gap-2">
+            <i class="text-green-600" v-html="icons.document"></i>
+            Quotation Details
+          </h2>
+          <div class="flex flex-col gap-5 pt-2">
             <!-- Quotation Amount -->
-            <div class="flex flex-col sm:flex-row sm:justify-between gap-2 sm:gap-0">
-              <span class="text-xs sm:text-sm font-normal text-[#2B3674]">Quotation</span>
+            <div class="flex flex-col sm:flex-row sm:justify-between items-center gap-3">
+              <span class="text-sm font-medium text-gray-600">Quotation Amount</span>
               <div v-if="!isEditing1">
-                <Button class="text-xs sm:text-sm bg-[#F6F6FF] items-center text-[#272833] W-4" @click="toggleEdit1">
-                ETB {{ Number(quotation.amount).toFixed(2) }} <i v-if="!isEditing && customerId.customers?.quotationStatus == 'PENDING'"
-                    class="pl-2" v-html="icons.pencil" />
+                <Button 
+                  class="text-sm bg-blue-50 hover:bg-blue-100 items-center text-blue-700 font-medium px-4 py-2 rounded-lg transition-colors duration-200 border border-blue-200"
+                  @click="toggleEdit1"
+                >
+                  ETB {{ Number(quotation.amount).toFixed(2) }} 
+                  <i 
+                    v-if="!isEditing && customerId.customers?.quotationStatus == 'PENDING'"
+                    class="pl-2" 
+                    v-html="icons.pencil" 
+                  />
                 </Button>
               </div>
-              <div v-if="isEditing1" class="flex items-center border-2">
-                <p class="p-2 text-xs sm:text-sm">ETB</p>
-                <input v-model="editedAmount1" type="number" class="w-16 pr-2 text-xs sm:text-sm" />
-                <button class="text-xs sm:text-sm bg-[#3C3C9E] items-center p-2 m-1 text-white rounded-md"
-                  @click="saveEdit">
-                  Change
+              <div v-if="isEditing1" class="flex items-center border-2 border-blue-300 rounded-lg bg-white">
+                <p class="p-3 text-sm font-medium text-gray-600">ETB</p>
+                <input 
+                  v-model="editedAmount1" 
+                  type="number" 
+                  class="w-24 px-2 text-sm border-none focus:outline-none focus:ring-0" 
+                />
+                <button 
+                  class="text-sm bg-green-600 hover:bg-green-700 items-center p-2 m-1 text-white rounded-md transition-colors duration-200 font-medium"
+                  @click="saveEdit"
+                >
+                  Update
                 </button>
               </div>
             </div>
 
             <!-- Deposit -->
-            <div class="flex flex-col sm:flex-row sm:justify-between gap-2 sm:gap-0">
-              <span class="text-xs sm:text-sm font-normal text-[#2B3674]">Deposit</span>
-              <div class="text-xs sm:text-sm bg-[#F6F6FF] items-center text-[#272833] p-2">
-               
-                
-ETB {{ Number(quotation.deposit).toFixed(2) }}
-
+            <div class="flex flex-col sm:flex-row sm:justify-between items-center gap-3">
+              <span class="text-sm font-medium text-gray-600">Deposit</span>
+              <div class="text-sm bg-green-50 items-center text-green-700 font-medium px-4 py-2 rounded-lg border border-green-200">
+                ETB {{ Number(quotation.deposit).toFixed(2) }}
               </div>
             </div>
 
             <!-- Monthly Repayment -->
-            <div class="flex flex-col sm:flex-row sm:justify-between gap-2 sm:gap-0">
-              <span class="text-xs sm:text-sm font-normal text-[#2B3674]">Monthly Repayment</span>
-              <div class="text-xs sm:text-sm bg-[#F6F6FF] items-center text-[#272833] p-2">
-            ETB {{ Number(quotation.premium).toFixed(2) }}
+            <div class="flex flex-col sm:flex-row sm:justify-between items-center gap-3">
+              <span class="text-sm font-medium text-gray-600">Monthly Repayment</span>
+              <div class="text-sm bg-purple-50 items-center text-purple-700 font-medium px-4 py-2 rounded-lg border border-purple-200">
+                ETB {{ Number(quotation.premium).toFixed(2) }}
               </div>
             </div>
           </div>
 
-          <div v-if="libreFrontPage || libreFrontPage === 'null'"
-            class="flex border-b-2 text-center items-center justify-center pt-6">
-            <Button v-if="customerId.customers?.quotationStatus == 'PENDING'"
-              class="flex justify-center mt-1 bg-[#3C3C9E] text-center w-full mx-2 items-center text-white py-2 rounded text-sm"
-              @click="sendFinalQuotation" :pending="isSubmitting">
-              Send Final Quote to Client
+          <div class="flex border-t border-gray-100 pt-6">
+            <Button 
+              v-if="customerId.customers?.quotationStatus == 'PENDING'"
+              class="flex justify-center bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-center w-full items-center text-white py-3 rounded-lg text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg"
+              @click="sendFinalQuotation" 
+              :pending="isSubmitting"
+            >
+              <i v-if="!isSubmitting" class="mr-2" v-html="icons.send"></i>
+              {{ isSubmitting ? 'Sending...' : 'Send Final Quote to Client' }}
             </Button>
-
-          </div>
-          <div v-else-if="!libreFrontPage || libreFrontPage === 'null'"
-            class="flex border-b-2 text-center items-center justify-center pt-6">
-            <Button v-if="customerId.customers?.quotationStatus == 'PENDING'"
-              class="flex justify-center mt-1 bg-[#3C3C9E] text-center w-full mx-2 items-center text-white py-2 rounded text-sm"
-              @click="openUploadModal" :pending="isSubmitting">
-              Libre Images Pending
-            </Button>
-
           </div>
         </section>
 
         <!-- Libre Section -->
-        <section class="w-full p-3 bg-white pt-5">
-          <h2 class="text-lg font-semibold mb-2 border-b flex justify-between items-center">
-            <span>Libre</span>
+        <section class="w-full p-5 bg-white rounded-xl shadow-sm border border-gray-100">
+          <h2 class="text-lg font-semibold mb-4 pb-3 border-b border-gray-100 flex justify-between items-center">
+            <span class="flex items-center gap-2">
+              <i class="text-orange-600" v-html="icons.image"></i>
+              Libre Documents
+            </span>
             <button
               v-if="libreFrontPage && libreBackPage && libreFrontPage !== 'null' && libreBackPage !== 'null' && customerId.customers?.quotationStatus == 'PENDING'"
-              @click="openUploadModal" class="bg-primary text-white py-1 px-3 rounded-md text-sm">
+              @click="openUploadModal" 
+              class="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2"
+            >
+              <i v-html="icons.upload"></i>
               Update Images
             </button>
           </h2>
           <div class="flex flex-col">
-            <div class="flex flex-col sm:flex-row px-2 gap-4 pt-2">
+            <div class="flex flex-col sm:flex-row px-2 gap-6 pt-2">
               <!-- Front Page -->
               <div class="relative w-full sm:w-1/2">
-                <div v-if="!libreFrontPage || libreFrontPage === 'null'"
-                  class="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-4 h-48">
-                  <div v-if="customerId.customers?.quotationStatus == 'PENDING'" class="text-gray-500 text-center mb-4">
-                    No
-                    front page image</div>
-                  <div v-else class="text-gray-500 text-center mb-4">Loading</div>
-                  <button @click="openUploadModal" v-if="customerId.customers?.quotationStatus == 'PENDING'"
-                    class="bg-primary text-white py-2 px-4 rounded-md text-sm">
+                <div 
+                  v-if="!libreFrontPage || libreFrontPage === 'null'"
+                  class="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl p-6 h-56 bg-gray-50 hover:bg-gray-100 transition-colors duration-200"
+                >
+                  <i class="text-gray-400 text-4xl mb-4" v-html="icons.image"></i>
+                  <div v-if="customerId.customers?.quotationStatus == 'PENDING'" class="text-gray-500 text-center mb-4 font-medium">
+                    No front page image
+                  </div>
+                  <div v-else class="text-gray-500 text-center mb-4">Loading...</div>
+                  <button 
+                    @click="openUploadModal" 
+                    v-if="customerId.customers?.quotationStatus == 'PENDING'"
+                    class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-2 px-6 rounded-lg text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg"
+                  >
                     Upload Libre Images
                   </button>
                 </div>
-                <div v-else class="flex flex-col gap-2">
-                  <img :src="libreFrontPage" class="w-full h-auto object-contain" />
-                  <button @click="viewImage('Front Page', libreFrontPage)"
-                    class="w-full bg-primary text-white py-2 rounded-md text-xs sm:text-sm">
+                <div v-else class="flex flex-col gap-3">
+                  <div class="border-2 border-gray-200 rounded-lg overflow-hidden">
+                    <img :src="libreFrontPage" class="w-full h-48 object-cover" />
+                  </div>
+                  <button 
+                    @click="viewImage('Front Page', libreFrontPage)"
+                    class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg"
+                  >
                     View Front Page
                   </button>
                 </div>
@@ -300,21 +433,31 @@ ETB {{ Number(quotation.deposit).toFixed(2) }}
 
               <!-- Back Page -->
               <div class="relative w-full sm:w-1/2">
-                <div v-if="!libreBackPage || libreBackPage === 'null'"
-                  class="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-4 h-48">
-                  <div v-if="customerId.customers?.quotationStatus == 'PENDING'" class="text-gray-500 text-center mb-4">
-                    No back
-                    page image</div>
-                  <div v-else class="text-gray-500 text-center mb-4">Loading</div>
-                  <button v-if="customerId.customers?.quotationStatus == 'PENDING'" @click="openUploadModal"
-                    class="bg-primary text-white py-2 px-4 rounded-md text-sm">
+                <div 
+                  v-if="!libreBackPage || libreBackPage === 'null'"
+                  class="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl p-6 h-56 bg-gray-50 hover:bg-gray-100 transition-colors duration-200"
+                >
+                  <i class="text-gray-400 text-4xl mb-4" v-html="icons.image"></i>
+                  <div v-if="customerId.customers?.quotationStatus == 'PENDING'" class="text-gray-500 text-center mb-4 font-medium">
+                    No back page image
+                  </div>
+                  <div v-else class="text-gray-500 text-center mb-4">Loading...</div>
+                  <button 
+                    v-if="customerId.customers?.quotationStatus == 'PENDING'" 
+                    @click="openUploadModal"
+                    class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-2 px-6 rounded-lg text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg"
+                  >
                     Upload Libre Images
                   </button>
                 </div>
-                <div v-else class="flex flex-col gap-2">
-                  <img :src="libreBackPage" class="w-full h-auto object-contain" />
-                  <button @click="viewImage('Back Page', libreBackPage)"
-                    class="w-full bg-primary text-white py-2 rounded-md text-xs sm:text-sm">
+                <div v-else class="flex flex-col gap-3">
+                  <div class="border-2 border-gray-200 rounded-lg overflow-hidden">
+                    <img :src="libreBackPage" class="w-full h-48 object-cover" />
+                  </div>
+                  <button 
+                    @click="viewImage('Back Page', libreBackPage)"
+                    class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg"
+                  >
                     View Back Page
                   </button>
                 </div>
@@ -322,72 +465,84 @@ ETB {{ Number(quotation.deposit).toFixed(2) }}
             </div>
           </div>
         </section>
-
-        <!-- Upload Modal Template -->
-        <template>
-          <Modal name="UploadLibreModal">
-            <div class="p-4">
-              <h2 class="text-lg font-semibold mb-4">
-                {{ libreFrontPage && libreBackPage ? 'Update' : 'Upload' }} Libre Images
-              </h2>
-
-              <!-- Front Libre Upload -->
-              <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Front Libre</label>
-                <div class="flex items-center justify-center w-full">
-                  <label
-                    class="w-full flex flex-col items-center px-4 py-6 bg-white rounded-lg border-2 border-dashed border-gray-300 cursor-pointer hover:bg-gray-50">
-                    <span class="text-sm text-gray-500">
-                      {{ frontLibrePreview ? 'Change Front Page' : 'Upload Front Page' }}
-                    </span>
-                    <input type="file" class="hidden" @change="handleFrontLibreUpload" accept="image/*" />
-                  </label>
-                </div>
-                <div v-if="frontLibrePreview" class="mt-2">
-                  <img :src="frontLibrePreview" class="h-20 object-contain" />
-                </div>
-              </div>
-
-              <!-- Back Libre Upload -->
-              <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Back Libre</label>
-                <div class="flex items-center justify-center w-full">
-                  <label
-                    class="w-full flex flex-col items-center px-4 py-6 bg-white rounded-lg border-2 border-dashed border-gray-300 cursor-pointer hover:bg-gray-50">
-                    <span class="text-sm text-gray-500">
-                      {{ backLibrePreview ? 'Change Back Page' : 'Upload Back Page' }}
-                    </span>
-                    <input type="file" class="hidden" @change="handleBackLibreUpload" accept="image/*" />
-                  </label>
-                </div>
-                <div v-if="backLibrePreview" class="mt-2">
-                  <img :src="backLibrePreview" class="h-20 object-contain" />
-                </div>
-              </div>
-
-              <!-- Submit Button -->
-              <div class="flex justify-end gap-2">
-                <button @click="closeModal('UploadLibreModal')"
-                  class="bg-gray-200 text-gray-800 px-4 py-2 rounded-md text-sm">
-                  Cancel
-                </button>
-                <button @click="submitLibreImages" class="bg-primary text-white px-4 py-2 rounded-md text-sm"
-                  :disabled="!frontLibre || !backLibre">
-                  {{ libreFrontPage && libreBackPage ? 'Update' : 'Upload' }} Images
-                </button>
-              </div>
-            </div>
-          </Modal>
-        </template>
       </section>
     </div>
+
+    <!-- Upload Modal Template -->
+    <template>
+      <Modal name="UploadLibreModal">
+        <div class="p-6 max-w-md mx-auto">
+          <h2 class="text-xl font-bold mb-6 text-gray-800 flex items-center gap-2">
+            <i class="text-blue-600" v-html="icons.upload"></i>
+            {{ libreFrontPage && libreBackPage ? 'Update' : 'Upload' }} Libre Images
+          </h2>
+
+          <!-- Front Libre Upload -->
+          <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-3">Front Libre</label>
+            <div class="flex items-center justify-center w-full">
+              <label
+                class="w-full flex flex-col items-center px-6 py-8 bg-white rounded-xl border-2 border-dashed border-gray-300 cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-all duration-200"
+              >
+                <i class="text-gray-400 text-2xl mb-2" v-html="icons.upload"></i>
+                <span class="text-sm text-gray-500 font-medium">
+                  {{ frontLibrePreview ? 'Change Front Page' : 'Click to upload Front Page' }}
+                </span>
+                <input type="file" class="hidden" @change="handleFrontLibreUpload" accept="image/*" />
+              </label>
+            </div>
+            <div v-if="frontLibrePreview" class="mt-3">
+              <p class="text-sm text-gray-600 mb-2">Preview:</p>
+              <img :src="frontLibrePreview" class="h-32 object-contain border rounded-lg" />
+            </div>
+          </div>
+
+          <!-- Back Libre Upload -->
+          <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-3">Back Libre</label>
+            <div class="flex items-center justify-center w-full">
+              <label
+                class="w-full flex flex-col items-center px-6 py-8 bg-white rounded-xl border-2 border-dashed border-gray-300 cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-all duration-200"
+              >
+                <i class="text-gray-400 text-2xl mb-2" v-html="icons.upload"></i>
+                <span class="text-sm text-gray-500 font-medium">
+                  {{ backLibrePreview ? 'Change Back Page' : 'Click to upload Back Page' }}
+                </span>
+                <input type="file" class="hidden" @change="handleBackLibreUpload" accept="image/*" />
+              </label>
+            </div>
+            <div v-if="backLibrePreview" class="mt-3">
+              <p class="text-sm text-gray-600 mb-2">Preview:</p>
+              <img :src="backLibrePreview" class="h-32 object-contain border rounded-lg" />
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
+            <button 
+              @click="closeModal('UploadLibreModal')"
+              class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
+            >
+              Cancel
+            </button>
+            <button 
+              @click="submitLibreImages" 
+              class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              :disabled="!frontLibre || !backLibre"
+            >
+              {{ libreFrontPage && libreBackPage ? 'Update' : 'Upload' }} Images
+            </button>
+          </div>
+        </div>
+      </Modal>
+    </template>
   </div>
 </template>
 
 <script setup>
 import { usePaginations } from '@/composables/usePaginationTemp.js';
 import { removeUndefined, toasted } from '@/utils/utils';
-import { openModal } from "@customizer/modal-x";
+import { openModal, closeModal } from "@customizer/modal-x";
 
 import { getCustomersbyId, getLibreImages, setQuotation, updateCarDetails, getAllcar } from '../api/customersApi';
 import { useRoute } from 'vue-router';
@@ -406,6 +561,12 @@ const api = new ApiService();
 const libreFrontPage = ref(null);
 const libreBackPage = ref(null);
 
+// Track API calls to prevent race conditions
+const hasFetchedLibre = ref(false);
+const isCustomerDataLoaded = ref(false);
+const currentCarUuid = ref(null); // Track the current car UUID to prevent stale data
+const pendingLibreRequest = ref(null); // Track the current request to cancel if needed
+
 const viewImage = (title, imageUrl) => {
   openModal('ImageViewer', {
     title,
@@ -414,101 +575,174 @@ const viewImage = (title, imageUrl) => {
 };
 
 const fetchLibreImages = async () => {
+  // Only fetch if we have valid customer data and a car UUID
+  if (!isCustomerDataLoaded.value || !currentCarUuid.value) {
+    console.log('Skipping libre fetch - customer data not loaded or no car UUID');
+    return;
+  }
+
+  // If we already fetched for this car UUID, don't fetch again
+  if (hasFetchedLibre.value && currentCarUuid.value === customerId.customers?.carUuid) {
+    console.log('Libre images already fetched for this car UUID, skipping...');
+    return;
+  }
+
+  // Cancel any pending request
+  if (pendingLibreRequest.value) {
+    console.log('Cancelling previous libre request');
+    // If using axios, you can cancel with CancelToken
+    // For simplicity, we'll just track and ignore the response
+  }
+
   try {
-    console.log('Fetching libre images...');
-    const carUuid = customerId.customers?.carUuid;
-    if (!carUuid) {
-      console.log('No carUuid available');
+    console.log('Fetching libre images for car UUID:', currentCarUuid.value);
+    
+    // Mark that we're making a request
+    const requestCarUuid = currentCarUuid.value; // Capture the current UUID
+    
+    const response = await getLibreImages(requestCarUuid);
+    console.log('API Response for car UUID:', requestCarUuid, response);
+
+    // IMPORTANT: Check if this response is still relevant (car UUID hasn't changed)
+    if (requestCarUuid !== currentCarUuid.value) {
+      console.log('Received stale libre response, ignoring...');
       return;
     }
 
-    const response = await getLibreImages(carUuid);
-    console.log('API Response:', response);
-
     if (response.success) {
-      // Only set the values if they're not null
-      libreFrontPage.value = response.data.libreFrontPage ?
-        `data:image/jpeg;base64,${response.data.libreFrontPage}` : null;
-      libreBackPage.value = response.data.libreBackPage ?
-        `data:image/jpeg;base64,${response.data.libreBackPage}` : null;
-      console.log('Images loaded successfully', {
-        front: libreFrontPage.value,
-        back: libreBackPage.value
-      });
+      // Only update if we have valid image data
+      if (response.data.libreFrontPage && response.data.libreFrontPage !== 'null') {
+        libreFrontPage.value = `data:image/jpeg;base64,${response.data.libreFrontPage}`;
+      } else {
+        libreFrontPage.value = null;
+      }
+      
+      if (response.data.libreBackPage && response.data.libreBackPage !== 'null') {
+        libreBackPage.value = `data:image/jpeg;base64,${response.data.libreBackPage}`;
+      } else {
+        libreBackPage.value = null;
+      }
+      
+      // Mark as fetched for this car UUID
+      hasFetchedLibre.value = true;
+      console.log('Images loaded successfully for car UUID:', requestCarUuid);
+    } else {
+      // If API call failed, set to null
+      libreFrontPage.value = null;
+      libreBackPage.value = null;
+      console.log('Failed to load libre images');
     }
   } catch (error) {
     console.error('Error fetching libre images:', error);
-    libreFrontPage.value = null;
-    libreBackPage.value = null;
+    // Only update if this error is for the current car UUID
+    if (currentCarUuid.value === customerId.customers?.carUuid) {
+      libreFrontPage.value = null;
+      libreBackPage.value = null;
+    }
+  } finally {
+    pendingLibreRequest.value = null;
   }
 };
 
-// Watch for changes in customerId.customers
+const route = useRoute()
+const userUuid = route.params?.quotationUuid
+
+// Initialize pagination and fetch customer data
+const pagination = usePaginations({
+  store: customerId,
+  cb: async (id) => {
+    try {
+      console.log('Fetching customer data...');
+      const response = await getCustomersbyId(userUuid);
+      
+      if (response && response.data) {
+        // Update current car UUID with the new one
+        const newCarUuid = response.data.carUuid;
+        
+        // Reset libre fetch flag if car UUID changed
+        if (newCarUuid !== currentCarUuid.value) {
+          console.log('Car UUID changed from', currentCarUuid.value, 'to', newCarUuid);
+          hasFetchedLibre.value = false;
+          currentCarUuid.value = newCarUuid;
+          
+          // Clear previous images while loading new ones
+          libreFrontPage.value = null;
+          libreBackPage.value = null;
+        }
+        
+        // Mark customer data as loaded
+        isCustomerDataLoaded.value = true;
+        
+        // Now fetch libre images with the new carUuid
+        nextTick(() => {
+          fetchLibreImages();
+        });
+      }
+      
+      return response;
+    } catch (error) {
+      console.error('Failed to fetch customers:', error);
+      isCustomerDataLoaded.value = false;
+    }
+  },
+});
+
+// Watch for customer data changes (as a backup)
 watch(
   () => customerId.customers,
   (newValue) => {
-    console.log('Customer data changed:', newValue);
-    if (newValue?.carUuid) {
-      fetchLibreImages();
+    if (newValue && newValue.carUuid) {
+      console.log('Customer data updated with car UUID:', newValue.carUuid);
+      
+      const newCarUuid = newValue.carUuid;
+      
+      // Only reset if car UUID actually changed
+      if (newCarUuid !== currentCarUuid.value) {
+        hasFetchedLibre.value = false;
+        currentCarUuid.value = newCarUuid;
+        
+        // Clear images while loading new ones
+        libreFrontPage.value = null;
+        libreBackPage.value = null;
+      }
+      
+      isCustomerDataLoaded.value = true;
+      
+      // If we haven't fetched libre images for this car UUID, fetch them now
+      if (!hasFetchedLibre.value) {
+        nextTick(() => {
+          fetchLibreImages();
+        });
+      }
     }
   },
-  { immediate: true }
+  { immediate: true, deep: true }
 );
 
 onMounted(() => {
   console.log('Component mounted');
-  if (customerId.customers?.carUuid) {
-    fetchLibreImages();
-  }
+  // Reset flags when component mounts
+  hasFetchedLibre.value = false;
+  isCustomerDataLoaded.value = false;
+  currentCarUuid.value = null;
 });
 
-// Customer data
-const customer = ref({
-  image: 'customer-image-url.jpg', // Replace with the actual image URL
-  joinedDate: '23-05-2024',
-  fullName: 'Birhane Araya',
-  phoneNumber: '+251 945 065 432',
-  address: 'Bole, Woreda 2, Addis Ababa',
-  email: 'birhanearaya23@gmail.com'
-});
+// ... rest of your existing code (customer data, mobile data, policy data, etc.)
 
-// Mobile data
-const mobile = ref({
-  deviceBrand: 'iPhone 15',
-  handsetCost: 'ETB 120,000.00',
-  manufacturedYear: '2023',
-  serialNumber: 'AD487598E',
-  imei: '495860469593',
-  imei2: '1239804710923'
-});
-
-// Policy data (if needed in future)
-const policy = ref({
-  policyNumber: 'L389247',
-  status: 'Active',
-  expiryDate: 'Araya',
-  premiumPayments: 23
-});
-const client = ref({
-  firstName: 'Birhane',
-  lastName: 'Araya',
-  email: 'birhanearya23@gmail.com',
-  phone: '+251 946065432',
-  image: 'path_to_image.jpg', // Replace with an actual image path  
-});
 const calculateMonthlyPremium = (quotationAmount) => {
-  return quotationAmount / 12; // quotation divided by 12
+  return quotationAmount / 12;
 };
+
 const calculateDeposit = (quotationAmount) => {
-  return quotationAmount * 0.22; // 22% of quotation
+  return quotationAmount * 0.22;
 };
-// Then define the quotation ref
+
+// Quotation data
 const quotation = ref({
   amount: customerId.customers?.quotationAmount || 0,
   deposit: calculateDeposit(customerId.customers?.quotationAmount || 0),
   premium: calculateMonthlyPremium(customerId.customers?.quotationAmount || 0),
 });
-// Example quotation data  
 
 const props = defineProps({
   pending: {
@@ -519,20 +753,6 @@ const props = defineProps({
     type: Function,
   },
 });
-
-const route = useRoute()
-const userUuid = route.params?.quotationUuid
-const pagination = usePaginations({
-  store: customerId,
-  cb: async (id) => {
-    try {
-      return await getCustomersbyId(userUuid);
-    } catch (error) {
-      console.error('Failed to fetch customers:', error);
-    }
-  },
-});
-
 
 watch(
   () => customerId.customers,
@@ -545,12 +765,8 @@ watch(
     }
   }
 );
-// First, define the calculation functions
 
-
-
-
-// Now define the editing states
+// Editing states and functions remain the same...
 const isEditing1 = ref(false);
 const isEditing2 = ref(false);
 const isEditing3 = ref(false);
@@ -559,7 +775,7 @@ const editedAmount2 = ref(quotation.value.deposit);
 const editedAmount3 = ref(quotation.value.premium);
 const isSubmitting = ref(false);
 const isSubmit = ref(false);
-// Toggle functions
+
 const toggleEdit1 = () => {
   if (customerId.customers?.quotationStatus === 'PENDING') {
     editedAmount1.value = quotation.value.amount;
@@ -569,36 +785,17 @@ const toggleEdit1 = () => {
   }
 };
 
-const toggleEdit2 = () => {
-  editedAmount2.value = quotation.value.deposit;
-  isEditing2.value = true;
-  isEditing1.value = false;
-  isEditing3.value = false;
-};
-
-const toggleEdit3 = () => {
-  editedAmount3.value = quotation.value.premium;
-  isEditing3.value = true;
-  isEditing2.value = false;
-  isEditing1.value = false;
-};
-
-// Method to save the edited amount
 const saveEdit = async () => {
   if (isEditing1.value) {
-    // Update quotation amount and recalculate deposit and premium locally
     const newAmount = parseFloat(editedAmount1.value);
     quotation.value.amount = newAmount;
     quotation.value.deposit = calculateDeposit(newAmount);
     quotation.value.premium = calculateMonthlyPremium(newAmount);
-
-    // Reset editing state
     isEditing1.value = false;
     editedAmount1.value = '';
   }
 };
 
-// Add new function to handle sending final quotation to backend
 const sendFinalQuotation = async () => {
   try {
     isSubmitting.value = true;
@@ -626,7 +823,6 @@ const sendFinalQuotation = async () => {
 
 const isEditing = ref(false);
 
-
 const editedData = reactive({
   carName: '',
   carModel: '',
@@ -634,7 +830,7 @@ const editedData = reactive({
   plateNumber: '',
   makeYear: '',
   buyingPrice: 0,
-  engine_No: '', // Make sure this matches the property name used in the API
+  engine_No: '',
   rateRequest: {
     category1: '',
     category2: '',
@@ -764,8 +960,6 @@ const saveChanges = async () => {
   }
 };
 
-console.log(customerId.customers?.clientFirstName)
-
 // Add the category selection refs
 const selectedMainCategory = ref('');
 const selectedSubCategory = ref('');
@@ -826,14 +1020,14 @@ const getSubCategories = () => {
 const getSubSubCategories = () => {
   if (!selectedMainCategory.value || !selectedSubCategory.value) return [];
   const category = categoryStructure[selectedMainCategory.value]?.[selectedSubCategory.value];
-  if (typeof category === 'string') return []; // If it's a final value, return empty array
+  if (typeof category === 'string') return [];
   return Object.keys(category || {});
 };
 
 const getFinalCategories = () => {
   if (!selectedMainCategory.value || !selectedSubCategory.value || !selectedSubSubCategory.value) return [];
   const category = categoryStructure[selectedMainCategory.value]?.[selectedSubCategory.value]?.[selectedSubSubCategory.value];
-  if (typeof category === 'string') return []; // If it's a final value, return empty array
+  if (typeof category === 'string') return [];
   return Object.keys(category || {});
 };
 
@@ -854,7 +1048,6 @@ watch(selectedSubCategory, (newValue) => {
   selectedSubSubCategory.value = '';
   selectedFinalCategory.value = '';
   if (newValue) {
-    // Handle direct values
     if (typeof categoryStructure[selectedMainCategory.value][newValue] === 'string') {
       editedData.rateRequest = {
         ...editedData.rateRequest,
@@ -874,7 +1067,6 @@ watch(selectedSubCategory, (newValue) => {
 watch(selectedSubSubCategory, (newValue) => {
   selectedFinalCategory.value = '';
   if (newValue) {
-    // Handle direct values
     if (typeof categoryStructure[selectedMainCategory.value][selectedSubCategory.value][newValue] === 'string') {
       editedData.rateRequest = {
         ...editedData.rateRequest,
@@ -939,22 +1131,6 @@ watch(() => customerId.customers, (newData) => {
   }
 }, { immediate: true });
 
-// Add debug logging to help track category values
-watch([selectedMainCategory, selectedSubCategory, selectedSubSubCategory, selectedFinalCategory],
-  ([main, sub, subSub, final]) => {
-    console.log('Category values updated:', {
-      main,
-      sub,
-      subSub,
-      final,
-      availableSubCategories: getSubCategories(),
-      availableSubSubCategories: getSubSubCategories(),
-      availableFinalCategories: getFinalCategories()
-    });
-  },
-  { deep: true }
-);
-
 // Add these refs
 const frontLibre = ref(null);
 const backLibre = ref(null);
@@ -1008,14 +1184,27 @@ const submitLibreImages = async () => {
   formData.append('Front_libre', frontLibre.value);
   formData.append('back_libre', backLibre.value);
 
-  const response = await saveCarLibre(customerId.customers?.carUuid, formData);
+  try {
+    const response = await saveCarLibre(customerId.customers?.carUuid, formData);
 
-  if (response.success || response.status === 200) {
-    toasted(true, 'Libre images uploaded successfully');
-    await fetchLibreImages(); // Refresh the images
-    closeModal('UploadLibreModal');
-  } else {
-    toasted(false, '', response.error || 'Failed to upload libre images');
+    if (response.success || response.status === 200) {
+      toasted(true, 'Libre images uploaded successfully');
+      // Reset flags to force refetch with new images
+      hasFetchedLibre.value = false;
+      await fetchLibreImages();
+      closeModal('UploadLibreModal');
+      
+      // Reset file previews
+      frontLibrePreview.value = null;
+      backLibrePreview.value = null;
+      frontLibre.value = null;
+      backLibre.value = null;
+    } else {
+      toasted(false, '', response.error || 'Failed to upload libre images');
+    }
+  } catch (error) {
+    console.error('Error uploading libre images:', error);
+    toasted(false, '', 'Failed to upload libre images');
   }
 };
 
@@ -1030,7 +1219,7 @@ const loadCarMakes = async () => {
   try {
     const response = await getAllcar();
     if (response.data) {
-      carMakes.value = response.data;  // Remove the mapping, use direct values
+      carMakes.value = response.data;
     }
   } catch (error) {
     console.error('Error fetching car makes:', error);
@@ -1041,7 +1230,7 @@ const loadCarTypes = async (carName) => {
   try {
     const response = await getAllcar({ carName });
     if (response.data) {
-      carTypes.value = response.data;  // Remove the mapping, use direct values
+      carTypes.value = response.data;
     }
   } catch (error) {
     console.error('Error fetching car types:', error);
@@ -1052,7 +1241,7 @@ const loadCarModels = async (carType) => {
   try {
     const response = await getAllcar({ carType });
     if (response.data) {
-      carModels.value = response.data;  // Remove the mapping, use direct values
+      carModels.value = response.data;
     }
   } catch (error) {
     console.error('Error fetching car models:', error);
@@ -1062,7 +1251,7 @@ const loadCarModels = async (carType) => {
 const loadEngineNumbers = async (carModel) => {
   try {
     const response = await getAllcar({ carModel });
-    console.log('Engine numbers response:', response.data); // Add this log
+    console.log('Engine numbers response:', response.data);
     if (response.data) {
       engineNumbers.value = response.data;
     }
@@ -1138,9 +1327,21 @@ watch(() => isEditing.value, async (newValue) => {
       }
     }
   }
-});  </script>
-
+});
+</script>
 
 <style scoped>
-/* You can add additional styles here if needed */
+/* Custom styles for better appearance */
+.gradient-bg {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.shadow-custom {
+  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  transition: transform 0.2s ease-in-out;
+}
 </style>

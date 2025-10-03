@@ -39,7 +39,7 @@
             class="w-full"
             @click.prevent="submit(handleLogin)"
             btn-text="Login"
-            :loading="loginReq.pending.value"
+            :pending="loginReq.pending.value"
           />
         </div>
       </NewFormLayout>
