@@ -45,7 +45,7 @@ watch(
 );
 
 function handleSignup({ values }) {
-  values.userType = 'Insurance';
+  values.userType = 'Client';
   values.roleUuid = clientRoleUuid.value;
 
   signupReq.send(

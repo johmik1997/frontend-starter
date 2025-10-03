@@ -24,14 +24,14 @@ function calculateAge(dateOfBirth) {
 function required(value, _, __, message) {
   if (value) return [true];
 
-  return [false, message || `this field is required`];
+  return [false, message || `This field is required`];
 }
 
 function requiredFile(value, _, __, message) {
   if (value instanceof FileList) {
     if (value.length) return [true];
 
-    return [false, message || `this field is required`];
+    return [false, message || `This field is required`];
   }
   return required(value);
 }
@@ -336,7 +336,7 @@ function date_thisYear(value) {}
 function requiredMultipleSelect(value, _, __, message) {
   function check(ary) {
     if (!(ary instanceof Array) || ary.length == 0)
-      return [false, message || "this field is required"];
+      return [false, message || "This field is required"];
 
     return [true];
   }
