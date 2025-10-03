@@ -1,15 +1,3 @@
-
-
-import Profile from "@/features/profile/pages/profile.vue";
 export default [
-
-	{
-		path: '/profile',
-		name: 'profile',
-		component: Profile,
-		meta: {
-      requiresAuth: true,
-      permissions: []
-    }
-	}
+  { path: '/profile', name: 'profile', component: () => import('@/features/profile/pages/profile.vue'), meta: { requiresAuth: true, permissions: [] } },
 ]
