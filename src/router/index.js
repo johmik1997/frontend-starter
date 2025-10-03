@@ -1,23 +1,23 @@
-import MainLayout from '@/layouts/MainLayout.vue'
-import quatationRoutes from './quatation.routes'
-import insuranceRoutes from './insurance.routes'
-import paymentRoutes from './payment.routes'
-import subcitiesRoutes from './profile.routes'
-import ketenaRoutes from './ketena.routes'
 import { createRouter, createWebHistory } from "vue-router";
-import HomeView from "../views/HomeView.vue";
-import membersRoutes from "./members.routes";
-import rolesRoutes from "./roles.routes";
-import usersRoutes from "./users.routes";
-import privilagesRoutes from "./privilages.routes";
-import Login from "@/pages/login/Login.vue";
-import profileRoutes from "./profile.routes";
-import Dashboard from '@/features/dashboard/pages/Dashboard.vue'
-import { useAuth } from '@/stores/auth'
-import carSpecificationsRoutes from './carSpecifications.routes'
-import premiumRoutes from './premium.routes'
-import SignUp from '@/pages/signUp.vue'
+import MainLayout from '@/layouts/MainLayout.vue';
+import { useAuth } from '@/stores/auth';
 
+// Lazy-loaded page components
+const Dashboard = () => import('@/features/dashboard/pages/Dashboard.vue');
+const Login = () => import('@/pages/login/Login.vue');
+const SignUp = () => import('@/pages/signUp.vue');
+
+// Route modules (keep static, they contain route definitions)
+import membersRoutes from "./members.routes";
+import rolesRoutes from './roles.routes';
+import privilagesRoutes from './privilages.routes';
+import usersRoutes from './users.routes';
+import profileRoutes from './profile.routes';
+import quotationRoutes from './quatation.routes';
+import paymentRoutes from './payment.routes';
+import insuranceRoutes from './insurance.routes';
+import carSpecificationsRoutes from './carSpecifications.routes';
+import premiumRoutes from './premium.routes';
 
 const routes = [
   {
@@ -26,25 +26,15 @@ const routes = [
     component: MainLayout,
     meta: { requiresAuth: true },
     children: [
-      {
-        path: "",
-        redirect: "/dashboard"
-      },
-      {
-        path: "/dashboard",
-        name: "dashboard",
-        component: Dashboard,
-        meta: { requiresAuth: true },
-      },
+      { path: "", redirect: "/dashboard" },
+      { path: "/dashboard", name: "dashboard", component: Dashboard, meta: { requiresAuth: true } },
       ...membersRoutes,
       ...rolesRoutes,
       ...privilagesRoutes,
       ...usersRoutes,
       ...profileRoutes,
-      ...quatationRoutes,
+      ...quotationRoutes,
       ...paymentRoutes,
-      ...subcitiesRoutes,
-      ...ketenaRoutes,
       ...insuranceRoutes,
       ...carSpecificationsRoutes,
       ...premiumRoutes,
@@ -52,7 +42,6 @@ const routes = [
   },
   { path: "/login", name: "Login", component: Login },
   { path: "/signUp", name: "SignUp", component: SignUp },
- 
 ];
 
 const router = createRouter({
