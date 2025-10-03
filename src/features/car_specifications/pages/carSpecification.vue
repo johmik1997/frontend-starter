@@ -11,6 +11,7 @@ import { useCarSpecification } from '../store/carSpecificationStore'
 import { getAllCarSpecifications } from '../api/carSpecificationApi'
 import { removeUndefined } from '@/utils/utils'
 import { usePaginationcopy } from '@/composables/usePaginationcopy.js'
+import { useApiRequest } from '@/composables/useApiRequest'
 
 const carSpecStore = useCarSpecification()
 const searchKey = ref('')
@@ -25,6 +26,7 @@ const pagination = usePaginationcopy({
     })
   ),
 })
+const req = useApiRequest();
 function editCarSpec(row) {
   console.log('=== EDIT BUTTON CLICKED ===');
   console.log('Row data:', row);
