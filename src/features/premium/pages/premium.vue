@@ -61,7 +61,7 @@ function openAddPremiumModal() {
     <Table
       :pending="pagination.pending.value"
       :headers="{
-        head: ['Car Type', 'Category', 'Sub Category', 'Rate (%)', 'actions'],
+        head: ['Car Type', 'Category', 'Sub Category', 'Rate ', 'actions'],
         row: ['carType', 'category', 'subCategory', 'rate'],
       }"
       :rowCom="PremiumStatusRow"

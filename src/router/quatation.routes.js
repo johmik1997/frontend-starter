@@ -3,6 +3,7 @@ import Drafts from "../features/drfats/pages/drafts.vue";
 import Details from "@/features/quatation/pages/details.vue";
 import QuotationIndex from "../features/quatation/pages/QuotationIndex.vue";
 import CreateNewQuatationClientSide from "@/features/quatation/pages/createNewQuatationClientSide.vue";
+import DraftForClient from "@/features/drfats/draftForClient.vue";
 
 export default [
   {
@@ -36,9 +37,19 @@ export default [
 	component: Drafts,
 	meta: {
   requiresAuth: true,
-  permissions: []
+  privileges: ['create_car'],
 }
 },
+ {
+	path: '/draftsForClient',
+	name: 'draftsForClient',
+	component: DraftForClient,
+	meta: {
+  requiresAuth: true,
+   privileges: ['create_car_collection'],
+}
+},
+
 {
 	path: '/createQuotation',
 	name: 'CreateQuotation',

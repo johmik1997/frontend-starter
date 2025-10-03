@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch, nextTick } from 'vue';
 import { useApiRequest } from '@/composables/useApiRequest';
 import { editPremiumRate } from '../api/premiumApi';
 import { usePremium } from '../store/premiumStore';
@@ -11,6 +11,7 @@ import Form from '@/components/new_form_builder/Form.vue';
 import { Input, Select } from '@/components/new_form_elements';
 import Button from '@/components/Button.vue';
 import icons from '@/utils/icons';
+import { readonly } from 'vue';
 
 const props = defineProps({
   data: {
@@ -37,62 +38,205 @@ const premiumData = ref({
   publicServiceType: ''
 });
 
-// Category options
-const carTypes = ['PRIVATE', 'COMMERCIAL'];
+// Category selection refs - exactly like add component
+const selectedMainCategory = ref('');
+const selectedSubCategory = ref('');
+const selectedSubSubCategory = ref('');
+const selectedFinalCategory = ref('');
 
-const privateTypes = ['PRIVATE_VEHICLES'];
+// Category structure - exactly like add component
+const categoryStructure = {
+  'Motor Private': {
+    'PRIVATE_VEHICLES': 'PRIVATE_VEHICLES',
+    'MOTORCYCLES': 'MOTORCYCLES'
+  },
+  'Motor Commercial': {
+    'GOODS_CARRYING': {
+      'OWN_GOODS': {
+        'PICK_UP': 'PICK_UP',
+        'TRUCK': 'TRUCK',
+        'TIPPER': 'TIPPER',
+        'TANKERS': 'TANKERS',
+        'WATER_TANKER': 'WATER_TANKER',
+        'TRUCK_TRAILERS': 'TRUCK_TRAILERS'
+      },
+      'GENERAL_CARTAGE': {
+        'PICK_UP': 'PICK_UP',
+        'TRUCK': 'TRUCK',
+        'TIPPER': 'TIPPER',
+        'TANKERS': 'TANKERS',
+        'WATER_TANKER': 'WATER_TANKER',
+        'TRUCK_TRAILERS': 'TRUCK_TRAILERS'
+      }
+    },
+    'PASSENGER_CARRYING': {
+      'OWN_SERVICE': 'OWN_SERVICE',
+      'PUBLIC_SERVICE': {
+        'SEATS_UP_TO_16': 'SEATS_UP_TO_16',
+        'SEATS_BETWEEN_17_30': 'SEATS_BETWEEN_17_30',
+        'SEATS_ABOVE_30': 'SEATS_ABOVE_30'
+      }
+    },
+    'THREE_WHEELERS_AND_TRI_CYCLES': 'THREE_WHEELERS_AND_TRI_CYCLES',
+    'CAR_HIRE': 'CAR_HIRE',
+    'TAXI': 'TAXI',
+    'AGRICULTURAL_VEHICLES': 'AGRICULTURAL_VEHICLES'
+  }
+};
 
-const commercialTypes = [
-  'GOODS_CARRYING_VEHICLES',
-  'PASSENGER_CARRYING_VEHICLES', 
-  'PUBLIC_SERVICE_VEHICLES'
-];
+// Watch for changes in category selections - exactly like add component
+watch([selectedMainCategory, selectedSubCategory, selectedSubSubCategory, selectedFinalCategory], () => {
+  handleCategorySelection();
+});
 
-const goodsCarryingTypes = [
-  'OWN_GOODS_VEHICLES',
-  'GENERAL_GOODS_CARRYING_VEHICLES'
-];
+// Category selection helpers - exactly like add component
+const getMainCategories = () => Object.keys(categoryStructure);
+const getSubCategories = () => {
+  if (!selectedMainCategory.value) return [];
+  const category = categoryStructure[selectedMainCategory.value];
+  return typeof category === 'object' ? Object.keys(category) : [];
+};
+const getSubSubCategories = () => {
+  if (!selectedSubCategory.value) return [];
+  const category = categoryStructure[selectedMainCategory.value]?.[selectedSubCategory.value];
+  return typeof category === 'object' ? Object.keys(category) : [];
+};
+const getFinalCategories = () => {
+  if (!selectedSubSubCategory.value) return [];
+  const category = categoryStructure[selectedMainCategory.value]?.[selectedSubCategory.value]?.[selectedSubSubCategory.value];
+  return typeof category === 'object' ? Object.keys(category) : [];
+};
 
-const ownGoodsTypes = [
-  'LIGHT_GOODS_VEHICLES',
-  'MEDIUM_GOODS_VEHICLES',
-  'HEAVY_GOODS_VEHICLES'
-];
+const handleCategorySelection = () => {
+  const mainCat = selectedMainCategory.value;
+  const subCat = selectedSubCategory.value;
+  const subSubCat = selectedSubSubCategory.value;
+  const finalCat = selectedFinalCategory.value;
 
-const generalGoodsTypes = [
-  'LIGHT_GENERAL_GOODS',
-  'MEDIUM_GENERAL_GOODS', 
-  'HEAVY_GENERAL_GOODS'
-];
+  const directCommercialTypes = [
+    'THREE_WHEELERS_AND_TRI_CYCLES',
+    'CAR_HIRE',
+    'TAXI',
+    'AGRICULTURAL_VEHICLES'
+  ];
 
-const passengerCarryingTypes = [
-  'TAXI',
-  'MINIBUS',
-  'BUS'
-];
+  // Reset all fields first
+  premiumData.value.privateType = '';
+  premiumData.value.commercialType = '';
+  premiumData.value.goodsCarryingType = '';
+  premiumData.value.ownGoodsType = '';
+  premiumData.value.generalGoodsCaringType = '';
+  premiumData.value.passengerCarryingType = '';
+  premiumData.value.publicServiceType = '';
 
-const publicServiceTypes = [
-  'AMBULANCE',
-  'FIRE_TRUCK',
-  'POLICE_VEHICLE'
-];
+  // Set car_type
+  premiumData.value.car_type = mainCat === 'Motor Private' ? 'PRIVATE' : 'COMMERCIAL';
 
-// Computed properties for conditional rendering
-const showPrivateOptions = computed(() => premiumData.value.car_type === 'PRIVATE');
-const showCommercialOptions = computed(() => premiumData.value.car_type === 'COMMERCIAL');
-const showGoodsCarryingOptions = computed(() => premiumData.value.commercialType === 'GOODS_CARRYING_VEHICLES');
-const showOwnGoodsOptions = computed(() => premiumData.value.goodsCarryingType === 'OWN_GOODS_VEHICLES');
-const showGeneralGoodsOptions = computed(() => premiumData.value.goodsCarryingType === 'GENERAL_GOODS_CARRYING_VEHICLES');
-const showPassengerOptions = computed(() => premiumData.value.commercialType === 'PASSENGER_CARRYING_VEHICLES');
-const showPublicServiceOptions = computed(() => premiumData.value.commercialType === 'PUBLIC_SERVICE_VEHICLES');
+  if (mainCat === 'Motor Private') {
+    // For private vehicles, set privateType
+    premiumData.value.privateType = subCat;
+  } else if (mainCat === 'Motor Commercial') {
+    // For commercial vehicles
+    if (directCommercialTypes.includes(subCat)) {
+      // Direct commercial types (no sub-categories)
+      premiumData.value.commercialType = subCat;
+    } else {
+      // Categories with sub-categories
+      premiumData.value.commercialType = subCat;
+      
+      if (subCat === 'GOODS_CARRYING') {
+        premiumData.value.goodsCarryingType = subSubCat;
+        
+        if (subSubCat === 'OWN_GOODS') {
+          premiumData.value.ownGoodsType = finalCat;
+        } else if (subSubCat === 'GENERAL_CARTAGE') {
+          premiumData.value.generalGoodsCaringType = finalCat;
+        }
+      } else if (subCat === 'PASSENGER_CARRYING') {
+        if (subSubCat === 'OWN_SERVICE') {
+          premiumData.value.passengerCarryingType = subSubCat;
+        } else if (subSubCat === 'PUBLIC_SERVICE') {
+          premiumData.value.passengerCarryingType = subSubCat;
+          premiumData.value.publicServiceType = finalCat;
+        }
+      }
+    }
+  }
+
+  console.log('Updated premium data:', premiumData.value);
+};
+
+function onCarTypeChange() {
+  selectedSubCategory.value = '';
+  selectedSubSubCategory.value = '';
+  selectedFinalCategory.value = '';
+}
+
+function onSubCategoryChange() {
+  selectedSubSubCategory.value = '';
+  selectedFinalCategory.value = '';
+}
+
+function onSubSubCategoryChange() {
+  selectedFinalCategory.value = '';
+}
+
+// Function to map existing data to category selections
+const mapExistingDataToCategories = () => {
+  const data = premiumData.value;
+  
+  // Reset category selections
+  selectedMainCategory.value = '';
+  selectedSubCategory.value = '';
+  selectedSubSubCategory.value = '';
+  selectedFinalCategory.value = '';
+
+  // Determine main category based on car_type
+  if (data.car_type === 'PRIVATE') {
+    selectedMainCategory.value = 'Motor Private';
+    
+    // Set sub category for private
+    if (data.privateType) {
+      selectedSubCategory.value = data.privateType;
+    }
+  } else if (data.car_type === 'COMMERCIAL') {
+    selectedMainCategory.value = 'Motor Commercial';
+    
+    // Set sub category for commercial
+    if (data.commercialType) {
+      selectedSubCategory.value = data.commercialType;
+      
+      // Handle nested categories
+      if (data.commercialType === 'GOODS_CARRYING') {
+        if (data.goodsCarryingType) {
+          selectedSubSubCategory.value = data.goodsCarryingType;
+          
+          if (data.goodsCarryingType === 'OWN_GOODS' && data.ownGoodsType) {
+            selectedFinalCategory.value = data.ownGoodsType;
+          } else if (data.goodsCarryingType === 'GENERAL_CARTAGE' && data.generalGoodsCaringType) {
+            selectedFinalCategory.value = data.generalGoodsCaringType;
+          }
+        }
+      } else if (data.commercialType === 'PASSENGER_CARRYING') {
+        if (data.passengerCarryingType) {
+          selectedSubSubCategory.value = data.passengerCarryingType;
+          
+          if (data.passengerCarryingType === 'PUBLIC_SERVICE' && data.publicServiceType) {
+            selectedFinalCategory.value = data.publicServiceType;
+          }
+        }
+      }
+    }
+  }
+};
 
 onMounted(() => {
   console.log('Edit Premium Modal - actualData:', actualData);
   
   // Properly map the API data to your form structure
   premiumData.value = {
-    car_type: actualData?.carType || '',
-    rate: actualData?.premiumRate ? (actualData.premiumRate * 100) : 0,
+    car_type: actualData?.carType || actualData?.car_type || '',
+    rate: actualData?.premiumRate ? (actualData.premiumRate ) : actualData?.rate || 0,
     privateType: actualData?.privateType || '',
     commercialType: actualData?.commercialType || '',
     goodsCarryingType: actualData?.goodsCarryingType || '',
@@ -101,37 +245,79 @@ onMounted(() => {
     passengerCarryingType: actualData?.passengerCarryingType || '',
     publicServiceType: actualData?.publicServiceType || ''
   };
+
+  // Map existing data to category selections after a small delay to ensure reactivity
+  setTimeout(() => {
+    mapExistingDataToCategories();
+  }, 100);
 });
-function resetSubCategories() {
-  premiumData.value.privateType = '';
-  premiumData.value.commercialType = '';
-  premiumData.value.goodsCarryingType = '';
-  premiumData.value.ownGoodsType = '';
-  premiumData.value.generalGoodsCaringType = '';
-  premiumData.value.passengerCarryingType = '';
-  premiumData.value.publicServiceType = '';
-}
 
-function onCarTypeChange() {
-  resetSubCategories();
-}
-
-function onCommercialTypeChange() {
-  premiumData.value.goodsCarryingType = '';
-  premiumData.value.ownGoodsType = '';
-  premiumData.value.generalGoodsCaringType = '';
-  premiumData.value.passengerCarryingType = '';
-  premiumData.value.publicServiceType = '';
-}
-
-function submitForm(event) {
+async function submitForm(event) {
   event?.preventDefault();
   event?.stopPropagation();
   
+  // Ensure all reactive updates are processed
+  await nextTick();
+  
+  // Validate required fields
+  if (!premiumData.value.car_type) {
+    toasted(false, 'Error', 'Please select a vehicle type');
+    return;
+  }
+  
+  if (!premiumData.value.rate || parseFloat(premiumData.value.rate) <= 0) {
+    toasted(false, 'Error', 'Please enter a valid premium rate');
+    return;
+  }
+  
+  // For private vehicles, ensure privateType is selected
+  if (premiumData.value.car_type === 'PRIVATE' && !premiumData.value.privateType) {
+    toasted(false, 'Error', 'Please select a private vehicle category');
+    return;
+  }
+  
+  // For commercial vehicles, ensure at least commercialType is selected
+  if (premiumData.value.car_type === 'COMMERCIAL' && !premiumData.value.commercialType) {
+    toasted(false, 'Error', 'Please select a commercial vehicle category');
+    return;
+  }
+  
+  // Create a clean form data object with only the relevant fields
   const formData = {
-    ...premiumData.value,
-    rate: parseFloat(premiumData.value.rate) / 100 // Convert percentage to decimal
+    car_type: premiumData.value.car_type,
+    rate: parseFloat(premiumData.value.rate) // Convert percentage to decimal
   };
+  
+  // Add only the relevant category fields based on the selected options
+  if (premiumData.value.privateType) {
+    formData.privateType = premiumData.value.privateType;
+  }
+  
+  if (premiumData.value.commercialType) {
+    formData.commercialType = premiumData.value.commercialType;
+  }
+  
+  if (premiumData.value.goodsCarryingType) {
+    formData.goodsCarryingType = premiumData.value.goodsCarryingType;
+  }
+  
+  if (premiumData.value.ownGoodsType) {
+    formData.ownGoodsType = premiumData.value.ownGoodsType;
+  }
+  
+  if (premiumData.value.generalGoodsCaringType) {
+    formData.generalGoodsCaringType = premiumData.value.generalGoodsCaringType;
+  }
+  
+  if (premiumData.value.passengerCarryingType) {
+    formData.passengerCarryingType = premiumData.value.passengerCarryingType;
+  }
+  
+  if (premiumData.value.publicServiceType) {
+    formData.publicServiceType = premiumData.value.publicServiceType;
+  }
+  
+  console.log('Submitting form data:', formData);
 
   // Use premiumUuid instead of premiumRateUuid
   req.send(
@@ -153,128 +339,94 @@ function submitForm(event) {
   <ModalParent>
     <NewFormParent title="Edit Premium Rate" size="lg" class="px-6 py-4 max-w-4xl">
       <template #default>
-          
-        <Form id="editPremiumForm" :inner="false" v-slot="{ submit }" class="space-y-6">
+        <Form id="edit_primum" @submit="submitForm">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Car Type -->
-            <Select
-              v-model="premiumData.car_type"
-              name="car_type"
-              validation="required"
-              label="Car Type"
-              :options="carTypes"
+            <!-- Vehicle Type Selection -->
+            <Input
+              v-model="selectedMainCategory"
+              label="Vehicle Type"
+              :options="getMainCategories()"
               @change="onCarTypeChange"
-              :attributes="{ placeholder: 'Select car type' }"
+              :attributes="{ placeholder: 'Select Vehicle Type', required: true, readonly: true }"
+              readonly
             />
-
+            
             <!-- Rate -->
             <Input
               v-model="premiumData.rate"
               name="rate"
               validation="required|numeric"
-              label="Premium Rate (%)"
+              label="Premium Rate"
               type="number"
-              :attributes="{ placeholder: '0.00', min: '0', step: '0.01' }"
+              :attributes="{ placeholder: '0.00', min: '0', step: '0.01', required: true }"
             >
-              <template #right>
-                <span class="text-gray-500 font-medium">%</span>
-              </template>
+             
             </Input>
           </div>
 
-          <!-- Private Vehicle Options -->
-          <div v-if="showPrivateOptions" class="grid grid-cols-1 gap-6">
-            <Select
-              v-model="premiumData.privateType"
-              name="privateType"
-              validation="required"
-              label="Private Vehicle Type"
-              :options="privateTypes"
-              :attributes="{ placeholder: 'Select private vehicle type' }"
-            />
-          </div>
-
-          <!-- Commercial Vehicle Options -->
-          <div v-if="showCommercialOptions" class="space-y-6">
-            <Select
-              v-model="premiumData.commercialType"
-              name="commercialType"
-              validation="required"
-              label="Commercial Vehicle Type"
-              :options="commercialTypes"
-              @change="onCommercialTypeChange"
-              :attributes="{ placeholder: 'Select commercial vehicle type' }"
-            />
-
-            <!-- Goods Carrying Options -->
-            <div v-if="showGoodsCarryingOptions" class="space-y-4">
-              <Select
-                v-model="premiumData.goodsCarryingType"
-                name="goodsCarryingType"
-                validation="required"
-                label="Goods Carrying Type"
-                :options="goodsCarryingTypes"
-                :attributes="{ placeholder: 'Select goods carrying type' }"
-              />
-
-              <!-- Own Goods Options -->
-              <Select
-                v-if="showOwnGoodsOptions"
-                v-model="premiumData.ownGoodsType"
-                name="ownGoodsType"
-                validation="required"
-                label="Own Goods Type"
-                :options="ownGoodsTypes"
-                :attributes="{ placeholder: 'Select own goods type' }"
-              />
-
-              <!-- General Goods Options -->
-              <Select
-                v-if="showGeneralGoodsOptions"
-                v-model="premiumData.generalGoodsCaringType"
-                name="generalGoodsCaringType"
-                validation="required"
-                label="General Goods Type"
-                :options="generalGoodsTypes"
-                :attributes="{ placeholder: 'Select general goods type' }"
+          <!-- Sub Categories -->
+          <div v-if="selectedMainCategory" class="mt-6">
+            <h3 class="text-sm font-medium text-gray-700 mb-3">Category Selection</h3>
+            
+            <!-- Sub Category -->
+            <div class="mb-4" v-if="getSubCategories().length">
+              <Input
+                v-model="selectedSubCategory"
+                label="Category"
+                :options="getSubCategories()"
+                @change="onSubCategoryChange"
+                :attributes="{ placeholder: 'Select Category', required: true, readonly: true }"
               />
             </div>
 
-            <!-- Passenger Carrying Options -->
-            <Select
-              v-if="showPassengerOptions"
-              v-model="premiumData.passengerCarryingType"
-              name="passengerCarryingType"
-              validation="required"
-              label="Passenger Carrying Type"
-              :options="passengerCarryingTypes"
-              :attributes="{ placeholder: 'Select passenger carrying type' }"
-            />
+            <!-- Sub Sub Category -->
+            <div class="mb-4" v-if="getSubSubCategories().length">
+              <Input
+                v-model="selectedSubSubCategory"
+                label="Sub Category"
+                :options="getSubSubCategories()"
+                @change="onSubSubCategoryChange"
+                :attributes="{ placeholder: 'Select Sub Category', readonly: true }"
+              />
+              />
+            </div>
 
-            <!-- Public Service Options -->
-            <Select
-              v-if="showPublicServiceOptions"
-              v-model="premiumData.publicServiceType"
-              name="publicServiceType"
-              validation="required"
-              label="Public Service Type"
-              :options="publicServiceTypes"
-              :attributes="{ placeholder: 'Select public service type' }"
-            />
+            <!-- Final Category -->
+            <div class="mb-4" v-if="getFinalCategories().length">
+              <Input
+                v-model="selectedFinalCategory"
+                label="Final Category"
+                :options="getFinalCategories()"
+                :attributes="{ placeholder: 'Select Final Category', readonly: true }"
+              />
+            </div>
+          </div>
+
+          <!-- Debug info (can be removed in production) -->
+          <div v-if="premiumData.car_type" class="mt-6 p-3 bg-gray-100 rounded-md text-xs">
+            <h4 class="font-medium mb-1">Current Selection:</h4>
+            <p>Car Type: {{ premiumData.car_type }}</p>
+            <p v-if="premiumData.privateType">Private Type: {{ premiumData.privateType }}</p>
+            <p v-if="premiumData.commercialType">Commercial Type: {{ premiumData.commercialType }}</p>
+            <p v-if="premiumData.goodsCarryingType">Goods Carrying: {{ premiumData.goodsCarryingType }}</p>
+            <p v-if="premiumData.ownGoodsType">Own Goods: {{ premiumData.ownGoodsType }}</p>
+            <p v-if="premiumData.generalGoodsCaringType">General Goods: {{ premiumData.generalGoodsCaringType }}</p>
+            <p v-if="premiumData.passengerCarryingType">Passenger Carrying: {{ premiumData.passengerCarryingType }}</p>
+            <p v-if="premiumData.publicServiceType">Public Service: {{ premiumData.publicServiceType }}</p>
           </div>
         </Form>
       </template>
 
       <template #bottom>
         <div class="flex justify-end gap-3">
-          <Button @click="closeModal" type="secondary" class="flex items-center gap-2 px-2 my-2">
+          <Button @click="closeModal" type="secondary">
             Cancel
           </Button>
           <Button
             @click="submitForm"
             :pending="req.pending.value"
             type="primary"
-            class="flex items-center gap-2 px-2 my-2"
+            class="flex items-center gap-2"
             :attributes="{ type: 'button' }"
           >
             <i v-html="icons.save" class="w-4 h-4"></i>

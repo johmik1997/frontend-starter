@@ -108,7 +108,7 @@ function viewDetails(row) {
 
       <!-- Rate -->
       <td class="px-6 py-4 text-sm text-gray-900">
-        <span class="font-semibold text-primary">{{ (row.premiumRate * 100).toFixed(2) }}%</span>
+        <span class="font-semibold text-primary">{{ (row.premiumRate) }}</span>
       </td>
 
       <!-- Actions -->

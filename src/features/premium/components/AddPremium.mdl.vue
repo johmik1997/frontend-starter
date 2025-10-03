@@ -203,7 +203,7 @@ async function submitForm(event) {
   // Create a clean form data object with only the relevant fields
   const formData = {
     car_type: premiumData.value.car_type,
-    rate: parseFloat(premiumData.value.rate) / 100 // Convert percentage to decimal
+    rate: parseFloat(premiumData.value.rate) // Convert percentage to decimal
   };
   
   // Add only the relevant category fields based on the selected options
@@ -272,13 +272,11 @@ async function submitForm(event) {
               v-model="premiumData.rate"
               name="rate"
               validation="required|numeric"
-              label="Premium Rate (%)"
+              label="Premium Rate"
               type="number"
               :attributes="{ placeholder: '0.00', min: '0', step: '0.01', required: true }"
             >
-              <template #right>
-                <span class="text-gray-500 font-medium">%</span>
-              </template>
+             
             </Input>
           </div>
 

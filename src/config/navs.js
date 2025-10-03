@@ -31,7 +31,18 @@ export default [
       permissions: []
     },
     type: "Pages",
-    privilage: ['create_car', 'create_car_collection'],
+    privilage: ['create_car'],
+  },
+    {
+    path: '/draftsForClient',
+    icon: icons.leeds,
+    name: 'Leads (Drafts)',
+    meta: {
+      requiresAuth: true,
+      permissions: []
+    },
+    type: "Pages",
+    privilage: [ 'create_car_collection'],
   },
   {
     path: '/clients',

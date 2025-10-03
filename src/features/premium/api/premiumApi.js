@@ -21,7 +21,7 @@ export function savePremium(data) {
     if (data.publicServiceType) params.append('publicServiceType', data.publicServiceType);
   }
   
-  return api.addAuthenticationHeader().post(`${path}/savePremium/?${params.toString()}`);
+  return api.addAuthenticationHeader().post(`${path}/savePremium?${params.toString()}`);
 }
 
 export function getAllPremiums(query = {}) {

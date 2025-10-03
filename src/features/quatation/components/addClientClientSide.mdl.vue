@@ -17,14 +17,16 @@ import { useAuth } from '@/stores/auth';
 
 const auth = useAuth();
 const quotationStore = useQuotation();
-// console.log(auth.auth?.user.userUuid);
+
 const props = defineProps(['data']);
+const emit = defineEmits(['close', 'success']);
+
 const editingIndex = ref(null);
 
 const carRequests = ref([]);
 const bankAccount = ref('');
 const step = ref(1);
-const createdQuotation = ref(null); // Store the created quotation response
+const createdQuotation = ref(null);
 
 // Add missing personalDetails reactive object
 const personalDetails = reactive({
@@ -192,13 +194,17 @@ const nextStep = () => {
     if (!isValidBankAccount()) {
       return;
     }
-    // Remove step 4 logic since we only have 3 steps
     submitForm();
   }
 };
 
 const prevStep = () => {
   if (step.value > 1) step.value--;
+};
+
+// Close modal function
+const closeThisModal = () => {
+  emit('close');
 };
 
 // Vehicle management
@@ -272,6 +278,7 @@ const deleteVehicle = (event, index) => {
   event?.stopPropagation();
   carRequests.value.splice(index, 1);
 };
+
 // Bank account validation
 const isValidBankAccount = () => {
   if (!bankAccount.value?.trim()) {
@@ -298,7 +305,7 @@ const submitForm = async () => {
   try {
     const response = await RegisterClient(requestData);
     if (response.success) {
-      createdQuotation.value = response.data; // Store the response
+      createdQuotation.value = response.data;
       quotationStore.add(response.data);
       await quotationStore.fetchQuotations();
       toasted(true, "Client Created Successfully!");
@@ -307,7 +314,8 @@ const submitForm = async () => {
       if (response.data.carResponseList && response.data.carResponseList.length > 0) {
         showLibreUploadModal(response.data.carResponseList[0]);
       } else {
-        closeModal();
+        closeThisModal();
+        emit('success', response.data);
       }
     } else {
       toasted(false, "Error", response.error || "Failed to create client");
@@ -335,7 +343,8 @@ const showLibreUploadModal = (carData) => {
 
 const handleLibreUploadSuccess = () => {
   toasted(true, 'Libre images uploaded successfully');
-  closeModal();
+  closeThisModal();
+  emit('success', createdQuotation.value);
 };
 
 // Draft saving
@@ -430,39 +439,53 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="px-6 py-8 max-w-6xl mx-auto">
-    <NewFormParent size="lg">
-      <!-- Title -->
+  <ModalParent>
+    <NewFormParent class="px-3 sm:px-6 py-3 sm:py-4 w-full max-w-6xl" size="lg">
       <template #title>
-        <div class="flex items-center justify-between w-full mb-6">
-          <div class="flex items-center gap-4">
-            <button @click="prevStep" v-if="step > 1"
-              class="flex items-center justify-center p-2 rounded-full hover:bg-gray-100 transition-colors">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                  stroke-linejoin="round" />
+        <div class="flex items-center justify-between w-full">
+          <div class="flex items-center gap-2 sm:gap-4">
+            <button 
+              @click="prevStep" 
+              v-if="step > 1"
+              class="flex items-center justify-center p-1.5 sm:p-2 rounded-full hover:bg-gray-100 transition-colors"
+            >
+              <svg width="16" height="16" sm:width="20" sm:height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </button>
             <div>
-              <h2 class="font-bold text-xl text-gray-800">{{ stepTitle }}</h2>
-              <p class="text-sm text-gray-500">Step {{ step }} of 3</p>
+              <h2 class="font-bold text-lg sm:text-xl text-gray-800 truncate">{{ stepTitle }}</h2>
+              <p class="text-xs sm:text-sm text-gray-500">Step {{ step }} of 3</p>
             </div>
           </div>
-
+          
           <!-- Progress Bar -->
-          <div class="flex items-center gap-2">
-            <div class="flex items-center gap-1">
-              <div v-for="i in 3" :key="i" class="w-8 h-2 rounded-full transition-all duration-300"
-                :class="i <= step ? 'bg-primary' : 'bg-gray-200'"></div>
+          <div class="flex items-center gap-1 sm:gap-2">
+            <div class="flex items-center gap-0.5 sm:gap-1">
+              <div 
+                v-for="i in 3" 
+                :key="i"
+                class="w-4 sm:w-8 h-1.5 sm:h-2 rounded-full transition-all duration-300"
+                :class="i <= step ? 'bg-primary' : 'bg-gray-200'"
+              ></div>
             </div>
-            <span class="text-xs text-gray-500 ml-2">{{ Math.round((step / 3) * 100) }}%</span>
+            <span class="text-xs text-gray-500 ml-1 sm:ml-2 hidden sm:inline">{{ Math.round((step / 3) * 100) }}%</span>
+            
+            <!-- Close Button -->
+            <button 
+              @click="closeThisModal"
+              class="ml-2 sm:ml-4 flex items-center justify-center p-1.5 sm:p-2 rounded-full hover:bg-gray-100 transition-colors"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
           </div>
         </div>
       </template>
-
-      <!-- Content -->
+      
       <template #default>
-        <Form class="gap-5 mt-3 p-6" id="addform">
+        <Form class="gap-3 sm:gap-5 mt-2 sm:mt-3 p-2 sm:p-6" id="addform">
           <!-- Step 1: Insurance Selection -->
           <div v-if="step === 1" class="space-y-6">
             <div class="text-center mb-8">
@@ -639,11 +662,11 @@ onMounted(() => {
                       </div>
                       <div class="flex flex-col gap-2 ml-4">
                         <Button @click="(e) => editVehicle(e, index)" type="secondary" size="sm" class="text-xs">
-  Edit
-</Button>
-                       <Button @click="(e) => deleteVehicle(e, index)" type="danger" size="sm" class="text-xs">
-  Delete
-</Button>
+                          Edit
+                        </Button>
+                        <Button @click="(e) => deleteVehicle(e, index)" type="danger" size="sm" class="text-xs">
+                          Delete
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -741,7 +764,7 @@ onMounted(() => {
         </div>
       </template>
     </NewFormParent>
-  </div>
+  </ModalParent>
 </template>
 
 <style scoped>
