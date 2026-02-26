@@ -79,7 +79,7 @@ function handleDeleteWithClose(row) {
       <div class="flex gap-2 justify-end items-center">
         <Button @click="openAddCarSpecModal" type="primary" class="flex items-center gap-2">
           <i v-html="icons.plus"></i>
-          Add Car Specification
+          Add New Physical Material
         </Button>
       </div>
     </template>

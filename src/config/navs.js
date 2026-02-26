@@ -5,170 +5,91 @@ export default [
     path: "/dashboard",
     icon: icons.dashboard,
     name: "Dashboard",
-    meta: {
-      requiresAuth: true,
-      permissions: [],
-    },
+    meta: { requiresAuth: true, permissions: [] },
     type: "Analytics",
     privilage: ['read_user'],
   },
-  // {
-  //   path: "/a",
-  //   icon: icons.report,
-  //   name: "Report and analytics",
-  //   meta: {
-  //     requiresAuth: true,
-  //     permissions: [],
-  //   },
-  //   type: "Analytics",
-  // },
-  {
-    path: '/drafts',
-    icon: icons.leeds,
-    name: 'Leads (Drafts)',
-    meta: {
-      requiresAuth: true,
-      permissions: []
-    },
+   {
+    path: '/payment',
+    icon: icons.payment,
+    name: 'Manage Materials',
+    meta: { requiresAuth: true, permissions: [] },
     type: "Pages",
-    privilage: ['create_car'],
-  },
-    {
-    path: '/draftsForClient',
-    icon: icons.leeds,
-    name: 'Leads (Drafts)',
-    meta: {
-      requiresAuth: true,
-      permissions: []
-    },
-    type: "Pages",
-    privilage: [ 'create_car_collection'],
+    isOpen: false,
+    privilage: ['create_payement'],
+    children: [
+      {
+        path: '/insurance',
+        name: 'Digital Material',
+        meta: { requiresAuth: true, permissions: [] },
+        privilage: ['createpayment'],
+      },
+      {
+        path: '/car_specifications',
+        name: 'Physical Material',
+        meta: { requiresAuth: true, permissions: [] },
+      },
+      {
+        path:'/premium',
+        name: 'E-Books',
+        meta: { requiresAuth: true, permissions: [] },
+      }
+    ]
   },
   {
     path: '/clients',
     icon: icons.renew,
-    name: 'Clients',
-    meta: {
-      requiresAuth: true,
-      permissions: []
-    },
+    name: 'Reservations',
+    meta: { requiresAuth: true, permissions: [] },
     type: "Pages",
     privilage: ['read_user'],
   },
   {
     path: '/quatation',
     icon: icons.quotation,
-    name: 'Quotations',
-    meta: {
-      requiresAuth: true,
-      permissions: [],
-    },
+    name: 'Borrow Physical Material',
+    meta: { requiresAuth: true, permissions: [] },
     type: "Pages",
     privilage: ['create_car'],
   },
-    {
-    path: '/createQuotation',
-    icon: icons.quotation,
-    name: 'Create Quotations',
-    meta: {
-      requiresAuth: true,
-      permissions: [],
-    },
-    type: "Pages",
-    privilage: ['create_car_collection'],
-  },
-  
+ 
   {
-    path: '/payment',
-    icon: icons.payment,
-    name: 'Financing',
-    meta: {
-      requiresAuth: true,
-      permissions: [],
-    },
-    type: "Pages",
-    isOpen: false, // Add this to control dropdown state
-    privilage: ['create_payement'],
-    children: [
-      {
-        path: '/payment/deposit',
-        name: 'Deposit',
-        meta: {
-          requiresAuth: true,
-          permissions: []
-        },
-        privilage: ['createpayment'],
-      },
-      {
-        path: '/payment/dispersement',
-        name: 'Pay For Insurances',
-        meta: {
-          requiresAuth: true,
-          permissions: []
-        }
-      },
-      {
-        path: '/payment/premium',
-        name: 'Premium Payment',
-        meta: {
-          requiresAuth: true,
-          permissions: []
-        }
-      }
-    ]
-  },
-  // {
-  //   path: '/policies',
-  //   icon: icons.policies,
-  //   name: 'policies',
-  //   meta: {
-  //     requiresAuth: true,
-  //     permissions: []
-  //   },
-  //   type: "Pages",
-  //   privilage: ['create_policies'],
-  // },
-  {
-    path: '/insurance',
+    path: '/payment/deposit' ,
     icon: icons.transfer,
-    name: 'Insurances',
-    meta: {
-      requiresAuth: true,
-      permissions: [],
-    },
+    name: 'Manage Fines',
+    meta: { requiresAuth: true, permissions: [] },
     type: "Pages",
     privilage: ['create_insurance'],
   },
-    {
-    path: '/car_specifications',
+  {
+    path:'/payment/dispersement',
     icon: icons.car,
-    name: 'Car Specifications',
-    meta: {
-      requiresAuth: true,
-      permissions: [],
-    },
+    name: 'Return Materials',
+    meta: { requiresAuth: true, permissions: [] },
     type: "Pages",
     privilage: ['create_specification'],
   },
-    {
-    path: '/premium',
+  {
+    path:  '/payment/premium',
     icon: icons.premium,
-    name: 'Premium',
-    meta: {
-      requiresAuth: true,
-      permissions: [],
-    },
+    name: 'Borrowed Materials',
+    meta: { requiresAuth: true, permissions: [] },
     type: "Pages",
     privilage: ['create_premium'],
+  },
+   {
+    path: '/createQuotation',
+    icon: icons.quotation,
+    name: 'Handle Digital Material',
+    meta: { requiresAuth: true, permissions: [] },
+    type: "Pages",
+    privilage: ['create_car_collection'],
   },
   {
     path: '/Users',
     name: 'Users',
     icon: icons.users,
-    meta: {
-      requiresAuth: true,
-      permissions: []
-    },
+    meta: { requiresAuth: true, permissions: [] },
     type: "Settings",
     privilage: ['create_user'],
   },
@@ -176,10 +97,7 @@ export default [
     path: '/privileges',
     name: 'Privileges',
     icon: icons.privilege,
-    meta: {
-      requiresAuth: true,
-      permissions: []
-    },
+    meta: { requiresAuth: true, permissions: [] },
     type: "Settings",
     privilage: ['create_privilege'],
   },
@@ -187,16 +105,8 @@ export default [
     path: '/roles',
     name: 'Roles',
     icon: icons.role,
-    meta: {
-      requiresAuth: true,
-      permissions: []
-    },
+    meta: { requiresAuth: true, permissions: [] },
     type: "Settings",
     privilage: ['create_role'],
   }
 ];
-
-
-
-
-

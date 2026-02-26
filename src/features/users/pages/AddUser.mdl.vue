@@ -75,7 +75,7 @@ function create({ values }) {
         <Input name="mobilePhone" label="Mobile Phone" validation="required|phone"
           :attributes="{ placeholder: 'Enter Mobile Phone' }" />
         <Select name="userType" label="User Type" validation="required"
-          :options="['Admin', 'Client', 'Insurance', 'Bank', 'Agent']"
+          :options="['Teacher', 'Student']"
           :attributes="{ placeholder: 'Select User Type',
             required
            }" />

@@ -3,136 +3,136 @@ import DefaultPage from '@/components/DefaultPage.vue'
 import Table from '@/components/Table.vue'
 import Button from '@/components/Button.vue'
 import icons from "@/utils/icons"
-import { ref, onMounted, computed, inject, watch } from 'vue'
+import { ref } from 'vue'
 import Status_row from '../components/statusRow.vue'
+import TableRowSkeleton from '@/components/TableRowSkeleton.vue'
+import BorrowBook from '@/features/drfats/pages/drafts.vue'
 import { openModal } from "@customizer/modal-x"
-import { useQuotation } from '../store/Quotation'
-import { getCustomers } from '../api/customersApi'
-import { removeUndefined } from '@/utils/utils'
-import { useRouter } from 'vue-router';
-import TableRowSkeleton from '@/components/TableRowSkeleton.vue';
-import { usePaginationcopy } from '@/composables/usePaginationcopy'
+import Drafts from '@/features/drfats/pages/drafts.vue'
 
-const router = useRouter();
-const quotationStore = useQuotation();
-const quotations = computed(() => quotationStore.quotations);
+const searchKey = ref('')
 
-// Add searchKey ref
-const searchKey = ref('');
+// Hardcoded borrowed materials data
+const materials = ref([
+  {
+    id: 1,
+    title: "Introduction to Algorithms",
+    author: "Cormen et al.",
+    category: "Computer Science",
+    type: "Book",
+    status: "Available",
+    borrowedBy: "",
+    dueDate: "",
+  },
+  {
+    id: 2,
+    title: "Clean Code",
+    author: "Robert C. Martin",
+    category: "Programming",
+    type: "Book",
+    status: "Borrowed",
+    borrowedBy: "Mekdes Alem",
+    dueDate: "2025-12-22",
+  },
+  {
+    id: 3,
+    title: "Design Patterns",
+    author: "Erich Gamma et al.",
+    category: "Software Engineering",
+    type: "Book",
+    status: "Overdue",
+    borrowedBy: "Samuel Tesfaye",
+    dueDate: "2025-12-15",
+  },
+  {
+    id: 4,
+    title: "The Pragmatic Programmer",
+    author: "Andrew Hunt",
+    category: "Programming",
+    type: "Book",
+    status: "Available",
+    borrowedBy: "",
+    dueDate: "",
+  },
+])
 
-// Watch for changes in searchKey
-watch(searchKey, (newValue) => {
-  console.log('Search value changed:', newValue);
-  // Use send directly since it handles resetting internally
-  pagination.send();
-});
+const showBorrowModal = ref(false)
 
-// Pagination setup for the quotations table
-const pagination = usePaginationcopy({
-  store: quotationStore,
-  cb: (data, config) => getCustomers(
-    removeUndefined({
-      ...data,
-      search: searchKey.value,
-    })
-  ),
-});
-
-// Function to open the add client modal
-function openAddClientModal() {
-  openModal('addClient', {
-    props: {
-      draftData: {
-        personalDetails: {
-          userUuid: '',
-          firstName: '',
-          fatherName: '',
-          email: '',
-          mobilePhone: '',
-          insuranceUuid: ''
-        },
-        carRequests: [],
-        step: 1
-      }
-    }
-  })
+function openBorrowModal() {
+  showBorrowModal.value = true
+}
+// function openAddClientModal() {
+//   openModal('addClient', {
+//     props: {
+//       draftData: {
+//         personalDetails: {
+//           userUuid: '',
+//           firstName: '',
+//           fatherName: '',
+//           email: '',
+//           mobilePhone: '',
+//           insuranceUuid: ''
+//         },
+//         carRequests: [],
+//         step: 1
+//       }
+//     }
+//   })
+// }
+// Functions
+function borrowMaterial(materialId) {
+  console.log("Borrow material:", materialId)
 }
 
-// Function to view quotation details
-function viewDetails(quotationUuid) {
-  if (!quotationUuid) {
-    console.error('No quotationUuid provided');
-    return;
-  }
-
-  // Navigate to the details page
-  router.push(`/quatation/details/${quotationUuid}`);
+function viewMaterialDetails(materialId) {
+  console.log("View material details:", materialId)
 }
 </script>
 
 <template>
-  <DefaultPage placeholder="Search For a Member" v-model="searchKey">
+  <DefaultPage placeholder="Search for a Material" v-model="searchKey">
     <!-- Header actions -->
     <template #more>
       <div class="flex gap-2 justify-end items-center ">
-        <Button @click="openAddClientModal" type="primary" class="flex items-center px-2 gap-2">
-          <i v-html="icons.add"></i> New Quotations
+        <Button @click="openBorrowModal" type="primary" class="flex items-center px-2 gap-2">
+          <i v-html="icons.add"></i> Borrow Material
         </Button>
       </div>
     </template>
-
-    <!-- Quotations table -->
-<Table
-  :pending="pagination.pending.value"
-  :headers="{
-    head: ['Customer Name', 'Inspection Date', 'Vehicle Detail', 'Insurance', 'Premium', 'Status', 'actions'],
-    row: ['customerName', 'quotationDate', 'VehicleDetail', 'insurance', 'quotationAmount', 'quotationStatus'],
-  }"
-  :rows="quotationStore.quotations"
-  :rowCom="Status_row"
-  :Fallback="TableRowSkeleton"
->
-
-   <template #actions="{ row }">
-           <div class="flex flex-col sm:flex-row gap-1 sm:gap-2">
-           <Button 
-          v-if="row?.quotationStatus === 'PENDING'"
-          @click="$router.push(`/quatation/details/${row.quotationUuid}`)" 
-          class="rounded-[4px]  bg-primary text-white gap-2"
-        >
-        <i v-html="icons.open"></i>
-          Open
-        </Button>
-        <Button 
-           v-else
-          @click="$router.push(`/quatation/details/${row.quotationUuid}`)" 
-          class="rounded-[4px]  bg-[#EBE7FF] text-primary gap-2"
-        >
-        <i v-html="icons.eye"></i>View
-        </Button>
+    
+ <BorrowBook 
+      v-if="showBorrowModal"
+      @close="showBorrowModal = false"
+      @success="handleBorrowSuccess"
+    />
+    <!-- Materials table -->
+    <Table
+      :headers="{
+        head: ['Title', 'Author', 'Category', 'Type', 'Availability', 'Borrower', 'Due Date', 'Actions'],
+        row: ['title', 'author', 'category', 'type', 'status', 'borrowedBy', 'dueDate']
+      }"
+      :rows="materials"
+      :rowCom="Status_row"
+      :Fallback="TableRowSkeleton"
+    >
+      <template #actions="{ row }">
+        <div class="flex flex-col sm:flex-row gap-1 sm:gap-2">
+          <Button 
+            v-if="row.status === 'Available'"
+            @click="borrowMaterial(row.id)" 
+            class="rounded-[4px] bg-primary text-white gap-2"
+          >
+            <i v-html="icons.add"></i> Borrow
+          </Button>
+          <Button 
+            v-else
+            @click="viewMaterialDetails(row.id)" 
+            class="rounded-[4px] bg-[#EBE7FF] text-primary gap-2"
+          >
+            <i v-html="icons.eye"></i> View
+          </Button>
         </div>
-        </template>
-</Table>
-
-  
+      </template>
+    </Table>
   </DefaultPage>
 </template>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

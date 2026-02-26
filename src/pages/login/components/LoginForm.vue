@@ -6,13 +6,11 @@
         <img src="@/assets/logo.svg" alt="Logo" class="h-[60px] sm:h-[80px]" />
       </div>
 
-      <!-- Form -->
       <NewFormLayout v-slot="{ submit }" id="login-form">
         <div class="flex flex-col gap-5">
           <Input
-            label="Email/Phone Number"
+            label="Idnumber"
             name="email"
-            validation="required"
             :attributes="{ placeholder: 'Email' }"
           />
           <InputPassword
@@ -284,22 +282,24 @@ if (detiail) {
 
 function handleLogin({ values }) {
   if (loginReq.pending.value) return;
-  loginReq.send(() => login(values), (res) => {
-    if (res.success) {
-      auth.setAuth({ user: res.data, accessToken: res.data?.token });
-      localStorage.setItem("userDetail", JSON.stringify(res.data));
-      reRoute();
-    } else {
-      const errorMsg = res?.error?.toLowerCase?.() || "";
-      if (res.status === 404 && errorMsg.includes("not  active")) {
-        pendingLoginData.value = values;
-        showVerificationModal.value = true;
-        toasted(false, "", "Account verification required");
-        return;
-      }
-      toasted(false, "Login failed", res.error || res.message || "Something went wrong");
-    }
-  });
+  // loginReq.send(() => login(values), (res) => {
+  //   if (res.success) {
+  //     auth.setAuth({ user: res.data, accessToken: res.data?.token });
+  //     localStorage.setItem("userDetail", JSON.stringify(res.data));
+  //     reRoute();
+  //   } else {
+  //     const errorMsg = res?.error?.toLowerCase?.() || "";
+  //     if (res.status === 404 && errorMsg.includes("not  active")) {
+  //       pendingLoginData.value = values;
+  //       showVerificationModal.value = true;
+  //       toasted(false, "", "Account verification required");
+  //       return;
+  //     }
+  //     toasted(false, "Login failed", res.error || res.message || "Something went wrong");
+  //   }
+  // });
+        reRoute();
+
 }
 
 function sendVerification() {
@@ -379,7 +379,6 @@ function sendForgotPassword() {
       const msg = res.message || res.error || "";
       console.log("Error message:", msg);
 
-      // Check for OTP already sent scenario
       if (
         msg.toLowerCase().includes("otp has already been sent")
       ) {

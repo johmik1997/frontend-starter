@@ -283,19 +283,25 @@ onMounted(() => {
       }"
     >
       <!-- Logo Header -->
-      <div class="p-4 px-6 h-16 flex gap-4 items-center sticky top-0 bg-[#3C3C9E] z-10 border-b border-white/10">
-        <i v-html="icons.cbhi_logo" class="w-8 h-8" />
-       
-        <!-- Close button for mobile -->
-        <button 
-          @click="toggleMobileMenu"
-          class="lg:hidden ml-auto p-1 rounded hover:bg-white/10"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
+    <div class="p-4 px-6 h-16 flex items-center justify-between sticky top-0 bg-[#3C3C9E] z-10 border-b border-white/10">
+
+  <!-- Left Section: Logo and Title -->
+  <div class="flex items-center gap-3">
+    <img src="@/assets/logo.svg" alt="Logo" class="h-[50px] sm:h-[60px]" />
+    <span class="text-white text-xl sm:text-2xl font-semibold">IoT Digital Library</span>
+  </div>
+
+  <!-- Close / Menu Button for Mobile -->
+  <button 
+    @click="toggleMobileMenu"
+    class="lg:hidden p-2 rounded hover:bg-white/10 text-white"
+  >
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  </button>
+</div>
+
 
       <!-- Navigation -->
       <div class="flex flex-col justify-start p-4 px-6 gap-6 pb-20">
