@@ -14,30 +14,34 @@ export const useUsers = defineStore("allUserStore", () => {
     return users.value;
   }
   function add(data) {
-    return users.value.push(add);
+    return users.value.push(data);
+  }
+
+  function getUserId(user) {
+    return user?.userUuid || user?.id;
   }
 
   function update(id, data) {
-    const idx = users.value.findIndex((el) => el.userUuid == id);
+    const idx = users.value.findIndex((el) => getUserId(el) == id);
     if (idx == -1) return;
 
     users.value.splice(idx, 1, data);
   }
   function remove(id) {
-    const idx = users.value.findIndex((el) => el.userUuid == id);
+    const idx = users.value.findIndex((el) => getUserId(el) == id);
     if (idx == -1) return;
     users.value.splice(idx, 1);
   }
 
   function updateStatus(id, status) {
-    const idx = users.value.findIndex((el) => el.userUuid == id);
+    const idx = users.value.findIndex((el) => getUserId(el) == id);
     if (idx == -1) return;
 
     users.value[idx].userStatus = status;
   }
   // In your userStore.js
 function updateVerification(userUuid, isVerified) {
-  const user = users.value.find(u => u.userUuid === userUuid);
+  const user = users.value.find(u => getUserId(u) === userUuid);
   if (user) {
     user.isVerified = isVerified;
   }

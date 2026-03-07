@@ -16,7 +16,7 @@ const authStore = useAuth();
         <Input
           label="First Name"
           validation="required"
-          :value="authStore.auth?.user?.firstName"
+          :value="authStore.auth?.user?.first_name"
           name="firstName"
           :attributes="{
             placeholder: 'Enter your First Name',
@@ -24,7 +24,7 @@ const authStore = useAuth();
         />
         <Input
           label="Father’s Name"
-          :value="authStore.auth?.user?.fatherName"
+          :value="authStore.auth?.user?.last_name"
           validation="required"
           name="fatherName"
           :attributes="{
@@ -40,16 +40,7 @@ const authStore = useAuth();
             placeholder: 'Enter your Grandfather’s Name',
           }"
         />
-        <Select
-          label="Gender"
-          name="gender"
-          :options="['Male', 'Female']"
-          :attributes="{
-            type: 'text',
-            placeholder: 'Enter Your Gender',
-          }"
-          :value="authStore.auth?.user?.gender"
-        />
+     
           <Select
           name="userStatus"
           label="User Status"
@@ -60,7 +51,7 @@ const authStore = useAuth();
            readonly: true,
             placeholder: 'User Status',
           }"
-          :value="authStore.auth?.user?.userStatus"
+          :value="authStore.auth?.user?.status"
         />
       </div>
       <div
@@ -68,7 +59,7 @@ const authStore = useAuth();
       >
         <Input
           label="Phone Number"
-          :value="authStore.auth?.user?.mobilePhone"
+          :value="authStore.auth?.user?.phone"
           validation="required"
           name="mobilePhone"
           :attributes="{
@@ -86,7 +77,7 @@ const authStore = useAuth();
         />
           <Input
           label="Role"
-          :value="authStore.auth?.user?.roleUuid"
+          :value="authStore.auth?.user?.role"
           validation="required"
           name="roleUuid"
           :attributes="{
@@ -95,7 +86,7 @@ const authStore = useAuth();
         />
           <Input
           label="User Type"
-          :value="authStore.auth?.user?.userType"
+          :value="authStore.auth?.user?.user_type"
           validation="required"
           name="userType"
           :attributes="{

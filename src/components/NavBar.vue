@@ -17,6 +17,8 @@ const props = defineProps({
 
 // Initialize store and router
 const authStore = useAuth();
+console.log(authStore);
+
 const router = useRouter();
 const isScrolled = ref(false);
 

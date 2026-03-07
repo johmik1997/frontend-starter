@@ -1,4 +1,4 @@
-import { ref, provide, nextTick, reactive, watch } from "vue";
+import { ref, provide, nextTick } from "vue";
 
 export function useForm(id, inner = true, childrenName) {
   if(!inner) return {}
@@ -29,27 +29,34 @@ export function useForm(id, inner = true, childrenName) {
     nextTick(() => {
       validateAll.value = false
       
-      let inputs
-      if(!formEl.value && id) {
-        let formFromId = document.querySelector(`#${id}`)
-        inputs = formFromId && formFromId.querySelectorAll(childrenName ? `.${childrenName}` : '.custom-input')
-      } else if(formEl){
-        inputs = formEl.value.querySelectorAll(childrenName ? `.${childrenName}` : '.custom-input')
-      } else {
-        throw new Error("no form found")
+      const selector = childrenName ? `.${childrenName}` : ".custom-input";
+      const formFromRef = formEl.value;
+      const formFromId = !formFromRef && id ? document.querySelector(`#${id}`) : null;
+      const targetForm = formFromRef || formFromId;
+
+      if (!targetForm) {
+        throw new Error(`[useForm] no form found for id: ${id}`);
       }
 
-      if(!inputs || !(inputs instanceof NodeList)) return false;
+      const inputs = targetForm.querySelectorAll(selector);
+      if (!inputs) return false;
 
-      const allValid = [...inputs].every(el => el.dataset['valid'] == 'true')
+      const allValid = [...inputs].every(el => el.dataset["valid"] == "true")
 
       if(!allValid) return
       valid.value = true
       let values = [...inputs].reduce((state, el) => {
-        if(el.type == 'file') {
-          state[el.getAttribute('name')] = el.val
+        const name = el.getAttribute("name");
+        if (!name) return state;
+
+        if(el.type == "file") {
+          state[name] = el.val
         } else {
-          state[el.getAttribute('name')] = JSON.parse(el.dataset['val'])?.value
+          try {
+            state[name] = JSON.parse(el.dataset["val"])?.value;
+          } catch {
+            state[name] = el.value ?? "";
+          }
         }
         return state
       }, {})

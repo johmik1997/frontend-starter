@@ -99,30 +99,49 @@ watch(() => route.path, (newPath, oldPath) => {
   }
 });
 
-// Filter navs based on privileges
-const filteredNavs = computed(() => {
-  return navs.filter(nav => {
-    const user = authStore.auth?.user;
-    
-    // Allow access if user is Super Admin or has All Privileges
-    if (user?.privileges?.includes("All Privileges") || user?.roleName === 'Super Admin') {
-      return true;
-    }
+function normalizeRole(rawRole) {
+  const value = typeof rawRole === 'object' && rawRole !== null
+    ? rawRole.roleName || rawRole.name || rawRole.role || rawRole.value
+    : rawRole;
 
-    // Check privileges for the nav item
-    if (nav.privilage) {
-      const userPrivileges = user?.privileges || [];
-      return nav.privilage.some(priv => userPrivileges.includes(`ROLE_${priv}`));
-    }
+  return String(value || "")
+    .toUpperCase()
+    .replace(/^ROLE_/, "")
+    .replace(/_/g, " ")
+    .trim();
+}
 
-    // If no privileges specified, show the nav item
+function canAccessNav(nav, user) {
+  if (!user) return false;
+
+  const role = normalizeRole(user.roleName || user.role || user.userRole);
+  const requiredRoles = Array.isArray(nav?.roles)
+    ? nav.roles.map((r) => normalizeRole(r))
+    : nav?.role
+      ? [normalizeRole(nav.role)]
+      : [];
+
+  if (!requiredRoles.length) {
     return true;
-  });
+  }
+
+  return requiredRoles.includes(role);
+}
+
+// Filter navs based on role
+const filteredNavs = computed(() => {
+  const user = authStore.auth?.user;
+  return navs.filter((nav) => canAccessNav(nav, user));
 });
 
 // Group filtered navs by type
 const grouped = computed(() => {
-  return Object.groupBy(filteredNavs.value, (el) => el.type);
+  return filteredNavs.value.reduce((acc, nav) => {
+    const key = nav.type || "General";
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(nav);
+    return acc;
+  }, {});
 });
 
 provide("search", search.value);
@@ -192,27 +211,9 @@ const isRouteActive = (navPath) => {
          (baseNavPath !== '/' && currentPath.startsWith(baseNavPath + '/'));
 };
 
-// Check if a nav item should be visible based on privileges
+// Check if a nav item should be visible based on role
 const shouldShowNavItem = (nav) => {
-  const user = authStore.auth?.user;
-  
-  // Always show if user is Super Admin or has All Privileges
-  if (user?.privileges?.includes("All Privileges") || user?.roleName === 'Super Admin') {
-    return true;
-  }
-
-  // Check privileges for the nav item and its children
-  if (nav.privilage || (nav.children && nav.children.some(child => child.privilage))) {
-    const userPrivileges = user?.privileges || [];
-    const navPrivileges = nav.privilage || [];
-    const childrenPrivileges = nav.children?.flatMap(child => child.privilage || []) || [];
-    
-    return [...navPrivileges, ...childrenPrivileges].some(priv => 
-      userPrivileges.includes(`ROLE_${priv}`)
-    );
-  }
-
-  return true;
+  return canAccessNav(nav, authStore.auth?.user);
 };
 
 // Initialize dropdowns based on current route
@@ -485,5 +486,3 @@ onMounted(() => {
   }
 }
 </style>
-
-

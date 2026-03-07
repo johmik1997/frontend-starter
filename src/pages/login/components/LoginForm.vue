@@ -10,8 +10,8 @@
         <div class="flex flex-col gap-5">
           <Input
             label="Idnumber"
-            name="email"
-            :attributes="{ placeholder: 'Email' }"
+            name="id_number"
+            :attributes="{ placeholder: 'Enter ID Number' }"
           />
           <InputPassword
             label="Password"
@@ -275,31 +275,61 @@ function reRoute() {
 }
 
 if (detiail) {
-  detiail = JSON.parse(detiail);
-  auth.setAuth({ user: detiail, accessToken: detiail.token });
-  reRoute();
+  try {
+    detiail = JSON.parse(detiail);
+    const storedUser = detiail?.user || detiail;
+    const storedAccessToken = detiail?.access || detiail?.accessToken || detiail?.token;
+    const storedRefreshToken = detiail?.refresh || detiail?.refreshToken;
+
+    if (storedUser && storedAccessToken) {
+      auth.setAuth({
+        user: storedUser,
+        accessToken: storedAccessToken,
+        refreshToken: storedRefreshToken,
+      });
+      reRoute();
+    }
+  } catch (e) {
+    console.error("Invalid userDetail in localStorage:", e);
+  }
 }
 
 function handleLogin({ values }) {
   if (loginReq.pending.value) return;
-  // loginReq.send(() => login(values), (res) => {
-  //   if (res.success) {
-  //     auth.setAuth({ user: res.data, accessToken: res.data?.token });
-  //     localStorage.setItem("userDetail", JSON.stringify(res.data));
-  //     reRoute();
-  //   } else {
-  //     const errorMsg = res?.error?.toLowerCase?.() || "";
-  //     if (res.status === 404 && errorMsg.includes("not  active")) {
-  //       pendingLoginData.value = values;
-  //       showVerificationModal.value = true;
-  //       toasted(false, "", "Account verification required");
-  //       return;
-  //     }
-  //     toasted(false, "Login failed", res.error || res.message || "Something went wrong");
-  //   }
-  // });
-        reRoute();
+  loginReq.send(() => login(values), (res) => {
+    if (res.success) {
+      const data = res?.data || {};
+      const accessToken = data?.access || data?.token;
+      const refreshToken = data?.refresh;
+      const user = data?.user || data;
 
+      if (!accessToken || !user) {
+        toasted(false, "Login failed", "Invalid login response from server");
+        return;
+      }
+
+      const authPayload = { user, accessToken, refreshToken };
+      auth.setAuth(authPayload);
+      localStorage.setItem(
+        "userDetail",
+        JSON.stringify({
+          user,
+          access: accessToken,
+          refresh: refreshToken,
+        })
+      );
+      reRoute();
+    } else {
+      const errorMsg = res?.error?.toLowerCase?.() || "";
+      if (res.status === 404 && errorMsg.includes("not  active")) {
+        pendingLoginData.value = values;
+        showVerificationModal.value = true;
+        toasted(false, "", "Account verification required");
+        return;
+      }
+      toasted(false, "Login failed", res.error || res.message || "Something went wrong");
+    }
+  });
 }
 
 function sendVerification() {

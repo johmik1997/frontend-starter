@@ -12,12 +12,14 @@ import { useUsers } from '../store/userStore';
 import { allRequest, toasted } from '@/utils/utils';
 import { useForm } from '@/components/new_form_builder/useForm';
 import { getAllRole } from '../../roles/Api/RoleApi';
+import { ref } from 'vue';
 
 const { submit } = useForm('addform');
 
 const user = useUsers();
 const req = useApiRequest();
 const rolereq = useApiRequest();
+const role = ref('');
 
 // Fetch roles
 rolereq.send(() =>
@@ -28,6 +30,11 @@ rolereq.send(() =>
 
 // Submit handler
 function create({ values }) {
+  if (values.role !== 'MEMBER') {
+    delete values.userType;
+    delete values.department;
+  }
+
   req.send(
     () => CreateUser(values),
     (res) => {
@@ -46,47 +53,44 @@ function create({ values }) {
 <template>
   <div class="bg-black/50 min-h-full p-4 sm:p-6 md:p-10 grid place-items-center">
     <NewFormParent title="Add User" size="xs">
-      <Form :inner="false" v-slot="{ submit }" id="addform"
+      <Form :inner="false" id="addform"
         class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4 sm:p-6">
         
+        <Input name="id_number" validation="required|numeric" label="ID Number" :attributes="{ placeholder: 'Enter ID Number' }" />
+
         <Input name="email" validation="required|email" label="Email" :attributes="{ placeholder: 'Enter User Email' }" />
         
         <InputPassword name="password" label="Password" validation="required|pass"
           :attributes="{ placeholder: 'Password' }" />
         
-        <Select name="title" label="Title" validation="required" 
-          :options="['Mr.', 'Ms.', 'Dr.', 'Prof']"
-          :attributes="{ placeholder: 'Title' }" />
-        
-        <Input name="firstName" validation="required|alpha" label="First Name"
+        <Input name="first_name" validation="required|alpha" label="First Name"
           :attributes="{ placeholder: 'Enter First Name' }" />
         
-        <Input name="fatherName" validation="required|alpha" label="Father Name"
-          :attributes="{ placeholder: 'Enter Father Name' }" />
+        <Input name="last_name" validation="required|alpha" label="Last Name"
+          :attributes="{ placeholder: 'Enter Last Name' }" />
         
-        <Input name="grandFatherName" validation="required|alpha" label="Grandfather Name"
-          :attributes="{ placeholder: 'Enter Grandfather Name' }" />
+        <!-- <Input name="grandFatherName" validation="required|alpha" label="Grandfather Name"
+          :attributes="{ placeholder: 'Enter Grandfather Name' }" />-->
         
-        <Select name="gender" label="Gender" validation="required"
-          :options="['Female', 'Male']" :attributes="{ placeholder: 'Select Gender',
-            required
-           }" />
-        
-        <Input name="mobilePhone" label="Mobile Phone" validation="required|phone"
+        <Input name="phone" label="Mobile Phone" validation="required|phone" 
           :attributes="{ placeholder: 'Enter Mobile Phone' }" />
-        <Select name="userType" label="User Type" validation="required"
-          :options="['Teacher', 'Student']"
-          :attributes="{ placeholder: 'Select User Type',
-            required
-           }" />
-        <Select :obj="true" name="roleUuid" label="Role" validation="required"
+       
+             <Select v-model="role" name="role" label="Role" validation="required"
+          :options="['MEMBER', 'STACK STAFF','TECHNICAL STAFF','FRONT DESK STAFF','ADMIN','SUPER ADMIN']"   
+          :attributes="{ placeholder: 'Select Role', required: true }" />
+            <Select v-if="role=='MEMBER'" name="user_type" label="User Type" validation="required"
+          :options="['TEACHER', 'STUDENT']"
+          :attributes="{ placeholder: 'Select User Type', required: true }" />
+        <!-- <Select :obj="true" name="roleUuid" label="Role" validation="required"
           :options="(rolereq.response.value?.roles?.content || []).map(role => ({
             label: role.roleName,
             value: role.roleUuid,
           }))"
           :attributes="{ placeholder: 'Select Role',
             required
-           }" />
+           }" /> -->
+           <Input v-if="role === 'MEMBER'" name="department" label="Department" validation="required"
+          :attributes="{ placeholder: 'Enter Department' }" />
       </Form>
 
       <template #bottom>

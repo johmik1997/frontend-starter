@@ -7,7 +7,7 @@ export function usePaginations(options = {}) {
     cb: (f) => f,
     store: null,
     auto: true,
-    perPage: 25,
+    perPage: 5,
     cache: false,
     ...(options || {}),
   });
@@ -20,35 +20,62 @@ export function usePaginations(options = {}) {
   const searching = ref(false);
   const searchPagination = useTablePagination(perPage.value);
   const pagination = useTablePagination(perPage.value);
+  const totalElements = ref(0);
+  pagination.page.value = 1;
+  searchPagination.page.value = 1;
+
+  function getRowsFromPayload(payload) {
+    if (!payload) return [];
+    const rows =
+      payload.response ??
+      payload.content ??
+      payload.result ??
+      payload.libraries ??
+      payload.users ??
+      payload;
+    return Array.isArray(rows) ? rows : [];
+  }
+
+  function normalizeQuery(query) {
+    return Object.fromEntries(
+      Object.entries(query || {}).filter(([, value]) => value !== undefined && value !== null && value !== "")
+    );
+  }
+
+  function updatePaginationMeta(payload = {}) {
+    const rows = getRowsFromPayload(payload);
+    const totalPages = payload.totalPages ?? payload.number_of_pages ?? 1;
+    const size = payload.size ?? perPage.value;
+    const count = payload.totalElements ?? payload.count ?? rows.length;
+    const pageOneBased = payload.page ?? ((payload.number ?? 0) + 1);
+
+    pagination.totalPages.value = Number(totalPages) || 1;
+    perPage.value = Number(size) || perPage.value;
+    pagination.limit.value = perPage.value;
+    searchPagination.limit.value = perPage.value;
+    totalElements.value = Number(count) || 0;
+    pagination.page.value = Number(pageOneBased) || 1;
+  }
 
   function getPaginationData(next = true, current = false) {
-    if (searching.value) {
-      return JSON.parse(
-        JSON.stringify({
-          searchKey: search.value || undefined,
-          search: search.value || undefined,
-          page: next
-            ? !current
-              ? ++searchPagination.page.value
-              : searchPagination.page.value
-            : --searchPagination.page.value,
-          size: searchPagination.limit.value || 25,
-        })
-      );
-    } else {
-      return JSON.parse(
-        JSON.stringify({
-          searchKey: search.value || undefined,
-          search: search.value || undefined,
-          page: next
-            ? !current
-              ? ++pagination.page.value
-              : pagination.page.value
-            : --pagination.page.value,
-          size: pagination.limit.value || 25,
-        })
-      );
+    const activePagination = searching.value ? searchPagination : pagination;
+    let targetPage = Number(activePagination.page.value) || 1;
+    if (!current) {
+      targetPage = next ? targetPage + 1 : targetPage - 1;
     }
+    targetPage = Math.max(targetPage, 1);
+    activePagination.page.value = targetPage;
+
+    return normalizeQuery(
+      JSON.parse(
+        JSON.stringify({
+          searchKey: search.value || undefined,
+          search: search.value || undefined,
+          page: targetPage,
+          size: Number(perPage.value) || Number(activePagination.limit.value) || 5,
+        })
+      )
+    );
   }
 
   function fetch(next = true, current = false, cache = false) {
@@ -62,13 +89,13 @@ export function usePaginations(options = {}) {
         
         if (paginationOptions.value.store && res.success) {
           console.log(res);
-            paginationOptions.value.store.set(res.data?.response || res.data || []);
+            paginationOptions.value.store.set(getRowsFromPayload(res.data));
         }
 
-        pagination.totalPages.value = res.data?.totalPages || 1;
+        updatePaginationMeta(res.data || {});
         if (
           res.success &&
-          res.data?.length < pagination.limit.value
+          getRowsFromPayload(res.data).length < pagination.limit.value
         ) {
           pagination.done.value = true;
         }
@@ -93,10 +120,11 @@ export function usePaginations(options = {}) {
             signal: controller.signal,
           }),
         (res) => {
-          searchPagination.totalPages.value = res.data?.totalPages || 1;
+          searchPagination.totalPages.value = res.data?.totalPages || res.data?.number_of_pages || 1;
+          totalElements.value = res.data?.totalElements ?? res.data?.count ?? totalElements.value;
           if (
             res?.success &&
-            res.data?.length < searchPagination.limit.value
+            getRowsFromPayload(res.data).length < searchPagination.limit.value
           ) {
             searchPagination.done.value = true;
           }
@@ -127,6 +155,32 @@ export function usePaginations(options = {}) {
     }
   }
 
+  function goToPage(page) {
+    const pageNum = Number(page);
+    if (!pageNum || pageNum < 1) return;
+
+    if (searching.value) {
+      searchPagination.page.value = pageNum;
+      searchPagination.done.value = false;
+      fetchSearch(true, true);
+      return;
+    }
+
+    pagination.page.value = pageNum;
+    pagination.done.value = false;
+    fetch(true, true, paginationOptions.value.cache);
+  }
+
+  function setPerPage(size) {
+    const nextSize = Number(size);
+    if (!nextSize || nextSize < 1) return;
+    perPage.value = nextSize;
+    pagination.limit.value = nextSize;
+    searchPagination.limit.value = nextSize;
+    pagination.page.value = 1;
+    searchPagination.page.value = 1;
+  }
+
   watch(search, () => {
     searchPagination.done.value = false;
     searchPagination.page.value = 0;
@@ -141,13 +195,26 @@ export function usePaginations(options = {}) {
   });
 
   const auto = computed(() => paginationOptions.value.auto);
-  watch(auto, fetch, {
-    immediate: paginationOptions.value.auto,
-  });
+  watch(
+    auto,
+    (enabled) => {
+      if (!enabled) return;
+      pagination.page.value = Math.max(Number(pagination.page.value) || 1, 1);
+      searchPagination.page.value = Math.max(Number(searchPagination.page.value) || 1, 1);
+      fetch(true, true, paginationOptions.value.cache);
+    },
+    {
+      immediate: paginationOptions.value.auto,
+    }
+  );
 
   watch(perPage, () => {
-    pagination.reset(perPage.value);
-    searchPagination.reset(perPage.value);
+    pagination.limit.value = perPage.value;
+    searchPagination.limit.value = perPage.value;
+    pagination.page.value = 1;
+    searchPagination.page.value = 1;
+    pagination.done.value = false;
+    searchPagination.done.value = false;
     if (search.value) {
       searching.value = true;
       fetchSearch(true, true);
@@ -177,9 +244,9 @@ export function usePaginations(options = {}) {
       
       const response = await paginationOptions.value.cb(
         {
-          page: pagination.page.value, // Use pagination.page.value instead of currentPage
+          page: Math.max(pagination.page.value || 0, 1),
           size: perPage.value, // Use 'size' instead of 'limit' to match your API
-          search: search.value || undefined,
+          ...(search.value ? { search: search.value } : {}),
           ...paginationOptions.value.params
         },
         paginationOptions.value.config
@@ -187,18 +254,14 @@ export function usePaginations(options = {}) {
       
       // Handle paginated response format
       if (response && response.data) {
-        // Extract pagination metadata - adjust based on your API response structure
-        const { totalElements, totalPages, size, number, content } = response.data;
+        const rows = getRowsFromPayload(response.data);
         
         // Update pagination state
-        pagination.total.value = totalElements || 0;
-        pagination.totalPages.value = totalPages || 1;
-        perPage.value = size || perPage.value;
-        pagination.page.value = number || 0;
+        updatePaginationMeta(response.data);
         
         // Set the response data to the store
         if (paginationOptions.value.store && typeof paginationOptions.value.store.set === 'function') {
-          paginationOptions.value.store.set(content || response.data.response || response.data);
+          paginationOptions.value.store.set(rows);
         }
       }
       
@@ -217,17 +280,26 @@ export function usePaginations(options = {}) {
     search,
     send,
     perPage,
+    meta: computed(() => ({
+      number: Math.max((pagination.page.value || 1) - 1, 0),
+      totalPages: pagination.totalPages.value || 1,
+      totalElements: totalElements.value || 0,
+      size: perPage.value || 5,
+      page: pagination.page.value || 1,
+    })),
     totalPages: computed(() => searching.value ? searchPagination.totalPages.value : pagination.totalPages.value),
     data: computed(() => {
       if (paginationOptions.value.store && !searching.value) {
         return paginationOptions.value.store.getAll();
       }
-      return req.response.value?.data?.response || req.response.value?.data || [];
+      return getRowsFromPayload(req.response.value?.data || req.response.value);
     }),
     error: req.error,
     pending: req.pending, // Return req.pending
     dirty: req.dirty,
     next,
     previous,
+    goToPage,
+    setPerPage,
   };
 }

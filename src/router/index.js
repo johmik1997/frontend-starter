@@ -7,17 +7,12 @@ const Dashboard = () => import('@/features/dashboard/pages/Dashboard.vue');
 const Login = () => import('@/pages/login/Login.vue');
 const SignUp = () => import('@/pages/signUp.vue');
 
-// Route modules (keep static, they contain route definitions)
-import membersRoutes from "./members.routes";
 import rolesRoutes from './roles.routes';
 import privilagesRoutes from './privilages.routes';
 import usersRoutes from './users.routes';
 import profileRoutes from './profile.routes';
-import quotationRoutes from './quatation.routes';
-import paymentRoutes from './payment.routes';
-import insuranceRoutes from './insurance.routes';
-import carSpecificationsRoutes from './carSpecifications.routes';
-import premiumRoutes from './premium.routes';
+import libraryRoutes from './library.routes';
+import materialRoutes from './material.routes';
 
 const routes = [
   {
@@ -28,16 +23,13 @@ const routes = [
     children: [
       { path: "", redirect: "/dashboard" },
       { path: "/dashboard", name: "dashboard", component: Dashboard, meta: { requiresAuth: true } },
-      ...membersRoutes,
       ...rolesRoutes,
       ...privilagesRoutes,
       ...usersRoutes,
       ...profileRoutes,
-      ...quotationRoutes,
-      ...paymentRoutes,
-      ...insuranceRoutes,
-      ...carSpecificationsRoutes,
-      ...premiumRoutes,
+      ...libraryRoutes,
+      ...materialRoutes,
+     
     ],
   },
   { path: "/login", name: "Login", component: Login },
@@ -51,16 +43,38 @@ const router = createRouter({
 
 router.beforeEach(async (to, from) => {
   const auth = useAuth();
+  const normalizeRole = (rawRole) => {
+    const value = typeof rawRole === 'object' && rawRole !== null
+      ? rawRole.roleName || rawRole.name || rawRole.role || rawRole.value
+      : rawRole;
+
+    return String(value || '')
+      .toUpperCase()
+      .replace(/^ROLE_/, '')
+      .replace(/_/g, ' ')
+      .trim();
+  };
 
   // Try to restore auth from localStorage if not in store
   if (!auth.auth?.accessToken) {
     let detail = localStorage.getItem('userDetail');
     if (detail) {
-      detail = JSON.parse(detail);
-      auth.setAuth({
-        user: detail,
-        accessToken: detail?.token,
-      });
+      try {
+        detail = JSON.parse(detail);
+        const storedUser = detail?.user || detail;
+        const storedAccessToken = detail?.access || detail?.accessToken || detail?.token;
+        const storedRefreshToken = detail?.refresh || detail?.refreshToken;
+
+        if (storedUser && storedAccessToken) {
+          auth.setAuth({
+            user: storedUser,
+            accessToken: storedAccessToken,
+            refreshToken: storedRefreshToken,
+          });
+        }
+      } catch (e) {
+        console.error('Invalid userDetail in localStorage:', e);
+      }
     }
   }
 
@@ -76,41 +90,34 @@ router.beforeEach(async (to, from) => {
       query: { redirect: to.path },
     };
   }
-
-  // If route doesn't require auth, allow access
   if (!to.meta?.requiresAuth) {
     return true;
   }
+  const user = auth.auth?.user || {};
+  const userRole = normalizeRole(user?.roleName || user?.role || user?.userRole);
 
-  // Check privileges for authenticated users
-  if (
-    auth.auth?.user?.privileges?.includes('All Privileges') ||
-    auth.auth?.user?.roleName === 'Super Admin'
-  ) {
+  // Role-only access control (no privilege dependency)
+  if (userRole === 'SUPER ADMIN') {
     return true;
   }
 
-  // Role-based access
-  if (
-    (auth.auth?.user?.roleName && to.meta?.role && 
-     auth.auth?.user?.roleName == to.meta?.role) ||
-    (!to.meta?.role && !to.meta?.privileges)
-  ) {
+  const routeRoles = [
+    ...(Array.isArray(to.meta?.roles) ? to.meta.roles : []),
+    ...(to.meta?.role ? [to.meta.role] : []),
+  ]
+    .map((role) => normalizeRole(role))
+    .filter(Boolean);
+
+  // If route doesn't declare roles, allow any authenticated user
+  if (!routeRoles.length) {
     return true;
   }
 
-  // Privilege-based access
-  const privileges = auth.auth.user?.privileges;
-  const found = (to.meta?.privileges || []).find((privilege) => {
-    return privileges?.includes(`ROLE_${privilege}`);
-  });
+  if (routeRoles.includes(userRole)) {
+    return true;
+  }
 
-  if (found) return true;
-
-  return { path: '/forbidden' };
+  return { path: '/dashboard' };
 });
 
 export default router;
-
-
-

@@ -7,11 +7,19 @@ import { getAllUser, removeUserById, verifyUser } from '../Api/UserApi';
 import { toasted } from '@/utils/utils';
 import { openModal } from '@customizer/modal-x';
 import BaseIcon from '@/components/base/BaseIcon.vue';
-import { mdiPencil, mdiDeleteAlert, mdiCheckDecagram } from '@mdi/js';
+import { mdiPencil, mdiDeleteAlert, mdiCheckDecagram, mdiBagPersonalPlus, mdiNaturePeople, mdiHuman } from '@mdi/js';
 import { usePaginations } from '@/composables/usePaginationTemp';
 
 const usersStore = useUsers();
 const selectedUser = ref(null);
+
+function getUserId(user) {
+  return user?.userUuid || user?.id;
+}
+
+function getPhone(user) {
+  return user?.phone || user?.mobilePhone || "";
+}
 
 const pagination = usePaginations({
   store: usersStore,
@@ -47,12 +55,12 @@ function openVerifyModal(user) {
     'VerificationModal',
     {
       title: 'Verify User',
-      message: `Enter verification code sent to ${user.mobilePhone}`,
+      message: `Enter verification code sent to ${getPhone(user)}`,
       inputLabel: 'Verification Code',
       inputPlaceholder: 'Enter code here',
     },
     (code) => {
-      if (code) verifyUserCode(user.mobilePhone, code);
+      if (code) verifyUserCode(getPhone(user), code);
     }
   );
 }
@@ -62,7 +70,7 @@ function verifyUserCode(phone, code) {
     () => verifyUser(phone, code),
     (res) => {
       if (res.success) {
-        usersStore.updateVerification(selectedUser.value.userUuid, true);
+        usersStore.updateVerification(getUserId(selectedUser.value), true);
         toasted(true, 'User verified successfully');
       } else {
         toasted(false, '', res.error || 'Verification failed');
@@ -75,49 +83,62 @@ function verifyUserCode(phone, code) {
 <template>
   <div class="p-4 sm:p-7">
     <!-- Add User Button -->
-    <div class="flex flex-col sm:flex-row justify-end mb-6 gap-4">
+     <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+       <h1 class="text-2xl font-bold flex items-center gap-2">
+        <BaseIcon :path="mdiHuman" size="28" />
+        User Management
+      </h1>
+      
       <button
         @click="openModal('AddUser')"
-        class="bg-primary text-white px-4 py-2 rounded-md flex items-center gap-2 sm:w-auto justify-center"
+        class="bg-primary text-white px-6 py-2 rounded-md flex items-center gap-2 hover:bg-primary/90 transition-colors shadow-sm"
       >
-        <!-- Icon SVG simplified -->
         <svg width="14" height="14" viewBox="0 0 12 14" fill="white" xmlns="http://www.w3.org/2000/svg">
-          <path
-            d="M1 4.05 C0.72 4.05 0.5 4.27 0.5 4.55 C0.5 4.83 0.72 5.05 1 5.05 V4.05 Z..."
-            fill="white"
-          />
+          <path d="M6 0V14M0 7H12" stroke="white" stroke-width="2"/>
         </svg>
         <span>Add User</span>
       </button>
     </div>
-
+    
     <!-- Users Table -->
     <div class="overflow-x-auto">
      
-    <Table :pending="pagination.pending.value" :headers="{
+    <Table :pending="pagination.pending.value" :pagination="pagination.meta.value" @next-page="pagination.next"
+      @prev-page="pagination.previous" @page-change="pagination.goToPage" @page-size-change="pagination.setPerPage" :headers="{
       head: [
         'Fullname',
         'Email',
         'Mobile Phone',
-        'Role Name',
-        'Gender',
+        'Role',
+        'Status',
         'Verified',
         'Actions',
       ],
       row: [
         'fullname',
         'email',
-        'mobilePhone',
-        'roleName',
-        'gender',
+        'phone',
+        'role',
+        'status',
         'isVerified',
       ]
     }" :cells="{
       fullname: (_, row) => {
-        return `${row?.title} ${row?.firstName} ${row?.fatherName} ${row?.grandFatherName}`
+        const first = row?.first_name || row?.firstName || '';
+        const last = row?.last_name || row?.lastName || row?.fatherName || '';
+        return [first, last].filter(Boolean).join(' ')
+      },
+      phone: (_, row) => {
+        return row?.phone || row?.mobilePhone || '-'
+      },
+      role: (_, row) => {
+        return row?.role || row?.roleName || '-'
+      },
+      status: (_, row) => {
+        return row?.status || row?.userStatus || '-'
       },
       isVerified: (_, row) => {
-        return row.isVerified ? 'Yes' : 'No'
+        return row?.isVerified ? 'Yes' : 'No'
       }
     }" :rows="usersStore.users || []">
 
@@ -125,7 +146,7 @@ function verifyUserCode(phone, code) {
           <div class="flex flex-col sm:flex-row gap-2">
             <button
               class="bg-gray-600 text-white px-3 py-1 rounded flex items-center gap-1 justify-center"
-              @click="$router.push('/edit_user/' + row.userUuid)"
+              @click="$router.push('/edit_user/' + getUserId(row))"
             >
               <BaseIcon :path="mdiPencil" />
               <span class=" sm:inline">Edit</span>
@@ -142,7 +163,7 @@ function verifyUserCode(phone, code) {
 
             <button
               class="bg-[#FF4C4C] text-white px-3 py-1 rounded flex items-center gap-1 justify-center"
-              @click="remove(row.userUuid)"
+              @click="remove(getUserId(row))"
             >
               <BaseIcon :path="mdiDeleteAlert" />
               <span class=" sm:inline">Delete</span>

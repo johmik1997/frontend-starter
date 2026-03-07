@@ -2,11 +2,11 @@ import ApiService from "@/service/ApiService";
 import { getQueryFormObject } from "@/utils/utils.js";
 
 const api = new ApiService();
-const path = "/users";
+const path = "/user/users";
 
 // ----------------- EXISTING -----------------
 export function CreateUser(data) {
-  return api.addAuthenticationHeader().post(`${path}/signUp`, data);
+  return api.addAuthenticationHeader().post(`${path}/create/`, data);
 }
 export const verifyUser = (phoneNumber, code) => {
   return api.post(`${path}/EnterVerificationCode?phoneNumber=${phoneNumber}&code=${code}`);
@@ -15,7 +15,15 @@ export const sendVerificationCode = (phoneNumber) => {
   return api.post(`${path}/send?phoneNumber=${phoneNumber}`);
 };
 export function getAllUser(query = {}) {
-  const qr = getQueryFormObject(query);
+  const normalizedQuery = { ...(query || {}) };
+
+  const page = Number(normalizedQuery.page);
+  normalizedQuery.page = Number.isFinite(page) && page > 0 ? page : 1;
+
+  const size = Number(normalizedQuery.size);
+  normalizedQuery.size = Number.isFinite(size) && size > 0 ? size : 25;
+
+  const qr = getQueryFormObject(normalizedQuery);
   return api.addAuthenticationHeader().get(`${path}/all${qr}`);
 }
 export function getUserById(id) {
