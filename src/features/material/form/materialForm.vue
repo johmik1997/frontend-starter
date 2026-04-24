@@ -31,7 +31,7 @@ function toDateInputValue(value) {
       label="Category"
       validation="required"
       :value="initialData?.category || ''"
-      :options="['Book', 'Journal', 'Magazine', 'Thesis']"
+      :options="['BOOK', 'MAGAZINE', 'RESEARCH PAPER', 'JOURNALS', 'THESIS']"
       :attributes="{ placeholder: 'Select Category' }"
     />
 
@@ -40,7 +40,7 @@ function toDateInputValue(value) {
       label="Genre"
       validation="required"
       :value="initialData?.genre || ''"
-      :options="['Science', 'Fiction', 'History', 'Biography', 'Technology', 'Educational', 'Other']"
+       :options="['SCIENCE', 'FICTION', 'HISTORY', 'BIOGRAPHY','TECHNOLOGY','EDUCATIONAL', 'OTHER']"
       :attributes="{ placeholder: 'Select Genre' }"
     />
 
@@ -49,8 +49,7 @@ function toDateInputValue(value) {
     <Input name="department" label="Department" :value="initialData?.department || ''" />
     <Input name="location" label="Library Location" :value="initialData?.location || ''" />
 
-    <Input name="copy_number" type="number" label="Total Copies" validation="required|numeric" :value="initialData?.copy_number ?? ''" />
-    <Input name="available_copies" type="number" label="Available Copies" validation="required|numeric" :value="initialData?.available_copies ?? ''" />
+    <Input name="total_copies" type="number" label="Total Copies" validation="required|numeric" :value="initialData?.total_copies ?? ''" />
     <Input name="price" type="number" label="Price" :value="initialData?.price ?? ''" :attributes="{ step: '0.01' }" />
 
     <Select
@@ -58,7 +57,7 @@ function toDateInputValue(value) {
       label="Condition"
       validation="required"
       :value="initialData?.condition || ''"
-      :options="['New', 'Good', 'Fair', 'Damaged']"
+     :options="['NEW', 'GOOD', 'FAIR', 'DAMAGED']"
       :attributes="{ placeholder: 'Select Condition' }"
     />
 

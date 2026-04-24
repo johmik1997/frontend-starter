@@ -13,6 +13,7 @@ import { allRequest, toasted } from '@/utils/utils';
 import { useForm } from '@/components/new_form_builder/useForm';
 import { getAllRole } from '../../roles/Api/RoleApi';
 import { ref } from 'vue';
+import { emitEntityMutation } from '@/utils/entitySync';
 
 const { submit } = useForm('addform');
 
@@ -40,6 +41,7 @@ function create({ values }) {
     (res) => {
       if (res.success) {
         user.add(res.data);
+        emitEntityMutation('users', { action: 'created', id: res.data?.id });
         toasted(true, 'User Created');
         closeModal();
       } else {

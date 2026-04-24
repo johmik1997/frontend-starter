@@ -9,6 +9,7 @@ import { ref, watch } from 'vue';
 import Button from '@/components/Button.vue';
 import { useForm } from '@/components/new_form_builder/useForm';
 import MaterialForm from '../form/materialForm.vue';
+import { emitEntityMutation } from '@/utils/entitySync';
 
 const route = useRoute();
 const router = useRouter();
@@ -56,8 +57,7 @@ function update({ values }) {
   const payload = {
     ...values,
     published_date: toDateInputValue(values.published_date),
-    copy_number: Number(values.copy_number),
-    available_copies: Number(values.available_copies),
+    total_copies: Number(values.total_copies),
     price: Number(values.price)
   };
 
@@ -68,7 +68,9 @@ function update({ values }) {
 
       if (res.success) {
         // Update store with new data
-        materialStore.update(materialUuid, { ...material.value, ...payload });
+        const updatedRow = res.data || { ...material.value, ...payload };
+        materialStore.update(materialUuid, updatedRow);
+        emitEntityMutation('materials', { action: 'updated', id: materialUuid, type: materialType.value });
         router.push({ name: 'Material' }); // Redirect back to material list
       }
     }

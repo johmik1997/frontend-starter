@@ -11,14 +11,15 @@ export function useApiRequest(provideValues = true) {
     provide("error", error);
   }
 
-  function send(
+  async function send(
     request = (f) => f,
     cb = (f) => f,
-    remove = false,
-    beforeResolve = false
+    remove = false
   ) {
-    if (typeof request != "function")
-      return console.error("can not be called. not a function");
+    if (typeof request != "function") {
+      console.error("can not be called. not a function");
+      return null;
+    }
 
     pending.value = true;
     error.value = "";
@@ -26,30 +27,29 @@ export function useApiRequest(provideValues = true) {
     if (remove) {
       response.value = null;
     }
-    // return new Promise((resolve, reject) => {
     try {
       dirty.value = true;
-      request().then((res) => {
-        if (beforeResolve) cb(res);
+      const res = await request();
+      response.value = res?.data ?? res;
+      error.value = res?.error || "";
 
-        // setTimeout(() => {
-        pending.value = false;
-        if (!(typeof cb == "function")) return; //resolve(res);
-
-        response.value = res?.data ?? res;
-        error.value = res?.error;
-
+      if (typeof cb == "function") {
         cb(res);
-        // resolve(res);
-        // }, 0);
-      });
+      }
+
+      return res;
     } catch (err) {
       console.error(err);
+      error.value = err?.message || "Request failed";
+      return {
+        success: false,
+        data: null,
+        status: err?.status || 500,
+        error: error.value,
+      };
+    } finally {
       pending.value = false;
-      error.value = err.message;
-      // reject(error.value)
     }
-    // });
   }
 
   return {

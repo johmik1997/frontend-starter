@@ -122,14 +122,9 @@ export default class ApiService {
     const authBase = strip(authApiUrl);
 
     const endpoints = [
-      `${apiBase}/token/refresh/`,
-      `${apiBase}/token/refresh`,
-      `${authBase}/token/refresh/`,
-      `${authBase}/token/refresh`,
+     
       `${authBase}/user/auth/token/refresh/`,
       `${authBase}/user/auth/token/refresh`,
-      `${apiBase}/user/auth/token/refresh/`,
-      `${apiBase}/user/auth/token/refresh`,
     ].filter((url) => {
       if (!url || url.startsWith("/")) return false;
       if (url.startsWith("undefined")) return false;

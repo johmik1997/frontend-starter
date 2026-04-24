@@ -11,6 +11,7 @@ import { CreateLibrary, getAllAdminUsers } from '../api/libraryApi';
 import { useLibrary } from '../store/libraryStore';
 import { toasted } from '@/utils/utils';
 import { useForm } from '@/components/new_form_builder/useForm';
+import { emitEntityMutation } from '@/utils/entitySync';
 
 const libraryStore = useLibrary();
 const req = useApiRequest();
@@ -29,6 +30,7 @@ function handleCreate({ values }) {
     (res) => {
       if (res.success) {
         libraryStore.add(res.data);
+        emitEntityMutation('libraries', { action: 'created', id: res.data?.id });
         toasted(true, 'Library Created Successfully');
         closeModal();
       } else {

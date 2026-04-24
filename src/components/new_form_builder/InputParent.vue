@@ -1,5 +1,5 @@
 <script setup>
-import { computed, inject, onMounted, ref, watch } from "vue";
+import { computed, inject, onMounted, ref, watch, markRaw } from "vue";
 import { getValidators } from "./util/validators";
 import { validationKeys } from "./util/validationUtils";
 
@@ -88,8 +88,7 @@ function validate(setError = true) {
   if (!validation.required && !thisValue.value) return true;
 
   let keys = Object.keys(validation);
-  let validator =
-    validators[props.attributes?.type || inputEl.value?.type || "text"];
+  let validator = resolveValidator();
 
   error.value = "";
   for (let key of keys) {
@@ -124,6 +123,22 @@ function validate(setError = true) {
     }
   }
   return true;
+}
+
+function resolveValidator() {
+  const declaredType = props.attributes?.type;
+  const elementType = inputEl.value?.type;
+  const nodeName = inputEl.value?.nodeName;
+
+  if (declaredType && validators[declaredType]) return validators[declaredType];
+  if (nodeName === "SELECT" || elementType === "select-one" || elementType === "select-multiple") {
+    return validators.select;
+  }
+  if (nodeName === "TEXTAREA") return validators.textarea;
+  if (elementType === "number") return validators.text;
+  if (elementType && validators[elementType]) return validators[elementType];
+
+  return validators.text;
 }
 
 const needToEmit = computed(() => {
@@ -165,17 +180,21 @@ onMounted(() => {
     builtInInput.value &&
     ["INPUT", "TEXTAREA"].includes(inputEl.value.nodeName)
   ) {
-    inputEl.value.addEventListener("input", () => {
+    const syncInputValue = () => {
       if (inputEl.value.type == "file") {
+        const files = inputEl.value.files;
         if (props.attributes?.multiple) {
-          thisValue.value = Array.from(inputEl.value.files);
+          thisValue.value = files ? Array.from(files).map((file) => markRaw(file)) : [];
         } else {
-          thisValue.value = inputEl.value.files[0];
+          thisValue.value = files?.[0] ? markRaw(files[0]) : "";
         }
       } else {
         thisValue.value = inputEl.value.value;
       }
-    });
+    };
+
+    inputEl.value.addEventListener("input", syncInputValue);
+    inputEl.value.addEventListener("change", syncInputValue);
   } else if (builtInInput.value && "SELECT" == inputEl.value.nodeName) {
     inputEl.value.addEventListener("change", () => {
       thisValue.value = inputEl.value.value;

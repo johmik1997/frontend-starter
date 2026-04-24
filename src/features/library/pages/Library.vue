@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { onBeforeUnmount, onMounted } from 'vue';
 import Table from '@/components/Table.vue';
 import { useApiRequest } from '@/composables/useApiRequest';
 import { getAllLibrary, removeLibraryById } from '../api/libraryApi';
@@ -8,19 +8,31 @@ import { openModal } from '@customizer/modal-x';
 import BaseIcon from '@/components/base/BaseIcon.vue';
 import { mdiPencil, mdiDeleteAlert, mdiLibrary } from '@mdi/js';
 import { usePaginations } from '@/composables/usePaginationTemp';
-// Change useLibraryStore to useLibrary
 import { useLibrary } from "../store/libraryStore"; 
+import { emitEntityMutation, subscribeEntityMutation } from '@/utils/entitySync';
 
-// Update the variable initialization
 const libraryStore = useLibrary();
+let unsubscribeEntitySync = () => {};
 
-// Setup pagination using the Library API and Store
 const pagination = usePaginations({
   store: libraryStore,
   cb: getAllLibrary,
 });
 
+onMounted(() => {
+  unsubscribeEntitySync = subscribeEntityMutation('libraries', () => {
+    pagination.refresh();
+  });
+});
+
+onBeforeUnmount(() => {
+  unsubscribeEntitySync?.();
+});
+
 const removeReq = useApiRequest();
+function getLibraryId(library) {
+  return library?.id || library?.uuid || library?.libraryUuid;
+}
 
 function remove(id) {
   openModal(
@@ -35,7 +47,8 @@ function remove(id) {
           () => removeLibraryById(id),
           (res) => {
             if (res.success) {
-              libraryStore.remove(id); // Ensure your store has a remove method
+              libraryStore.remove(id);
+              emitEntityMutation('libraries', { action: 'deleted', id });
               toasted(true, 'Library removed successfully');
             } else {
               toasted(false, 'Failed to remove library', res.error);
@@ -75,27 +88,18 @@ function remove(id) {
             'Location',
             'Contact Phone',
             'Admin Name',
-            'Status',
+            'Campus',
             'Actions',
           ],
           row: [
             'name',
             'location',
-            'mobilePhone',
-            'adminName',
-            'libraryStatus',
+            'phone',
+            'staff_name',
+            'campus'
           ]
         }" 
-        :cells="{
-          libraryStatus: (val) => {
-            const colors = {
-              'ACTIVE': 'text-green-600 bg-green-50',
-              'PENDING': 'text-orange-600 bg-orange-50',
-              'SUSPENDED': 'text-red-600 bg-red-50'
-            }
-            return `<span class='px-2 py-1 rounded-full text-xs font-bold ${colors[val] || 'bg-gray-50'}'>${val}</span>`
-          }
-        }" 
+     
         :rows="libraryStore.libraries || []"
         :pagination="pagination.meta.value"
         @next-page="pagination.next"
@@ -108,7 +112,7 @@ function remove(id) {
             <button
               class="bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white p-2 rounded transition-colors"
               title="Edit Library"
-              @click="$router.push('/edit_library/' + row.uuid)"
+              @click="openModal('EditLibrary', { library: row })"
             >
               <BaseIcon :path="mdiPencil" size="18" />
             </button>
@@ -116,7 +120,7 @@ function remove(id) {
             <button
               class="bg-red-50 text-red-600 hover:bg-red-600 hover:text-white p-2 rounded transition-colors"
               title="Delete Library"
-              @click="remove(row.uuid)"
+              @click="remove(getLibraryId(row))"
             >
               <BaseIcon :path="mdiDeleteAlert" size="18" />
             </button>

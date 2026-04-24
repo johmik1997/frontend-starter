@@ -1,5 +1,4 @@
 import icons from "@/utils/icons";
-import { mdiBook } from "@mdi/js";
 
 export default [
   {
@@ -8,7 +7,7 @@ export default [
     name: "Dashboard",
     meta: { requiresAuth: true, permissions: [] },
     type: "Analytics",
-    roles: ["MEMBER", "ADMIN", "SUPER ADMIN"],
+    roles: ["MEMBER", "ADMIN", "SUPER ADMIN", "STACK STAFF", "TECHNICAL STAFF", "FRONT DESK STAFF", "DEPARTMENT HEAD"],
   },
   {
     path: "/material",
@@ -16,24 +15,63 @@ export default [
     icon: icons.books,
     meta: { requiresAuth: true, permissions: [] },
     type: "Management",
-    roles: ["MEMBER", "ADMIN", "SUPER ADMIN","TECHNICAL STAFF"],
+    roles: ["MEMBER", "ADMIN","STACK STAFF", "SUPER ADMIN","TECHNICAL STAFF"],
   },
   {
-
+    path: "/borrows",
+    name: "Borrow",
+    icon: icons.borrow,
+    meta: { requiresAuth: true, permissions: [] },
+    type: "Management",
+    roles: ["ADMIN", "SUPER ADMIN","STACK STAFF", "TECHNICAL STAFF"],
+  },
+  {
+    path: "/returns",
+    name: "Returns",
+    icon: icons.report,
+    meta: { requiresAuth: true, permissions: [] },
+    type: "Management",
+    roles: ["ADMIN", "SUPER ADMIN", "STACK STAFF"],
+  },
+  {
+    path: "/my-borrows",
+    name: "My Borrows",
+    icon: icons.borrow,
+    meta: { requiresAuth: true, permissions: [] },
+    type: "Management",
+    roles: ["MEMBER"],
+  },
+  {
+    path: "/fine-payments",
+    name: "Fine Payments",
+    icon: icons.transfer,
+    meta: { requiresAuth: true, permissions: [] },
+    type: "Management",
+    roles: ["MEMBER", "ADMIN", "SUPER ADMIN"],
+  },
+  {
+    path: "/reservations",
+    name: "My Reservations",
+    icon: icons.reservation,
+    meta: { requiresAuth: true, permissions: [] },
+    type: "Management",
+    roles: ["MEMBER"],
+  },
+  {
     path: "/library",
     name: "Library",
-    icon: icons.users,
+    icon: icons.library,
     meta: { requiresAuth: true, permissions: [] },
     type: "Settings",
-    roles: ["MEMBER", "ADMIN", "SUPER ADMIN","TECHNICAL STAFF"],
-  },
+    roles: ["ADMIN", "SUPER ADMIN"],
+  },  
   {
     path: '/users',
     name: 'Users',
     icon: icons.users,
     meta: { requiresAuth: true, permissions: [] },
     type: "Settings",
-    roles: ["ADMIN", "SUPER ADMIN","MEMBER"],
+    roles: ["ADMIN", "SUPER ADMIN"],
   },
 
 ];

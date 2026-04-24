@@ -45,3 +45,7 @@ export function removeMaterialById(id, type = "physical") {
   const path = resolvePath(type);
   return api.addAuthenticationHeader().delete(`${path}/${id}/`);
 }
+
+export function generateMaterialDescription(payload = {}) {
+  return api.addAuthenticationHeader().post("/material/generate-description/", payload);
+}

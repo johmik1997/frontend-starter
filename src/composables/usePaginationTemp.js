@@ -30,6 +30,7 @@ export function usePaginations(options = {}) {
       payload.response ??
       payload.content ??
       payload.result ??
+      payload.results ??
       payload.libraries ??
       payload.users ??
       payload;
@@ -78,18 +79,14 @@ export function usePaginations(options = {}) {
     );
   }
 
-  function fetch(next = true, current = false, cache = false) {
+  async function fetch(next = true, current = false, cache = false) {
     if (req.pending.value || (next && pagination.done.value)) return;
 
-    // if(cache && paginationOptions.value.store && paginationOptions.value.store.getAll()?.length) return
-
-    req.send(
+    return req.send(
       () => paginationOptions.value.cb(getPaginationData(next, current)),
       (res) => {
-        
         if (paginationOptions.value.store && res.success) {
-          console.log(res);
-            paginationOptions.value.store.set(getRowsFromPayload(res.data));
+          paginationOptions.value.store.set(getRowsFromPayload(res.data));
         }
 
         updatePaginationMeta(res.data || {});
@@ -106,32 +103,40 @@ export function usePaginations(options = {}) {
 
   let controller;
   let timeout;
-  function fetchSearch(next = true, current = false) {
+  async function fetchSearch(next = true, current = false) {
     if (next && searchPagination.done.value) return;
 
     if (controller) controller.abort();
     if (timeout) clearTimeout(timeout);
     controller = new AbortController();
 
-    timeout = setTimeout(() => {
-      req.send(
-        () =>
-          paginationOptions.value.cb(getPaginationData(next, current), {
-            signal: controller.signal,
-          }),
-        (res) => {
-          searchPagination.totalPages.value = res.data?.totalPages || res.data?.number_of_pages || 1;
-          totalElements.value = res.data?.totalElements ?? res.data?.count ?? totalElements.value;
-          if (
-            res?.success &&
-            getRowsFromPayload(res.data).length < searchPagination.limit.value
-          ) {
-            searchPagination.done.value = true;
-          }
-        },
-        true
-      );
-    }, 20);
+    return new Promise((resolve) => {
+      timeout = setTimeout(() => {
+        req.send(
+          () =>
+            paginationOptions.value.cb(getPaginationData(next, current), {
+              signal: controller.signal,
+            }),
+          (res) => {
+            if (paginationOptions.value.store && res.success) {
+              paginationOptions.value.store.set(getRowsFromPayload(res.data));
+            }
+
+            searchPagination.totalPages.value = res.data?.totalPages || res.data?.number_of_pages || 1;
+            totalElements.value = res.data?.totalElements ?? res.data?.count ?? totalElements.value;
+            if (
+              res?.success &&
+              getRowsFromPayload(res.data).length < searchPagination.limit.value
+            ) {
+              searchPagination.done.value = true;
+            }
+
+            resolve(res);
+          },
+          true
+        );
+      }, 20);
+    });
   }
 
   function next() {
@@ -239,7 +244,6 @@ export function usePaginations(options = {}) {
   });
  async function send() {
     try {
-      // Use req.pending instead of pending
       req.pending.value = true;
       
       const response = await paginationOptions.value.cb(
@@ -252,14 +256,11 @@ export function usePaginations(options = {}) {
         paginationOptions.value.config
       );
       
-      // Handle paginated response format
       if (response && response.data) {
         const rows = getRowsFromPayload(response.data);
         
-        // Update pagination state
         updatePaginationMeta(response.data);
         
-        // Set the response data to the store
         if (paginationOptions.value.store && typeof paginationOptions.value.store.set === 'function') {
           paginationOptions.value.store.set(rows);
         }
@@ -275,10 +276,22 @@ export function usePaginations(options = {}) {
     }
   }
 
+  function refresh() {
+    pagination.done.value = false;
+    searchPagination.done.value = false;
+
+    if (search.value) {
+      return fetchSearch(true, true);
+    }
+
+    return fetch(true, true, paginationOptions.value.cache);
+  }
+
   return {
     page: computed(() => searching.value ? searchPagination.page.value : pagination.page.value),
     search,
     send,
+    refresh,
     perPage,
     meta: computed(() => ({
       number: Math.max((pagination.page.value || 1) - 1, 0),

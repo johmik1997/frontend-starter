@@ -177,6 +177,22 @@ const pageNumbers = computed(() => {
   
   return pages;
 });
+
+function getCellValue(row, key) {
+  return key.split(".").reduce((all, el) => all?.[el], row);
+}
+
+function renderCell(row, key) {
+  if (!props.cells?.[key]) {
+    return getCellValue(row, key) ?? "-";
+  }
+
+  if (typeof props.cells[key] === "function") {
+    return props.cells[key](getCellValue(row, key), row);
+  }
+
+  return getCellValue(row, key) ?? "-";
+}
 </script>
 <template>
   <div class="modern-table-container">
@@ -208,11 +224,11 @@ const pageNumbers = computed(() => {
                 {{ spec.head[keyIndex] || key }}
               </span>
               <span class="text-sm font-medium text-gray-900 text-right flex-1 ml-2">
-                <template v-if="cells && cells[key]">
-                  <component :is="cells[key]" :row="row" :key="key" />
+                <template v-if="cells && cells[key] && cells[key].com">
+                  <component :is="cells[key].com" :row="row" :key="key" />
                 </template>
                 <template v-else>
-                  {{ row[key] || '-' }}
+                  {{ renderCell(row, key) }}
                 </template>
               </span>
             </div>

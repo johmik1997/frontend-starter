@@ -5,6 +5,10 @@ import Select from "@/components/new_form_elements/Select.vue";
 import { useAuth } from "@/stores/auth";
 import { readonly } from "vue";
 const authStore = useAuth();
+console.log(authStore.auth?.user);
+console.log(authStore.auth?.user?.role);
+
+
 </script>
 
 <template>
@@ -13,6 +17,16 @@ const authStore = useAuth();
       <div
         class="border border-base-clr/20 grid grid-cols-2 gap-6 rounded-md p-5"
       >
+      <Input
+          label="ID Number"
+          validation="required"
+          :value="authStore.auth?.user?.id_number"
+          name="idNumber"
+          :attributes="{
+            placeholder: 'Enter your ID Number',
+          }"
+        />
+
         <Input
           label="First Name"
           validation="required"
@@ -31,32 +45,8 @@ const authStore = useAuth();
             placeholder: 'Enter your Father’s Name',
           }"
         />
-        <Input
-          label="Grandfather’s Name"
-          :value="authStore.auth?.user?.grandFatherName"
-          validation="required"
-          name="grandFatherName"
-          :attributes="{
-            placeholder: 'Enter your Grandfather’s Name',
-          }"
-        />
-     
-          <Select
-          name="userStatus"
-          label="User Status"
-          validation="required"
-          :options="['ACTIVE', 'INACTIVE']"
-          readonly
-          :attributes="{
-           readonly: true,
-            placeholder: 'User Status',
-          }"
-          :value="authStore.auth?.user?.status"
-        />
-      </div>
-      <div
-        class="border border-base-clr/20 grid grid-cols-2 gap-6 rounded-md p-5"
-      >
+      
+
         <Input
           label="Phone Number"
           :value="authStore.auth?.user?.phone"
@@ -75,24 +65,8 @@ const authStore = useAuth();
             placeholder: 'Enter your email',
           }"
         />
-          <Input
-          label="Role"
-          :value="authStore.auth?.user?.role"
-          validation="required"
-          name="roleUuid"
-          :attributes="{
-            placeholder: 'Enter your roleUuid',
-          }"
-        />
-          <Input
-          label="User Type"
-          :value="authStore.auth?.user?.user_type"
-          validation="required"
-          name="userType"
-          :attributes="{
-            placeholder: 'Enter your userType',
-          }"
-        />
+         
+         
            
       </div>
     </Form>

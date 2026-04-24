@@ -4,6 +4,7 @@ import { useAuth } from '@/stores/auth';
 
 // Lazy-loaded page components
 const Dashboard = () => import('@/features/dashboard/pages/Dashboard.vue');
+const HomePage = () => import('@/pages/HomePage.vue');
 const Login = () => import('@/pages/login/Login.vue');
 const SignUp = () => import('@/pages/signUp.vue');
 
@@ -13,15 +14,26 @@ import usersRoutes from './users.routes';
 import profileRoutes from './profile.routes';
 import libraryRoutes from './library.routes';
 import materialRoutes from './material.routes';
+import reservationRoutes from './reservation.routes';
+import borrow from "./borrow.routes";
+import returnsRoutes from './returns.routes';
+import paymentRoutes from './payment.routes';
+import ForgotPassword from "@/pages/login/forgotPassword.vue";
+import ResetPassword from "@/pages/login/ResetPassword.vue";
+import VerifyOtp from "@/pages/login/verifyOtp.vue";
 
 const routes = [
+  {
+    path: "/",
+    name: "Home",
+    component: HomePage,
+  },
   {
     path: "",
     name: "Root",
     component: MainLayout,
     meta: { requiresAuth: true },
     children: [
-      { path: "", redirect: "/dashboard" },
       { path: "/dashboard", name: "dashboard", component: Dashboard, meta: { requiresAuth: true } },
       ...rolesRoutes,
       ...privilagesRoutes,
@@ -29,10 +41,16 @@ const routes = [
       ...profileRoutes,
       ...libraryRoutes,
       ...materialRoutes,
-     
+      ...reservationRoutes,
+      ...borrow,
+      ...returnsRoutes,
+      ...paymentRoutes,
     ],
   },
   { path: "/login", name: "Login", component: Login },
+  { path: "/forgot-password", name: "ForgotPassword", component: ForgotPassword },
+  { path: "/reset-password", name: "ResetPassword", component: ResetPassword },
+  {path: "/verify-otp", name: "VerifyOtp", component: VerifyOtp },
   { path: "/signUp", name: "SignUp", component: SignUp },
 ];
 
@@ -80,7 +98,7 @@ router.beforeEach(async (to, from) => {
 
   // If going to login and already authenticated, redirect back
   if (to.path == '/login' && auth.auth?.accessToken) {
-    return { path: from.path };
+    return { path: '/dashboard' };
   }
 
   // If no authentication and trying to access protected route

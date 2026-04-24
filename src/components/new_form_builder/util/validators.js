@@ -353,6 +353,7 @@ const common = {
   max,
   min,
   num,
+  numeric: num,
   len,
   exact,
   required,
@@ -464,4 +465,3 @@ export function getValidators() {
     date,
   };
 }
-

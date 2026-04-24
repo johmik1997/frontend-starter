@@ -1,83 +1,107 @@
 <script setup>
-import Input from '@/components/new_form_elements/Input.vue';
-import InputPassword from '@/components/new_form_elements/InputPassword.vue';
-import Select from '@/components/new_form_elements/Select.vue';
-import { useApiRequest } from '@/composables/useApiRequest';
-import { getAllRole } from '../../roles/Api/RoleApi';
-import Form from '@/components/new_form_builder/Form.vue';
-
+import Input from '@/components/new_form_elements/Input.vue'
+import Select from '@/components/new_form_elements/Select.vue'
+import Form from '@/components/new_form_builder/Form.vue'
+import { ref, watch } from 'vue'
 
 const props = defineProps({
-    roles: {
-        type: Array,
-        required: true,
-    },
-    user: {
-        type: Object,
-        required: true,
-    }
+  user: {
+    type: Object,
+    required: true
+  }
 })
 
-console.log('user', props.user);
-console.log(props.roles);
+const role = ref('')
 
-
+watch(
+  () => props.user,
+  (val) => {
+    role.value = val?.role || val?.roleName || ''
+  },
+  { immediate: true }
+)
 </script>
+
 <template>
-    <Form class="grid grid-cols-3 gap-5 mt-3 p-6" id="userform" :inner="false">
-        <Input name="email"  label="Email" :value="user?.email || ''" :attributes="{
-            placeholder: 'Enter User Email',
-        }" />
-        <Select name="title" label="Title" :value="user?.title || ''"
-            :options="['Mr.', 'Ms.', 'Dr.', 'Prof.']" :attributes="{
-                type: 'text',
-                placeholder: 'title',
-              
-            }">
-        </Select>
-        <Input name="firstName" validation="required|alpha" :value="user?.firstName || ''" label="First Name"
-            :attributes="{
-                placeholder: 'Enter firstname',
-                required
-            }" />
-        <Input name="fatherName" validation="required|alpha" :value="user?.fatherName || ''" label="Father Name"
-            :attributes="{
-                placeholder: 'Enter fathername',
-                required
-            }" />
-        <Input name="grandFatherName"  :value="user?.grandFatherName || ''"
-            label="Grandfather Name" :attributes="{
-                placeholder: 'Enter grandfathername',
-            }" />
-        <Select name="gender" label="Gender" :value="user?.gender || ''" validation="required"
-            :options="['Female', 'Male']" :attributes="{
-                placeholder: 'select gender',
-                required
-            }">
-        </Select>
+  <Form
+    class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4 sm:p-6"
+    id="userform"
+    :inner="false"
+  >
 
-        <Input name="mobilePhone" label="Mobile Phone" :value="user?.mobilePhone || ''" validation="required|phone"
-            :attributes="{
-                placeholder: 'mobile phone',
-                required
-            }" />
-        <Select :obj="true" name="roleUuid" label="Role" validation="required" :value="user?.roleUuid || ''"
-            :options="(roles || []).map(role => ({ label: role.roleName, value: role.roleUuid }))" :attributes="{
-                placeholder: 'Select Role',
-                required
-            }">
-        </Select>
-         <Select name="userType" label="User Type" validation="required"
-          :options="['Admin', 'Client', 'Insurance', 'Bank', 'Agent']" :value="user?.userType || ''"
-          :attributes="{ placeholder: 'Select User Type',
-            required
-           }" />
-        <Select name="userStatus" label="User Status" :value="user?.userStatus || ''" validation="required"
-            :options="['ACTIVE', 'HISTORY', 'SUSPENDED', 'PENDING']" :attributes="{
-                type: 'text',
-                placeholder: 'status',
-            }"></Select>
-   
+    <Input
+      name="id_number"
+      validation="required|numeric"
+      label="ID Number"
+      :value="user?.id_number || ''"
+      :attributes="{ placeholder: 'Enter ID Number' }"
+    />
 
-    </Form>
+    <Input
+      name="email"
+      validation="required|email"
+      label="Email"
+      :value="user?.email || ''"
+      :attributes="{ placeholder: 'Enter Email' }"
+    />
+
+    <Input
+      name="first_name"
+      validation="required|alpha"
+      label="First Name"
+      :value="user?.first_name || user?.firstName || ''"
+      :attributes="{ placeholder: 'Enter First Name' }"
+    />
+
+    <Input
+      name="last_name"
+      validation="required|alpha"
+      label="Last Name"
+      :value="user?.last_name || user?.lastName || ''"
+      :attributes="{ placeholder: 'Enter Last Name' }"
+    />
+
+    <Input
+      name="phone"
+      validation="required"
+      label="Mobile Phone"
+      :value="user?.phone || user?.mobilePhone || ''"
+      :attributes="{ placeholder: 'Enter Mobile Phone' }"
+    />
+
+    <Select
+      v-model="role"
+      name="role"
+      label="Role"
+      validation="required"
+      :options="[
+        'MEMBER',
+        'STACK STAFF',
+        'TECHNICAL STAFF',
+        'FRONT_DESK STAFF',
+        'ADMIN',
+        'SUPER ADMIN'
+      ]"
+      :attributes="{ placeholder: 'Select Role' }"
+    />
+
+    <Select
+      v-if="role === 'MEMBER'"
+      name="user_type"
+      label="User Type"
+      validation="required"
+      :value="user?.user_type || ''"
+      :options="['TEACHER','STUDENT']"
+    />
+
+    <Input
+      v-if="role === 'MEMBER'"
+      name="department"
+      label="Department"
+      validation="required"
+      :value="user?.department || ''"
+      :attributes="{ placeholder: 'Enter Department' }"
+    />
+
+  </Form>
 </template>
