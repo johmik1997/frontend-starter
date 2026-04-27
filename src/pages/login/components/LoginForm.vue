@@ -81,7 +81,7 @@ function handleLogin({ values }) {
       auth.setAuth(authPayload);
       localStorage.setItem("userDetail", JSON.stringify(authPayload));
       
-      const redirect = route.query.redirect || "/dashboard";
+      const redirect = route.query.redirect || "/app/dashboard";
       router.replace(redirect);
       toasted(true, "Welcome back!");
     } else {

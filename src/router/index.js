@@ -23,18 +23,51 @@ import ResetPassword from "@/pages/login/ResetPassword.vue";
 import VerifyOtp from "@/pages/login/verifyOtp.vue";
 
 const routes = [
+  // Public routes (no layout wrapper)
   {
     path: "/",
     name: "Home",
     component: HomePage,
   },
   {
-    path: "",
+    path: "/login",
+    name: "Login",
+    component: Login,
+  },
+  {
+    path: "/forgot-password",
+    name: "ForgotPassword",
+    component: ForgotPassword,
+  },
+  {
+    path: "/reset-password",
+    name: "ResetPassword",
+    component: ResetPassword,
+  },
+  {
+    path: "/verify-otp",
+    name: "VerifyOtp",
+    component: VerifyOtp,
+  },
+  {
+    path: "/signUp",
+    name: "SignUp",
+    component: SignUp,
+  },
+  
+  // Authenticated routes with MainLayout wrapper
+  {
+    path: "/app",
     name: "Root",
     component: MainLayout,
     meta: { requiresAuth: true },
     children: [
-      { path: "/dashboard", name: "dashboard", component: Dashboard, meta: { requiresAuth: true } },
+      { 
+        path: "dashboard",  // ✅ No leading slash - relative to /app
+        name: "dashboard", 
+        component: Dashboard, 
+        meta: { requiresAuth: true } 
+      },
       ...rolesRoutes,
       ...privilagesRoutes,
       ...usersRoutes,
@@ -47,11 +80,6 @@ const routes = [
       ...paymentRoutes,
     ],
   },
-  { path: "/login", name: "Login", component: Login },
-  { path: "/forgot-password", name: "ForgotPassword", component: ForgotPassword },
-  { path: "/reset-password", name: "ResetPassword", component: ResetPassword },
-  {path: "/verify-otp", name: "VerifyOtp", component: VerifyOtp },
-  { path: "/signUp", name: "SignUp", component: SignUp },
 ];
 
 const router = createRouter({
@@ -59,6 +87,7 @@ const router = createRouter({
   routes,
 });
 
+// Navigation guard remains the same
 router.beforeEach(async (to, from) => {
   const auth = useAuth();
   const normalizeRole = (rawRole) => {
@@ -73,7 +102,7 @@ router.beforeEach(async (to, from) => {
       .trim();
   };
 
-  // Try to restore auth from localStorage if not in store
+  // Restore auth from localStorage
   if (!auth.auth?.accessToken) {
     let detail = localStorage.getItem('userDetail');
     if (detail) {
@@ -96,25 +125,27 @@ router.beforeEach(async (to, from) => {
     }
   }
 
-  // If going to login and already authenticated, redirect back
-  if (to.path == '/login' && auth.auth?.accessToken) {
-    return { path: '/dashboard' };
+  // Redirect from login if already authenticated
+  if (to.path === '/login' && auth.auth?.accessToken) {
+    return { path: '/app/dashboard' };
   }
 
-  // If no authentication and trying to access protected route
+  // Protect authenticated routes
   if (!auth.auth?.accessToken && to.meta?.requiresAuth) {
     return {
-      path: `/login`,
+      path: '/login',
       query: { redirect: to.path },
     };
   }
+  
   if (!to.meta?.requiresAuth) {
     return true;
   }
+  
+  // Role-based access control
   const user = auth.auth?.user || {};
   const userRole = normalizeRole(user?.roleName || user?.role || user?.userRole);
 
-  // Role-only access control (no privilege dependency)
   if (userRole === 'SUPER ADMIN') {
     return true;
   }
@@ -126,7 +157,6 @@ router.beforeEach(async (to, from) => {
     .map((role) => normalizeRole(role))
     .filter(Boolean);
 
-  // If route doesn't declare roles, allow any authenticated user
   if (!routeRoles.length) {
     return true;
   }
@@ -135,7 +165,7 @@ router.beforeEach(async (to, from) => {
     return true;
   }
 
-  return { path: '/dashboard' };
+  return { path: '/app/dashboard' };
 });
 
 export default router;

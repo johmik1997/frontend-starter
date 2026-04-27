@@ -2,7 +2,7 @@ import icons from "@/utils/icons";
 
 export default [
   {
-    path: "/dashboard",
+    path: "/app/dashboard",
     icon: icons.dashboard,
     name: "Dashboard",
     meta: { requiresAuth: true, permissions: [] },
