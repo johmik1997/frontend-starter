@@ -21,10 +21,6 @@ export function updateLibraryById(id, data) {
 }
 
 export function removeLibraryById(id) {
-  return api.addAuthenticationHeader().delete(`${path}/${id}`);
+  return api.addAuthenticationHeader().delete(`${path}/${id}/`);
 }
 
-// Fixed endpoint to get admins for the dropdown
-export function getAllAdminUsers() {
-  return api.addAuthenticationHeader().get(`/user/users/admins/`);
-}

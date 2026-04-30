@@ -10,6 +10,7 @@ import Button from '@/components/Button.vue';
 import { useForm } from '@/components/new_form_builder/useForm';
 import MaterialForm from '../form/materialForm.vue';
 import { emitEntityMutation } from '@/utils/entitySync';
+import { getAllLibrary } from '@/features/library/api/libraryApi';
 
 const route = useRoute();
 const router = useRouter();
@@ -34,9 +35,11 @@ function toDateInputValue(value) {
 const { submit } = useForm('materialform');
 const materialReq = useApiRequest();
 const updateReq = useApiRequest();
+const libraryReq = useApiRequest();
 
 // Fetch material by ID
 materialReq.send(() => getMaterialById(materialUuid, materialType.value));
+libraryReq.send(() => getAllLibrary({ page: 1, size: 200 }));
 
 // Watch the API response and set local material
 watch(
@@ -102,6 +105,7 @@ const goBack = () => router.go(-1);
     <MaterialForm
       v-if="materialReq.response.value"
       :initialData="material"
+      :libraries="libraryReq.response.value?.libraries || libraryReq.response.value || []"
     />
 
     <template #bottom>

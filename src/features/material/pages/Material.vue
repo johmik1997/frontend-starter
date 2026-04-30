@@ -4,11 +4,12 @@ import { useRouter } from 'vue-router'
 import Table from '@/components/Table.vue'
 import { useMaterials } from '../store/materialStore'
 import { useApiRequest } from '@/composables/useApiRequest'
-import { getAllMaterials, removeMaterialById } from '../api/materialApi'
+import { getAllMaterials, getMaterialById, removeMaterialById } from '../api/materialApi'
+import { normalizeRoleValue } from '@/utils/authNavigation'
 import { toasted } from '@/utils/utils'
 import { openModal } from '@customizer/modal-x'
 import BaseIcon from '@/components/base/BaseIcon.vue'
-import { mdiPencil, mdiDeleteAlert, mdiBook, mdiMagnify, mdiClose, mdiEyeOutline } from '@mdi/js'
+import { mdiPencil, mdiDeleteAlert, mdiBook, mdiMagnify, mdiClose, mdiEyeOutline, mdiStar } from '@mdi/js'
 import { usePaginations } from '@/composables/usePaginationTemp'
 import BorrowHeader from '@/features/borrow/components/BorrowHeader.vue'
 import defaultCover from '@/assets/default-coverpage.png'
@@ -29,6 +30,9 @@ const pagination = usePaginations({
 })
 
 const removeReq = useApiRequest()
+const detailModalReq = useApiRequest()
+const selectedMaterial = ref(null)
+const detailModalVisible = ref(false)
 let unsubscribeEntitySync = () => {}
 const toggleClass = (type) => activeType.value === type
   ? 'bg-primary text-white shadow-sm'
@@ -121,17 +125,99 @@ function getMaterialId(row) {
   return row?.id || row?.uuid || row?.materialUuid
 }
 
+function extractRow(payload) {
+  if (!payload) return null
+  if (Array.isArray(payload)) return payload[0] || null
+  if (Array.isArray(payload?.content)) return payload.content[0] || null
+  if (Array.isArray(payload?.data)) return payload.data[0] || null
+  if (Array.isArray(payload?.results)) return payload.results[0] || null
+  return payload
+}
+
+const detailModalMaterial = computed(() => extractRow(detailModalReq.response.value) || selectedMaterial.value)
+
+const isDigital = computed(() => activeType.value === 'digital');
+
+const userRole = computed(() => {
+  const stored = JSON.parse(localStorage.getItem('userDetail') || '{}');
+  const user = stored?.user || stored || {};
+  return normalizeRoleValue(user?.roleName || user?.role || user?.userRole);
+});
+
+const canManageMaterial = computed(() => !['MEMBER', 'STACK STAFF'].includes(userRole.value));
+
+const detailModalStats = computed(() => {
+  const stats = [
+    {
+      label: 'Type',
+      value: activeType.value,
+    },
+    {
+      label: 'Library',
+      value: detailModalMaterial.value?.library_name || 'Catalog',
+    },
+  ];
+
+  if (!isDigital.value) {
+    stats.unshift(
+      {
+        label: 'Available copies',
+        value: Number(detailModalMaterial.value?.available_copies || detailModalMaterial.value?.copy_number || 0),
+      },
+      {
+        label: 'Total copies',
+        value: Number(detailModalMaterial.value?.total_copies || detailModalMaterial.value?.available_copies || detailModalMaterial.value?.copy_number || 0),
+      }
+    );
+  }
+
+  return stats;
+});
+
 function openDetail(row) {
   const id = getMaterialId(row)
   if (!id) return
-  router.push({
-    path: `/material/${id}`,
-    query: { type: activeType.value },
-  })
+
+  const stored = JSON.parse(localStorage.getItem('userDetail') || '{}')
+  const user = stored?.user || stored
+  const role = normalizeRoleValue(user?.roleName || user?.role || user?.userRole)
+
+  if (role === 'MEMBER') {
+    router.push({
+      path: `/material/${id}`,
+      query: { type: activeType.value },
+    })
+    return
+  }
+
+  selectedMaterial.value = row
+  detailModalVisible.value = true
+  detailModalReq.send(
+    () => getMaterialById(id, activeType.value),
+    (res) => {
+      if (!res?.success) {
+        toasted(false, 'Failed to load material details')
+        detailModalVisible.value = false
+      }
+    },
+    true
+  )
 }
 
 function getStock(row) {
   return Number(row?.available_copies ?? row?.copy_number ?? 0)
+}
+
+function getRating(row) {
+  const rating = Number(row?.average_rating || row?.rating || row?.avg_rating || 0)
+  return Number.isFinite(rating) ? rating.toFixed(1) : 'N/A'
+}
+
+function stockTone(row) {
+  const stock = getStock(row);
+  if (stock > 3) return 'bg-emerald-100 text-emerald-700';
+  if (stock > 0) return 'bg-amber-100 text-amber-700';
+  return 'bg-rose-100 text-rose-700';
 }
 
 function onImageError(event) {
@@ -244,61 +330,77 @@ function remove(id) {
       <div
         v-for="row in filteredRows"
         :key="row.id"
-        class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+        class="group overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-xl"
       >
-        <div class="h-44 bg-gray-100">
+        <div class="relative h-52 overflow-hidden bg-slate-100">
           <img
             :src="row?.cover_image || row?.image || row?.thumbnail || defaultCover"
             :alt="row?.title || 'Material cover'"
-            class="w-full h-full object-cover"
+            class="h-full w-full object-cover transition duration-500 group-hover:scale-105"
             @error="onImageError"
           />
+          <div class="absolute inset-x-0 top-0 flex items-start justify-between p-4">
+            <span class="rounded-full bg-slate-950/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white">
+              {{ activeType }}
+            </span>
+            <span v-if="!isDigital" class="rounded-full px-3 py-1 text-[11px] font-semibold" :class="stockTone(row)">
+              {{ getStock(row) > 0 ? `${getStock(row)} in stock` : 'Unavailable' }}
+            </span>
+            <span v-else class="rounded-full bg-slate-700/80 px-3 py-1 text-[11px] font-semibold text-white">
+              {{ row?.format || 'Digital' }}
+            </span>
+          </div>
         </div>
-        <div class="p-4">
-          <button class="font-semibold text-gray-900 line-clamp-1 text-left hover:text-primary" @click="openDetail(row)">
+        <div class="space-y-4 p-5">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">{{ row?.library_name || 'Library collection' }}</p>
+            <button class="mt-2 line-clamp-2 text-left text-lg font-semibold text-slate-900 transition hover:text-primary" @click="openDetail(row)">
             {{ row?.title || 'Untitled' }}
-          </button>
-          <p class="text-sm text-gray-500 line-clamp-1 mt-0.5">{{ row?.author || '-' }}</p>
-          <div class="mt-3 grid grid-cols-2 gap-2 text-xs">
-            <div class="bg-gray-50 rounded-lg p-2">
-              <p class="text-gray-500">Category</p>
-              <p class="font-medium text-gray-800 line-clamp-1">{{ row?.category || row?.genre || '-' }}</p>
+            </button>
+            <p class="mt-1 line-clamp-1 text-sm text-slate-500">{{ row?.author || '-' }}</p>
+          </div>
+          <div class="grid grid-cols-2 gap-3 text-xs">
+            <div class="rounded-2xl bg-slate-50 p-3">
+              <p class="text-slate-500">Category</p>
+              <p class="mt-1 font-medium text-slate-800 line-clamp-1">{{ row?.category || row?.genre || '-' }}</p>
             </div>
-            <div class="bg-gray-50 rounded-lg p-2">
-              <p class="text-gray-500">Stock</p>
-              <p class="font-medium text-gray-800">{{ getStock(row) }}</p>
+            <div class="rounded-2xl bg-slate-50 p-3">
+              <p class="text-slate-500">Rating</p>
+              <p class="mt-1 font-medium text-slate-800 inline-flex items-center gap-1">
+                <BaseIcon :path="mdiStar" size="14" class="text-amber-500" />
+                {{ getRating(row) || 'N/A' }}
+              </p>
             </div>
-            <div class="bg-gray-50 rounded-lg p-2">
-              <p class="text-gray-500">Condition</p>
-              <p class="font-medium text-gray-800">{{ row?.condition || 'Good' }}</p>
+            <div class="rounded-2xl bg-slate-50 p-3">
+              <p class="text-slate-500">Condition</p>
+              <p class="mt-1 font-medium text-slate-800">{{ row?.condition || (activeType.value === 'digital' ? row?.format || 'DIGITAL' : 'Good') }}</p>
             </div>
-            <div class="bg-gray-50 rounded-lg p-2">
-              <p class="text-gray-500">Price</p>
-              <p class="font-medium text-gray-800">{{ row?.price ? `$${row.price}` : 'Free' }}</p>
+            <div class="rounded-2xl bg-slate-50 p-3">
+              <p class="text-slate-500">{{ isDigital ? 'Format' : 'Stock' }}</p>
+              <p class="mt-1 font-medium text-slate-800">{{ isDigital ? (row?.format || 'Digital') : getStock(row) }}</p>
             </div>
           </div>
-          <div class="mt-4 flex gap-2">
+          <div class="flex flex-col gap-2 sm:flex-row">
             <button
-              class="flex-1 bg-gray-50 text-gray-700 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-1"
+              class="flex-1 rounded-2xl bg-slate-100 px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-900 hover:text-white"
               @click="openDetail(row)"
             >
-              <BaseIcon :path="mdiEyeOutline" size="16" />
               Details
             </button>
-            <button
-              class="flex-1 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white px-3 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-1"
-              @click="$router.push('/edit_material/' + row.id + '?type=' + activeType)"
-            >
-              <BaseIcon :path="mdiPencil" size="16" />
-              Edit
-            </button>
-            <button
-              class="flex-1 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white px-3 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-1"
-              @click="remove(row.id)"
-            >
-              <BaseIcon :path="mdiDeleteAlert" size="16" />
-              Delete
-            </button>
+            <template v-if="canManageMaterial">
+              <button
+                class="flex-1 rounded-2xl bg-blue-50 px-3 py-2.5 text-sm font-medium text-blue-700 transition hover:bg-blue-600 hover:text-white"
+                @click="$router.push('/edit_material/' + row.id + '?type=' + activeType)"
+              >
+                Edit
+              </button>
+              <button
+                class="flex-1 rounded-2xl bg-rose-50 px-3 py-2.5 text-sm font-medium text-rose-700 transition hover:bg-rose-600 hover:text-white"
+                @click="remove(row.id)"
+              >
+                Delete
+              </button>
+            </template>
           </div>
         </div>
       </div>
@@ -397,22 +499,148 @@ function remove(id) {
             >
               <BaseIcon :path="mdiEyeOutline" size="18"/>
             </button>
-            <button
-              class="bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white p-2 rounded"
-              @click="$router.push('/edit_material/' + row.id + '?type=' + activeType)"
-            >
-              <BaseIcon :path="mdiPencil" size="18"/>
-            </button>
-            <button
-              class="bg-red-50 text-red-600 hover:bg-red-600 hover:text-white p-2 rounded"
-              @click="remove(row.id)"
-            >
-              <BaseIcon :path="mdiDeleteAlert" size="18"/>
-            </button>
+              <template v-if="canManageMaterial">
+              <button
+                class="bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white p-2 rounded"
+                @click="$router.push('/edit_material/' + row.id + '?type=' + activeType)"
+              >
+                <BaseIcon :path="mdiPencil" size="18"/>
+              </button>
+              <button
+                class="bg-red-50 text-red-600 hover:bg-red-600 hover:text-white p-2 rounded"
+                @click="remove(row.id)"
+              >
+                <BaseIcon :path="mdiDeleteAlert" size="18"/>
+              </button>
+            </template>
           </div>
         </template>
       </Table>
     </div>
 
+    <div
+      v-if="detailModalVisible"
+      class="fixed inset-0 z-50 overflow-auto bg-slate-950/60 p-4 backdrop-blur-sm"
+      @click.self="detailModalVisible = false"
+    >
+      <div class="mx-auto w-full max-w-6xl overflow-hidden rounded-[30px] bg-white shadow-2xl ring-1 ring-slate-900/10">
+        <div class="flex flex-col gap-4 border-b border-slate-200 bg-slate-50 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 class="text-xl font-semibold text-slate-900">Material quick view</h2>
+            <p class="text-sm text-slate-600">Preview material information without leaving this page.</p>
+          </div>
+          <button
+            class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-100"
+            @click="detailModalVisible = false"
+          >
+            <BaseIcon :path="mdiClose" size="20" />
+          </button>
+        </div>
+
+        <div class="space-y-6 p-5">
+          <div v-if="detailModalReq.pending.value" class="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
+            Loading material details...
+          </div>
+
+          <div v-else-if="!detailModalMaterial" class="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-800">
+            Material detail is not available.
+          </div>
+
+          <template v-else>
+            <section class="overflow-hidden rounded-[30px] border border-slate-200 bg-[radial-gradient(circle_at_top_left,_rgba(14,165,233,0.24),_transparent_28%),linear-gradient(150deg,_#0f172a,_#111827_46%,_#1d4ed8)] shadow-xl">
+              <div class="grid grid-cols-1 gap-0 lg:grid-cols-[320px_1fr]">
+                <div class="border-b border-white/10 bg-black/10 p-6 lg:border-b-0 lg:border-r">
+                  <div class="aspect-[3/4] overflow-hidden rounded-[28px] bg-slate-900/30 shadow-2xl">
+                    <img
+                      :src="detailModalMaterial?.cover_image || detailModalMaterial?.image || detailModalMaterial?.thumbnail || defaultCover"
+                      :alt="detailModalMaterial?.title || 'Material cover'"
+                      class="h-full w-full object-cover"
+                      @error="onImageError"
+                    />
+                  </div>
+                </div>
+
+                <div class="p-6 text-white">
+                  <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div class="max-w-3xl">
+                      <div class="flex flex-wrap gap-2">
+                        <span class="rounded-full bg-white/12 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-sky-100">
+                          {{ activeType }}
+                        </span>
+                        <span
+                          class="rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em]"
+                          :class="Number(detailModalMaterial?.available_copies || detailModalMaterial?.copy_number || 0) > 0 ? 'bg-emerald-400/15 text-emerald-100' : 'bg-rose-400/15 text-rose-100'"
+                        >
+                          {{ Number(detailModalMaterial?.available_copies || detailModalMaterial?.copy_number || 0) > 0 ? 'Available now' : 'Waitlist only' }}
+                        </span>
+                        <span v-if="detailModalMaterial?.library_name" class="rounded-full bg-white/12 px-3 py-1 text-xs font-semibold text-slate-100">
+                          {{ detailModalMaterial?.library_name }}
+                        </span>
+                      </div>
+
+                      <h1 class="mt-4 text-3xl font-bold tracking-tight">{{ detailModalMaterial?.title || 'Untitled' }}</h1>
+                      <p class="mt-3 flex items-center gap-2 text-sm text-slate-200/90">
+                        <BaseIcon :path="mdiAccount" size="16" />
+                        {{ detailModalMaterial?.author || '-' }}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div class="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    <div
+                      v-for="card in detailModalStats"
+                      :key="card.label"
+                      class="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur"
+                    >
+                      <p class="text-xs uppercase tracking-[0.22em] text-slate-200/70">{{ card.label }}</p>
+                      <p class="mt-2 text-2xl font-bold">{{ card.value }}</p>
+                    </div>
+                  </div>
+
+                  <div class="mt-6 grid grid-cols-1 gap-3 text-sm text-slate-100/90 md:grid-cols-2 xl:grid-cols-3">
+                    <div class="rounded-2xl border border-white/10 bg-white/8 p-4">
+                      <p class="flex items-center gap-2 text-slate-200/70"><BaseIcon :path="mdiTag" size="16" /> Category</p>
+                      <p class="mt-2 font-semibold">{{ detailModalMaterial?.category || detailModalMaterial?.genre || '-' }}</p>
+                    </div>
+                    <div class="rounded-2xl border border-white/10 bg-white/8 p-4">
+                      <p class="flex items-center gap-2 text-slate-200/70"><BaseIcon :path="mdiSchoolOutline" size="16" /> Department</p>
+                      <p class="mt-2 font-semibold">{{ detailModalMaterial?.department || '-' }}</p>
+                    </div>
+                    <div class="rounded-2xl border border-white/10 bg-white/8 p-4">
+                      <p class="flex items-center gap-2 text-slate-200/70"><BaseIcon :path="mdiTranslate" size="16" /> Language</p>
+                      <p class="mt-2 font-semibold">{{ detailModalMaterial?.language || '-' }}</p>
+                    </div>
+                    <div class="rounded-2xl border border-white/10 bg-white/8 p-4">
+                      <p class="flex items-center gap-2 text-slate-200/70"><BaseIcon :path="mdiBarcode" size="16" /> ISBN</p>
+                      <p class="mt-2 font-semibold">{{ detailModalMaterial?.isbn || 'N/A' }}</p>
+                    </div>
+                    <div v-if="!isDigital" class="rounded-2xl border border-white/10 bg-white/8 p-4">
+                      <p class="flex items-center gap-2 text-slate-200/70"><BaseIcon :path="mdiPackageVariantClosed" size="16" /> Stock</p>
+                      <p class="mt-2 font-semibold">{{ Number(detailModalMaterial?.available_copies || detailModalMaterial?.copy_number || 0) }}/{{ Number(detailModalMaterial?.total_copies || detailModalMaterial?.available_copies || detailModalMaterial?.copy_number || 0) }}</p>
+                    </div>
+                    <div class="rounded-2xl border border-white/10 bg-white/8 p-4">
+                      <p class="flex items-center gap-2 text-slate-200/70"><BaseIcon :path="mdiCalendarClock" size="16" /> Published</p>
+                      <p class="mt-2 font-semibold">{{ detailModalMaterial?.published_date || '-' }}</p>
+                    </div>
+                    <div class="rounded-2xl border border-white/10 bg-white/8 p-4">
+                      <p class="flex items-center gap-2 text-slate-200/70"><BaseIcon :path="mdiBookOpenPageVariant" size="16" /> Genre</p>
+                      <p class="mt-2 font-semibold">{{ detailModalMaterial?.genre || '-' }}</p>
+                    </div>
+                    <div class="rounded-2xl border border-white/10 bg-white/8 p-4">
+                      <p class="flex items-center gap-2 text-slate-200/70"><BaseIcon :path="mdiMapMarkerOutline" size="16" /> Shelf / Location</p>
+                      <p class="mt-2 font-semibold">{{ detailModalMaterial?.location || detailModalMaterial?.library_name || '-' }}</p>
+                    </div>
+                    <div class="rounded-2xl border border-white/10 bg-white/8 p-4">
+                      <p class="flex items-center gap-2 text-slate-200/70"><BaseIcon :path="mdiCommentTextOutline" size="16" /> Condition / Format</p>
+                      <p class="mt-2 font-semibold">{{ activeType === 'physical' ? detailModalMaterial?.condition || 'GOOD' : detailModalMaterial?.format || 'DIGITAL' }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </template>
+        </div>
+      </div>
+    </div>
   </div>
 </template>

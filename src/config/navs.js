@@ -23,7 +23,7 @@ export default [
     icon: icons.borrow,
     meta: { requiresAuth: true, permissions: [] },
     type: "Management",
-    roles: ["ADMIN", "SUPER ADMIN","STACK STAFF", "TECHNICAL STAFF"],
+    roles: ["ADMIN", "SUPER ADMIN","STACK STAFF"],
   },
   {
     path: "/returns",
@@ -65,6 +65,14 @@ export default [
     type: "Settings",
     roles: ["ADMIN", "SUPER ADMIN"],
   },  
+  {
+    path: "/library-policy",
+    name: "Library Policy",
+    icon: icons.policies,
+    meta: { requiresAuth: true, permissions: [] },
+    type: "Settings",
+    roles: ["ADMIN", "SUPER ADMIN"],
+  },
   {
     path: '/users',
     name: 'Users',

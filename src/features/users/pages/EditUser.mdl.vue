@@ -9,11 +9,15 @@ import Button from '@/components/Button.vue';
 import { useForm } from '@/components/new_form_builder/useForm';
 import UserForm from '../form/userForm.vue';
 import { emitEntityMutation } from '@/utils/entitySync';
+import { getAllLibrary } from '@/features/library/api/libraryApi';
 
 const modalName = 'EditUser';
 const usersStore = useUsers();
 const { submit } = useForm('userform');
 const updateReq = useApiRequest();
+const libraryReq = useApiRequest();
+
+libraryReq.send(() => getAllLibrary({ page: 1, size: 200 }));
 
 function getUserId(user) {
   return user?.userUuid || user?.id;
@@ -48,7 +52,7 @@ function update({ values }, userId, currentUser = {}) {
 <template>
   <ModalParent v-slot="{ data }" :name="modalName" class="bg-black/50 min-h-full p-4 sm:p-6 md:p-10 grid place-items-center">
     <NewFormParent title="Update User" size="md">
-      <UserForm :user="data?.user || {}" />
+      <UserForm :user="data?.user || {}" :libraries="libraryReq.response.value?.libraries || libraryReq.response.value || []" />
 
       <div class="p-4 sm:p-6 pt-0">
         <Button

@@ -1,13 +1,8 @@
 <script setup>
 import Input from '@/components/new_form_elements/Input.vue';
-import Select from '@/components/new_form_elements/Select.vue';
 import Form from '@/components/new_form_builder/Form.vue';
 
-const { admins, library } = defineProps({
-  admins: {
-    type: Array,
-    default: () => [],
-  },
+const { library } = defineProps({
   library: {
     type: Object,
     default: () => ({}),
@@ -47,16 +42,6 @@ const { admins, library } = defineProps({
       label="Contact Phone"
       :value="library?.phone || ''"
       :attributes="{ placeholder: 'Enter Phone Number' }"
-    />
-
-    <Select
-      :obj="true"
-      name="staff_id"
-      label="Assign Admin"
-      validation="required"
-      :value="library?.staff_id || ''"
-      :options="(admins || []).map((admin) => ({ label: admin.name, value: admin.staff_id }))"
-      :attributes="{ placeholder: 'Select Admin User', required: true }"
     />
   </Form>
 </template>

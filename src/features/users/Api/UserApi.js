@@ -28,16 +28,6 @@ export function getAllUser(query = {}) {
   normalizedQuery.size = Number.isFinite(size) && size > 0 ? size : 25;
 
   // Handle search parameter
-  if (normalizedQuery.search) {
-    normalizedQuery.searchTerm = normalizedQuery.search;
-    delete normalizedQuery.search;
-  }
-
-  // Handle role filter
-  if (normalizedQuery.role) {
-    normalizedQuery.role = normalizedQuery.role;
-    delete normalizedQuery.role;
-  }
   const qr = getQueryFormObject(normalizedQuery);
   return api.addAuthenticationHeader().get(`${path}/all${qr}`);
 }

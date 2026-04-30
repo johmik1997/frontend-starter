@@ -7,17 +7,14 @@ import NewFormParent from '../../roles/components/NewFormParent.vue';
 import Button from '@/components/Button.vue';
 import { useForm } from '@/components/new_form_builder/useForm';
 import LibraryForm from '../components/libraryForm.vue';
-import { getAllAdminUsers, updateLibraryById } from '../api/libraryApi';
+import { updateLibraryById } from '../api/libraryApi';
 import { emitEntityMutation } from '@/utils/entitySync';
 
 const modalName = 'EditLibrary';
 const libraryStore = useLibrary();
 const { submit } = useForm('libraryform');
 
-const adminReq = useApiRequest();
 const updateReq = useApiRequest();
-
-adminReq.send(() => getAllAdminUsers());
 
 function getLibraryId(library) {
   return library?.id || library?.uuid || library?.libraryUuid;
@@ -48,7 +45,6 @@ function update({ values }, libraryId, currentLibrary = {}) {
   <ModalParent v-slot="{ data }" :name="modalName" class="bg-black/50 min-h-full p-4 sm:p-6 md:p-10 grid place-items-center">
     <NewFormParent title="Update Library" size="md">
       <LibraryForm
-        :admins="adminReq.response.value || []"
         :library="data?.library || {}"
       />
 

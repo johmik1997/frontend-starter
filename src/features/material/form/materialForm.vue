@@ -8,6 +8,10 @@ const props = defineProps({
     type: Object,
     default: () => ({}),
   },
+  libraries: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 function toDateInputValue(value) {
@@ -48,6 +52,16 @@ function toDateInputValue(value) {
     <Input name="published_date" type="date" label="Published Date" :value="toDateInputValue(initialData?.published_date)" />
     <Input name="department" label="Department" :value="initialData?.department || ''" />
     <Input name="location" label="Library Location" :value="initialData?.location || ''" />
+
+    <Select
+      :obj="true"
+      name="library"
+      label="Owning Library"
+      validation="required"
+      :value="initialData?.library || initialData?.library_id || ''"
+      :options="libraries.map((library) => ({ label: library?.name, value: library?.id }))"
+      :attributes="{ placeholder: 'Select Library' }"
+    />
 
     <Input name="total_copies" type="number" label="Total Copies" validation="required|numeric" :value="initialData?.total_copies ?? ''" />
     <Input name="price" type="number" label="Price" :value="initialData?.price ?? ''" :attributes="{ step: '0.01' }" />

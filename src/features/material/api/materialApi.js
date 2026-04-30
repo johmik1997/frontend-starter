@@ -49,3 +49,50 @@ export function removeMaterialById(id, type = "physical") {
 export function generateMaterialDescription(payload = {}) {
   return api.addAuthenticationHeader().post("/material/generate-description/", payload);
 }
+
+export function getMaterialInteractionStats(materialId, materialType = "physical") {
+  const qr = getQueryFormObject({
+    material_id: materialId,
+    material_type: materialType,
+  });
+  return api.addAuthenticationHeader().get(`/material/interactions/stats/${qr}`);
+}
+
+export function getMaterialFeedback(query = {}) {
+  const qr = getQueryFormObject(query || {});
+  return api.addAuthenticationHeader().get(`/material/feedback/${qr}`);
+}
+
+export function createMaterialFeedback(payload = {}) {
+  return api.addAuthenticationHeader().post("/material/feedback/", payload);
+}
+
+export function updateMaterialFeedback(id, payload = {}) {
+  return api.addAuthenticationHeader().patch(`/material/feedback/${id}/`, payload);
+}
+
+export function getMaterialFavorites(query = {}) {
+  const qr = getQueryFormObject(query || {});
+  return api.addAuthenticationHeader().get(`/material/favorites/${qr}`);
+}
+
+export function createMaterialFavorite(payload = {}) {
+  return api.addAuthenticationHeader().post("/material/favorites/", payload);
+}
+
+export function removeMaterialFavorite(id) {
+  return api.addAuthenticationHeader().delete(`/material/favorites/${id}/`);
+}
+
+export function getMaterialBookmarks(query = {}) {
+  const qr = getQueryFormObject(query || {});
+  return api.addAuthenticationHeader().get(`/material/bookmarks/${qr}`);
+}
+
+export function createMaterialBookmark(payload = {}) {
+  return api.addAuthenticationHeader().post("/material/bookmarks/", payload);
+}
+
+export function removeMaterialBookmark(id) {
+  return api.addAuthenticationHeader().delete(`/material/bookmarks/${id}/`);
+}
