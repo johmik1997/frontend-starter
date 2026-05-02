@@ -161,6 +161,7 @@ function cancelBorrow(row) {
             'Member ID',
             'Borrowed At',
             'Returns At',
+            'Fine Amount',
             'Status',
             // 'Actions',
           ],
@@ -171,6 +172,7 @@ function cancelBorrow(row) {
             'member_id',
             'borrow_date',
             'due_date',
+            'estimated_fine_amount',
             'status',
           ],
         }"

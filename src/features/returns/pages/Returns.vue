@@ -240,11 +240,12 @@ onBeforeUnmount(() => {
           :rows="filteredBorrows"
           :show-pagination="false"
           :headers="{
-            head: ['Material', 'Author', 'Member', 'Member ID', 'Due Date', 'Status', 'Actions'],
-            row: ['material_title', 'material_author', 'member_name', 'member_id', 'due_date', 'status'],
+            head: ['Material', 'Author', 'Member', 'Member ID', 'Due Date','fine_amount', 'Status', 'Actions'],
+            row: ['material_title', 'material_author', 'member_name', 'member_id', 'due_date', 'estimated_fine_amount', 'status'],
           }"
           :cells="{
             due_date: (val) => secondDateFormatWithTime(val) || '-',
+            estimated_fine_amount: (val) => `ETB ${val?.toFixed(2) || '0.00'}`,
           }"
         >
           <template #actions="{ row }">

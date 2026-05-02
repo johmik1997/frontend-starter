@@ -501,27 +501,22 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="space-y-6 p-4 sm:p-7">
-    <section class="overflow-hidden rounded-[30px] border border-slate-200 bg-[radial-gradient(circle_at_top_left,_rgba(251,191,36,0.28),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(16,185,129,0.22),_transparent_28%),linear-gradient(135deg,_#0f172a,_#1d4ed8_58%,_#93c5fd)] p-6 text-white shadow-[0_28px_90px_rgba(15,23,42,0.2)]">
-      <div class="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-        <div class="max-w-3xl">
-          <p class="text-xs font-semibold uppercase tracking-[0.32em] text-blue-100/75">Role-aware dashboard</p>
-          <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">{{ dashboardTitle }}</h1>
-          <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-100/85 sm:text-base">{{ dashboardSubtitle }}</p>
+  <div class="dashboard-container space-y-6 p-4 sm:p-7">
+    <!-- Hero Banner -->
+    <section class="dashboard-hero">
+      <div class="hero-content">
+        <div class="hero-text">
+          <p class="hero-badge">Role-aware dashboard</p>
+          <h1 class="hero-title">{{ dashboardTitle }}</h1>
+          <p class="hero-subtitle">{{ dashboardSubtitle }}</p>
         </div>
 
-        <div class="flex flex-wrap gap-3">
-          <button
-            class="inline-flex items-center gap-2 rounded-full bg-white/12 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
-            @click="loadDashboard"
-          >
+        <div class="hero-actions">
+          <button class="btn-outline" @click="loadDashboard">
             <BaseIcon :path="mdiRefresh" size="18" />
             Refresh
           </button>
-          <button
-            class="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-slate-100"
-            @click="router.push('/material')"
-          >
+          <button class="btn-primary" @click="router.push('/material')">
             <BaseIcon :path="mdiArrowRight" size="18" />
             Open materials
           </button>
@@ -529,7 +524,8 @@ onBeforeUnmount(() => {
       </div>
     </section>
 
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <!-- Stat Cards Grid -->
+    <div class="stats-grid">
       <DashboardStatCard
         v-for="card in statCards"
         :key="card.label"
@@ -541,16 +537,18 @@ onBeforeUnmount(() => {
       />
     </div>
 
-    <div v-if="dashboardError" class="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+    <!-- Error & Loading States -->
+    <div v-if="dashboardError" class="alert-error">
       Some dashboard data failed to load. Use refresh to try again.
     </div>
 
-    <div v-if="isLoading" class="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
+    <div v-if="isLoading" class="alert-info">
       Loading live dashboard insights...
     </div>
 
-    <div class="grid grid-cols-1 gap-6 xl:grid-cols-3">
-      <div class="xl:col-span-2">
+    <!-- Charts Row -->
+    <div class="charts-grid">
+      <div class="charts-main">
         <DashboardPanel
           :title="isMember ? 'My six-month activity' : 'Borrow and reservation momentum'"
           :subtitle="isMember ? 'Your own borrow and reservation history over the last six months' : 'System activity during the last six months'"
@@ -563,7 +561,7 @@ onBeforeUnmount(() => {
         </DashboardPanel>
       </div>
 
-      <div class="xl:col-span-1">
+      <div class="charts-side">
         <DashboardPanel title="Collection mix" subtitle="Availability and material-type balance">
           <DashboardMaterialPieChart
             :available="availableMaterials"
@@ -575,144 +573,141 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <div class="grid grid-cols-1 gap-6 xl:grid-cols-3">
-      <div class="xl:col-span-1">
+    <!-- Quick Actions & Recommendations Row -->
+    <div class="actions-grid">
+      <div class="actions-side">
         <DashboardPanel title="Quick actions" subtitle="Jump directly into the work that matches your role">
-          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-1">
+          <div class="actions-list">
             <button
               v-for="action in quickActions"
               :key="action.label"
-              class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-left transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white"
+              class="action-card"
               @click="router.push(action.path)"
             >
-              <div class="flex items-center gap-3">
-                <div class="grid h-11 w-11 place-items-center rounded-2xl bg-white shadow-sm">
+              <div class="action-card-left">
+                <div class="action-icon" :class="`tone-${action.tone}`">
                   <BaseIcon :path="action.icon" size="20" />
                 </div>
                 <div>
-                  <p class="text-sm font-semibold text-slate-900">{{ action.label }}</p>
-                  <p class="text-xs text-slate-500">Open page</p>
+                  <p class="action-label">{{ action.label }}</p>
+                  <p class="action-hint">Open page</p>
                 </div>
               </div>
-              <BaseIcon :path="mdiArrowRight" size="18" class="text-slate-400" />
+              <BaseIcon :path="mdiArrowRight" size="18" class="action-arrow" />
             </button>
           </div>
         </DashboardPanel>
       </div>
 
-      <div v-if="isMember" class="xl:col-span-2">
+      <!-- Recommendations for Members -->
+      <div v-if="isMember" class="actions-main">
         <DashboardPanel
           title="Recommended for you"
           :subtitle="recommendationStrategy === 'personalized' ? 'Built from your borrow and reservation history' : 'Popular resources when there is not enough personal history yet'"
         >
-          <div v-if="recommendations.length" class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div v-if="recommendations.length" class="recommendations-grid">
             <button
               v-for="item in recommendations"
               :key="item.id"
-              class="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white"
+              class="recommendation-card"
               @click="openMaterial(item)"
             >
-              <div class="flex items-center justify-between gap-3">
-                <span class="rounded-full bg-slate-900 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white">
-                  {{ item.material_type }}
-                </span>
-                <span class="text-xs font-semibold text-emerald-600" v-if="item.material_type === 'PHYSICAL'">
+              <div class="recommendation-header">
+                <span class="badge-material">{{ item.material_type }}</span>
+                <span v-if="item.material_type === 'PHYSICAL'" class="badge-stock">
                   {{ item.available_copies }} in stock
                 </span>
               </div>
-              <h3 class="mt-4 text-base font-semibold text-slate-900">{{ item.title }}</h3>
-              <p class="mt-1 text-sm text-slate-500">{{ item.author || 'Unknown author' }}</p>
-              <div class="mt-4 flex flex-wrap gap-2">
-                <span class="rounded-full bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600">
-                  {{ item.category || 'General' }}
-                </span>
-                <span class="rounded-full bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600">
-                  {{ item.genre || 'Mixed' }}
-                </span>
+              <h3 class="recommendation-title">{{ item.title }}</h3>
+              <p class="recommendation-author">{{ item.author || 'Unknown author' }}</p>
+              <div class="recommendation-tags">
+                <span class="tag">{{ item.category || 'General' }}</span>
+                <span class="tag">{{ item.genre || 'Mixed' }}</span>
               </div>
-              <p class="mt-4 text-xs leading-5 text-slate-500">
+              <p class="recommendation-reason">
                 {{ item.reasons?.[0] || 'Recommended from current library activity' }}
               </p>
             </button>
           </div>
 
-          <div v-else class="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">
+          <div v-else class="empty-state">
             Recommendations will appear here as soon as the dashboard has enough activity to work with.
           </div>
         </DashboardPanel>
       </div>
 
-      <div v-else class="xl:col-span-2">
+      <!-- Operational Watchlist for Staff/Admin -->
+      <div v-else class="actions-main">
         <DashboardPanel title="Operational watchlist" subtitle="What needs attention first">
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Circulation</p>
-              <div class="mt-4 space-y-3">
-                <div class="flex items-center justify-between text-sm">
-                  <span class="text-slate-500">Active borrows</span>
-                  <span class="font-semibold text-slate-900">{{ activeBorrows }}</span>
+          <div class="watchlist-grid">
+            <div class="watchlist-card">
+              <p class="watchlist-title">Circulation</p>
+              <div class="watchlist-stats">
+                <div class="watchlist-stat">
+                  <span class="stat-label">Active borrows</span>
+                  <span class="stat-value">{{ activeBorrows }}</span>
                 </div>
-                <div class="flex items-center justify-between text-sm">
-                  <span class="text-slate-500">Overdue borrows</span>
-                  <span class="font-semibold text-amber-600">{{ overdueBorrows }}</span>
+                <div class="watchlist-stat">
+                  <span class="stat-label">Overdue borrows</span>
+                  <span class="stat-value overdue">{{ overdueBorrows }}</span>
                 </div>
-                <div class="flex items-center justify-between text-sm">
-                  <span class="text-slate-500">Reservations waiting</span>
-                  <span class="font-semibold text-slate-900">{{ activeReservations }}</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Collection</p>
-              <div class="mt-4 space-y-3">
-                <div class="flex items-center justify-between text-sm">
-                  <span class="text-slate-500">Total materials</span>
-                  <span class="font-semibold text-slate-900">{{ allMaterials.length }}</span>
-                </div>
-                <div class="flex items-center justify-between text-sm">
-                  <span class="text-slate-500">Available now</span>
-                  <span class="font-semibold text-emerald-600">{{ availableMaterials }}</span>
-                </div>
-                <div class="flex items-center justify-between text-sm">
-                  <span class="text-slate-500">Low stock alerts</span>
-                  <span class="font-semibold text-rose-600">{{ lowStockMaterials }}</span>
+                <div class="watchlist-stat">
+                  <span class="stat-label">Reservations waiting</span>
+                  <span class="stat-value">{{ activeReservations }}</span>
                 </div>
               </div>
             </div>
 
-            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Users & branches</p>
-              <div class="mt-4 space-y-3">
-                <div class="flex items-center justify-between text-sm">
-                  <span class="text-slate-500">Members</span>
-                  <span class="font-semibold text-slate-900">{{ totalMembers }}</span>
+            <div class="watchlist-card">
+              <p class="watchlist-title">Collection</p>
+              <div class="watchlist-stats">
+                <div class="watchlist-stat">
+                  <span class="stat-label">Total materials</span>
+                  <span class="stat-value">{{ allMaterials.length }}</span>
                 </div>
-                <div class="flex items-center justify-between text-sm">
-                  <span class="text-slate-500">Libraries</span>
-                  <span class="font-semibold text-slate-900">{{ libraries.length }}</span>
+                <div class="watchlist-stat">
+                  <span class="stat-label">Available now</span>
+                  <span class="stat-value available">{{ availableMaterials }}</span>
                 </div>
-                <div class="flex items-center justify-between text-sm">
-                  <span class="text-slate-500">Digital resources</span>
-                  <span class="font-semibold text-slate-900">{{ digitalMaterials.length }}</span>
+                <div class="watchlist-stat">
+                  <span class="stat-label">Low stock alerts</span>
+                  <span class="stat-value low-stock">{{ lowStockMaterials }}</span>
                 </div>
               </div>
             </div>
 
-            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Fine status</p>
-              <div class="mt-4 space-y-3">
-                <div class="flex items-center justify-between text-sm">
-                  <span class="text-slate-500">Returned today</span>
-                  <span class="font-semibold text-slate-900">{{ returnedToday }}</span>
+            <div class="watchlist-card">
+              <p class="watchlist-title">Users & branches</p>
+              <div class="watchlist-stats">
+                <div class="watchlist-stat">
+                  <span class="stat-label">Members</span>
+                  <span class="stat-value">{{ totalMembers }}</span>
                 </div>
-                <div class="flex items-center justify-between text-sm">
-                  <span class="text-slate-500">Unpaid fine total</span>
-                  <span class="font-semibold text-rose-600">ETB {{ unpaidFineTotal.toFixed(2) }}</span>
+                <div class="watchlist-stat">
+                  <span class="stat-label">Libraries</span>
+                  <span class="stat-value">{{ libraries.length }}</span>
                 </div>
-                <div class="flex items-center justify-between text-sm">
-                  <span class="text-slate-500">Return records</span>
-                  <span class="font-semibold text-slate-900">{{ returns.length }}</span>
+                <div class="watchlist-stat">
+                  <span class="stat-label">Digital resources</span>
+                  <span class="stat-value">{{ digitalMaterials.length }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="watchlist-card">
+              <p class="watchlist-title">Fine status</p>
+              <div class="watchlist-stats">
+                <div class="watchlist-stat">
+                  <span class="stat-label">Returned today</span>
+                  <span class="stat-value">{{ returnedToday }}</span>
+                </div>
+                <div class="watchlist-stat">
+                  <span class="stat-label">Unpaid fine total</span>
+                  <span class="stat-value fine">ETB {{ unpaidFineTotal.toFixed(2) }}</span>
+                </div>
+                <div class="watchlist-stat">
+                  <span class="stat-label">Return records</span>
+                  <span class="stat-value">{{ returns.length }}</span>
                 </div>
               </div>
             </div>
@@ -721,102 +716,95 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
+    <!-- Recent Activity Row -->
+    <div class="recent-grid">
       <DashboardPanel
         :title="isMember ? 'My latest borrows' : 'Recent borrows'"
         :subtitle="isMember ? 'Your newest borrowing activity' : 'Latest circulation movement across the system'"
       >
-        <div v-if="(isMember ? myBorrows : recentBorrows).length" class="space-y-3">
+        <div v-if="(isMember ? myBorrows : recentBorrows).length" class="recent-list">
           <div
             v-for="row in (isMember ? myBorrows.slice(0, 5) : recentBorrows)"
             :key="row?.id || row?.uuid"
-            class="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+            class="recent-item"
           >
-            <div class="flex items-start justify-between gap-3">
+            <div class="recent-item-header">
               <div>
-                <p class="font-semibold text-slate-900">{{ row?.material_title || 'Material' }}</p>
-                <p class="mt-1 text-xs text-slate-500">
+                <p class="recent-item-title">{{ row?.material_title || 'Material' }}</p>
+                <p class="recent-item-meta">
                   {{ isMember ? (row?.status || '-') : `${row?.member_name || '-'} • ${row?.status || '-'}` }}
                 </p>
               </div>
-              <span
-                class="rounded-full px-2.5 py-1 text-[11px] font-semibold"
-                :class="normalizeStatus(row?.status) === 'OVERDUE' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'"
-              >
+              <span class="status-badge" :class="normalizeStatus(row?.status) === 'OVERDUE' ? 'status-overdue' : 'status-active'">
                 {{ row?.status || 'UNKNOWN' }}
               </span>
             </div>
-            <p class="mt-3 text-xs text-slate-400">{{ formatDate(row?.borrow_date || row?.created_at) }}</p>
+            <p class="recent-item-date">{{ formatDate(row?.borrow_date || row?.created_at) }}</p>
           </div>
         </div>
-        <p v-else class="text-sm text-slate-500">No borrow activity found yet.</p>
+        <p v-else class="empty-message">No borrow activity found yet.</p>
       </DashboardPanel>
 
       <DashboardPanel
         :title="isMember ? 'My fines and reservations' : 'Returns and reservations'"
         :subtitle="isMember ? 'Outstanding charges and your latest holds' : 'Latest return records and reservation queue activity'"
       >
-        <div v-if="isMember" class="space-y-4">
-          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <div class="flex items-center justify-between gap-3">
-              <div>
-                <p class="text-xs uppercase tracking-[0.22em] text-slate-400">Outstanding fine total</p>
-                <p class="mt-2 text-2xl font-bold text-rose-600">ETB {{ myOutstandingFineTotal.toFixed(2) }}</p>
-              </div>
-              <button
-                class="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800"
-                @click="router.push('/fine-payments')"
-              >
-                Open payments
-              </button>
+        <div v-if="isMember" class="member-fines">
+          <div class="fine-card">
+            <div>
+              <p class="fine-label">Outstanding fine total</p>
+              <p class="fine-amount">ETB {{ myOutstandingFineTotal.toFixed(2) }}</p>
             </div>
+            <button class="btn-small" @click="router.push('/fine-payments')">
+              Open payments
+            </button>
           </div>
 
-          <div v-if="myReservations.length" class="space-y-3">
+          <div v-if="myReservations.length" class="reservations-list">
             <div
               v-for="row in myReservations.slice(0, 4)"
               :key="row?.id || row?.uuid"
-              class="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+              class="reservation-item"
             >
-              <p class="font-semibold text-slate-900">{{ row?.material_title || 'Reserved material' }}</p>
-              <p class="mt-1 text-xs text-slate-500">{{ row?.status || '-' }}</p>
-              <p class="mt-3 text-xs text-slate-400">{{ formatDate(row?.reserve_date || row?.created_at) }}</p>
+              <p class="reservation-title">{{ row?.material_title || 'Reserved material' }}</p>
+              <p class="reservation-status">{{ row?.status || '-' }}</p>
+              <p class="reservation-date">{{ formatDate(row?.reserve_date || row?.created_at) }}</p>
             </div>
           </div>
-          <p v-else class="text-sm text-slate-500">You do not have any reservation activity yet.</p>
+          <p v-else class="empty-message">You do not have any reservation activity yet.</p>
         </div>
 
-        <div v-else class="space-y-4">
-          <div v-if="recentReturns.length" class="space-y-3">
+        <div v-else class="staff-activity">
+          <div v-if="recentReturns.length" class="returns-list">
             <div
               v-for="row in recentReturns"
               :key="row?.id || row?.uuid"
-              class="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+              class="return-item"
             >
-              <div class="flex items-start justify-between gap-3">
+              <div class="return-item-header">
                 <div>
-                  <p class="font-semibold text-slate-900">{{ row?.material_title || 'Returned material' }}</p>
-                  <p class="mt-1 text-xs text-slate-500">{{ row?.member_name || '-' }}</p>
+                  <p class="return-item-title">{{ row?.material_title || 'Returned material' }}</p>
+                  <p class="return-item-member">{{ row?.member_name || '-' }}</p>
                 </div>
-                <span class="rounded-full bg-slate-900 px-2.5 py-1 text-[11px] font-semibold text-white">
+                <span class="fine-badge" :class="amount(row?.fine_amount) > 0 ? 'fine-positive' : 'fine-zero'">
                   {{ amount(row?.fine_amount) > 0 ? `ETB ${amount(row?.fine_amount).toFixed(2)}` : 'NO FINE' }}
                 </span>
               </div>
-              <p class="mt-3 text-xs text-slate-400">{{ formatDate(row?.return_date || row?.created_at) }}</p>
+              <p class="return-item-date">{{ formatDate(row?.return_date || row?.created_at) }}</p>
             </div>
           </div>
-          <p v-else class="text-sm text-slate-500">No return activity found yet.</p>
+          <p v-else class="empty-message">No return activity found yet.</p>
 
-          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <p class="text-xs uppercase tracking-[0.22em] text-slate-400">Reservation queue snapshot</p>
-            <div class="mt-3 grid grid-cols-2 gap-3 text-sm">
+          <div class="queue-card">
+            <p class="queue-title">Reservation queue snapshot</p>
+            <div class="queue-stats">
               <div>
-                <p class="text-slate-500">Reserved</p>
-                <p class="mt-1 text-xl font-semibold text-slate-900">{{ activeReservations }}</p>
+                <p class="queue-label">Reserved</p>
+                <p class="queue-value">{{ activeReservations }}</p>
               </div>
               <div>
-                <p class="text-slate-500">Recent entries</p>
-                <p class="mt-1 text-xl font-semibold text-slate-900">{{ recentReservations.length }}</p>
+                <p class="queue-label">Recent entries</p>
+                <p class="queue-value">{{ recentReservations.length }}</p>
               </div>
             </div>
           </div>
@@ -825,3 +813,712 @@ onBeforeUnmount(() => {
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Dashboard Container */
+.dashboard-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.dark .dashboard-container {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+}
+
+/* Hero Banner */
+.dashboard-hero {
+  border-radius: 1.5rem;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(239, 68, 68, 0.1));
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  padding: 1.5rem;
+  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.3);
+}
+
+@media (min-width: 768px) {
+  .dashboard-hero {
+    padding: 2rem;
+  }
+}
+
+.hero-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+@media (min-width: 1024px) {
+  .hero-content {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+}
+
+.hero-text {
+  max-width: 48rem;
+}
+
+.hero-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.32em;
+  color: #f59e0b;
+}
+
+.hero-title {
+  margin-top: 0.75rem;
+  font-size: 1.875rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  background: linear-gradient(135deg, #ffffff, #f59e0b);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+@media (min-width: 640px) {
+  .hero-title {
+    font-size: 2.25rem;
+  }
+}
+
+.hero-subtitle {
+  margin-top: 0.75rem;
+  max-width: 36rem;
+  font-size: 0.875rem;
+  line-height: 1.5rem;
+  color: #94a3b8;
+}
+
+@media (min-width: 640px) {
+  .hero-subtitle {
+    font-size: 1rem;
+  }
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: white;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  cursor: pointer;
+}
+
+.btn-outline:hover {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.5);
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: white;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px -5px rgba(245, 158, 11, 0.4);
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Alerts */
+.alert-error {
+  border-radius: 1rem;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.1);
+  padding: 1rem;
+  font-size: 0.875rem;
+  color: #f87171;
+}
+
+.alert-info {
+  border-radius: 1rem;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  background: rgba(245, 158, 11, 0.1);
+  padding: 1rem;
+  font-size: 0.875rem;
+  color: #fbbf24;
+}
+
+/* Charts Grid */
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 1280px) {
+  .charts-grid {
+    grid-template-columns: 2fr 1fr;
+  }
+}
+
+.charts-main,
+.charts-side {
+  width: 100%;
+}
+
+/* Actions Grid */
+.actions-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 1280px) {
+  .actions-grid {
+    grid-template-columns: 1fr 2fr;
+  }
+}
+
+.actions-side,
+.actions-main {
+  width: 100%;
+}
+
+/* Actions List */
+.actions-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .actions-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .actions-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+.action-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 1rem;
+  border: 1px solid rgba(51, 65, 85, 0.5);
+  background: rgba(30, 41, 59, 0.5);
+  padding: 1rem;
+  text-align: left;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  width: 100%;
+}
+
+.action-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(245, 158, 11, 0.4);
+  background: rgba(30, 41, 59, 0.8);
+}
+
+.action-card-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.action-icon {
+  display: grid;
+  height: 2.75rem;
+  width: 2.75rem;
+  place-items: center;
+  border-radius: 1rem;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.action-icon.tone-blue {
+  color: #60a5fa;
+}
+
+.action-icon.tone-amber {
+  color: #f59e0b;
+}
+
+.action-icon.tone-green {
+  color: #34d399;
+}
+
+.action-icon.tone-violet {
+  color: #a78bfa;
+}
+
+.action-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.action-hint {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.action-arrow {
+  color: #475569;
+  transition: transform 0.2s ease;
+}
+
+.action-card:hover .action-arrow {
+  transform: translateX(4px);
+  color: #f59e0b;
+}
+
+/* Recommendations Grid */
+.recommendations-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .recommendations-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .recommendations-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.recommendation-card {
+  border-radius: 1rem;
+  border: 1px solid rgba(51, 65, 85, 0.5);
+  background: rgba(30, 41, 59, 0.5);
+  padding: 1rem;
+  text-align: left;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.recommendation-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(245, 158, 11, 0.4);
+  background: rgba(30, 41, 59, 0.8);
+}
+
+.recommendation-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.badge-material {
+  border-radius: 9999px;
+  background: #0f172a;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: #f59e0b;
+}
+
+.badge-stock {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #34d399;
+}
+
+.recommendation-title {
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.recommendation-author {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.recommendation-tags {
+  margin-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tag {
+  border-radius: 9999px;
+  background: rgba(15, 23, 42, 0.8);
+  padding: 0.25rem 0.625rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: #94a3b8;
+}
+
+.recommendation-reason {
+  margin-top: 1rem;
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+  color: #64748b;
+}
+
+/* Watchlist Grid */
+.watchlist-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .watchlist-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.watchlist-card {
+  border-radius: 1rem;
+  border: 1px solid rgba(51, 65, 85, 0.5);
+  background: rgba(30, 41, 59, 0.5);
+  padding: 1rem;
+}
+
+.watchlist-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: #f59e0b;
+}
+
+.watchlist-stats {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.watchlist-stat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.875rem;
+}
+
+.stat-label {
+  color: #94a3b8;
+}
+
+.stat-value {
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.stat-value.overdue {
+  color: #f59e0b;
+}
+
+.stat-value.available {
+  color: #34d399;
+}
+
+.stat-value.low-stock {
+  color: #f87171;
+}
+
+.stat-value.fine {
+  color: #f87171;
+}
+
+/* Recent Activity Grid */
+.recent-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 1280px) {
+  .recent-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Recent Lists */
+.recent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.recent-item {
+  border-radius: 1rem;
+  border: 1px solid rgba(51, 65, 85, 0.5);
+  background: rgba(30, 41, 59, 0.5);
+  padding: 1rem;
+}
+
+.recent-item-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.recent-item-title {
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.recent-item-meta {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.status-badge {
+  border-radius: 9999px;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.status-overdue {
+  background: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+}
+
+.status-active {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+}
+
+.recent-item-date {
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+/* Member Fines */
+.member-fines {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.fine-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(51, 65, 85, 0.5);
+  background: rgba(30, 41, 59, 0.5);
+  padding: 1rem;
+}
+
+.fine-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: #64748b;
+}
+
+.fine-amount {
+  margin-top: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #f87171;
+}
+
+.btn-small {
+  border-radius: 9999px;
+  background: #0f172a;
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: white;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.btn-small:hover {
+  background: rgba(245, 158, 11, 0.2);
+}
+
+.reservations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.reservation-item {
+  border-radius: 1rem;
+  border: 1px solid rgba(51, 65, 85, 0.5);
+  background: rgba(30, 41, 59, 0.5);
+  padding: 1rem;
+}
+
+.reservation-title {
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.reservation-status {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.reservation-date {
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+/* Staff Activity */
+.staff-activity {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.returns-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.return-item {
+  border-radius: 1rem;
+  border: 1px solid rgba(51, 65, 85, 0.5);
+  background: rgba(30, 41, 59, 0.5);
+  padding: 1rem;
+}
+
+.return-item-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.return-item-title {
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.return-item-member {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.fine-badge {
+  border-radius: 9999px;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.fine-positive {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+.fine-zero {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+}
+
+.return-item-date {
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.queue-card {
+  border-radius: 1rem;
+  border: 1px solid rgba(51, 65, 85, 0.5);
+  background: rgba(30, 41, 59, 0.5);
+  padding: 1rem;
+}
+
+.queue-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: #f59e0b;
+}
+
+.queue-stats {
+  margin-top: 0.75rem;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.queue-label {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.queue-value {
+  margin-top: 0.25rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #f1f5f9;
+}
+
+.empty-state,
+.empty-message {
+  border-radius: 1rem;
+  border: 1px dashed rgba(51, 65, 85, 0.5);
+  background: rgba(30, 41, 59, 0.3);
+  padding: 1.5rem;
+  font-size: 0.875rem;
+  text-align: center;
+  color: #64748b;
+}
+</style>
