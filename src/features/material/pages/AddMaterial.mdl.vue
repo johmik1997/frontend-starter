@@ -12,9 +12,11 @@ import { toasted } from '@/utils/utils';
 import { useForm } from '@/components/new_form_builder/useForm';
 import { useMaterials } from '../store/materialStore';
 import { emitEntityMutation } from '@/utils/entitySync';
+import { getAllLibrary } from '@/features/library/api/libraryApi';
 
 const { submit } = useForm('addMaterialForm');
 const req = useApiRequest();
+const libraryReq = useApiRequest();
 const materialStore = useMaterials();
 const currentStep = ref(1);
 const totalSteps = computed(() => 3);
@@ -23,6 +25,7 @@ const currentType = computed(() => materialStore.createType || 'physical');
 const isDigital = computed(() => currentType.value === 'digital');
 const modalTitle = computed(() => isDigital.value ? 'Add New Digital Material' : 'Add New Physical Material');
 const actionLabel = computed(() => isDigital.value ? 'Add Digital Material' : 'Add Physical Material');
+const libraryOptions = computed(() => libraryReq.response.value?.libraries || libraryReq.response.value || []);
 
 const steps = computed(() => {
   const baseSteps = [
@@ -33,6 +36,8 @@ const steps = computed(() => {
 
   return baseSteps;
 });
+
+libraryReq.send(() => getAllLibrary({ page: 1, size: 200 }));
 
 function toDateInputValue(value) {
   if (!value) return '';
@@ -116,6 +121,9 @@ function handleCreate({ values }) {
     payload.append('department', values.department || '');
     payload.append('language', values.language || '');
     payload.append('isbn', values.isbn || '');
+    if (values.library) {
+      payload.append('library', values.library);
+    }
     payload.append('file', uploadFile, uploadFile.name);
 
     console.log('FormData created, sending request...');
@@ -143,6 +151,7 @@ function handleCreate({ values }) {
       price: Number(values.price || 0),
       can_borrow: String(values.can_borrow || '').toUpperCase() === 'YES',
       total_copies: Number(values.total_copies || 0),
+      library: values.library || null,
     };
     
     req.send(
@@ -240,6 +249,17 @@ function validateAndNext() {
               :options="['English', 'Amharic']"
               :attributes="{ placeholder: 'e.g. English, Amharic' }" />
             <Input name="department" label="Department" :attributes="{ placeholder: 'Target Department' }" />
+            <Select
+              :obj="true"
+              name="library"
+              label="Owning Library"
+              validation="required"
+              :options="libraryOptions.map((library) => ({
+                label: library?.name,
+                value: library?.id,
+              }))"
+              :attributes="{ placeholder: 'Select Library' }"
+            />
           </div>
         </div>
 

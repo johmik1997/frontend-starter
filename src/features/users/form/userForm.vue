@@ -2,16 +2,21 @@
 import Input from '@/components/new_form_elements/Input.vue'
 import Select from '@/components/new_form_elements/Select.vue'
 import Form from '@/components/new_form_builder/Form.vue'
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 const props = defineProps({
   user: {
     type: Object,
     required: true
+  },
+  libraries: {
+    type: Array,
+    default: () => []
   }
 })
 
 const role = ref('')
+const libraryRequired = computed(() => role.value !== 'MEMBER' && role.value !== 'SUPER ADMIN')
 
 watch(
   () => props.user,
@@ -70,6 +75,16 @@ watch(
     />
 
     <Select
+      :obj="true"
+      name="library"
+      label="Library"
+      :validation="libraryRequired ? 'required' : ''"
+      :value="user?.library_id || user?.library || ''"
+      :options="libraries.map((library) => ({ label: library?.name, value: library?.id }))"
+      :attributes="{ placeholder: libraryRequired ? 'Select Library' : 'Select Library (optional)', required: libraryRequired }"
+    />
+
+    <Select
       v-model="role"
       name="role"
       label="Role"
@@ -78,7 +93,7 @@ watch(
         'MEMBER',
         'STACK STAFF',
         'TECHNICAL STAFF',
-        'FRONT_DESK STAFF',
+        'FRONT DESK STAFF',
         'ADMIN',
         'SUPER ADMIN'
       ]"

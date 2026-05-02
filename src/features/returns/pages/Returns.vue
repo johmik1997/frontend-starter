@@ -1,25 +1,30 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { openModal } from '@customizer/modal-x';
 import BaseIcon from '@/components/base/BaseIcon.vue';
 import Table from '@/components/Table.vue';
 import { useApiRequest } from '@/composables/useApiRequest';
 import { getAllBorrows } from '@/features/borrow/api/borrowApi';
+import { initializeFinePayment, verifyFinePayment } from '@/features/payment/api/paymentApi';
 import { createReturn, getAllReturns } from '../api/returnApi';
 import { emitEntityMutation, subscribeEntityMutation } from '@/utils/entitySync';
 import { secondDateFormatWithTime, toasted } from '@/utils/utils';
 import {
+  mdiCashMultiple,
+  mdiCheckCircleOutline,
+  mdiClockAlertOutline,
   mdiKeyboardReturn,
   mdiMagnify,
   mdiRefresh,
-  mdiClockAlertOutline,
-  mdiCheckCircleOutline,
-  mdiCashMultiple,
 } from '@mdi/js';
 
+const router = useRouter();
 const borrowReq = useApiRequest();
 const returnReq = useApiRequest();
 const createReq = useApiRequest();
+const paymentReq = useApiRequest();
+const verifyReq = useApiRequest();
 const searchQuery = ref('');
 let unsubscribeEntitySync = () => {};
 
@@ -51,6 +56,15 @@ function loadPage() {
 const borrows = computed(() => rowsFromPayload(borrowReq.response.value));
 const returns = computed(() => rowsFromPayload(returnReq.response.value));
 
+const settlementByBorrowId = computed(() =>
+  returns.value.reduce((state, row) => {
+    if (row?.borrow) {
+      state[row.borrow] = row;
+    }
+    return state;
+  }, {})
+);
+
 const activeBorrows = computed(() =>
   borrows.value.filter((row) => !row?.is_returned && ['BORROWED', 'OVERDUE'].includes(normalizeStatus(row?.status)))
 );
@@ -65,6 +79,7 @@ const filteredBorrows = computed(() => {
       row?.material_author,
       row?.member_name,
       row?.member_id,
+      row?.library_name,
       row?.status,
     ]
       .filter(Boolean)
@@ -72,37 +87,44 @@ const filteredBorrows = computed(() => {
   );
 });
 
-const recentReturns = computed(() =>
-  [...returns.value].sort((a, b) => new Date(b?.return_date || 0) - new Date(a?.return_date || 0)).slice(0, 8)
+const settlementRows = computed(() =>
+  [...returns.value]
+    .filter((row) => amount(row?.fine_amount) > 0)
+    .sort((a, b) => new Date(b?.return_date || 0) - new Date(a?.return_date || 0))
+);
+
+const pendingSettlementRows = computed(() =>
+  settlementRows.value.filter((row) => normalizeStatus(row?.payment_status) !== 'COMPLETED')
 );
 
 const stats = computed(() => ({
-  activeReturns: activeBorrows.value.length,
+  awaitingCheckIn: activeBorrows.value.length,
   overdue: activeBorrows.value.filter((row) => normalizeStatus(row?.status) === 'OVERDUE').length,
-  completedToday: returns.value.filter((row) => {
-    const returnDate = new Date(row?.return_date || 0);
-    const now = new Date();
-    return (
-      returnDate.getFullYear() === now.getFullYear() &&
-      returnDate.getMonth() === now.getMonth() &&
-      returnDate.getDate() === now.getDate()
-    );
-  }).length,
-  pendingFineTotal: returns.value.reduce((sum, row) => {
-    if (amount(row?.fine_amount) <= 0 || normalizeStatus(row?.payment_status) === 'COMPLETED') {
-      return sum;
-    }
-    return sum + amount(row?.fine_amount);
-  }, 0),
+  unpaidSettlements: pendingSettlementRows.value.length,
+  pendingFineTotal: pendingSettlementRows.value.reduce((sum, row) => sum + amount(row?.fine_amount), 0),
 }));
 
+function getReturnUrl() {
+  return `${window.location.origin}/returns`;
+}
+
+function openPayments(returnId = null) {
+  router.push({
+    path: '/fine-payments',
+    query: returnId ? { returnId: String(returnId) } : {},
+  });
+}
+
 function recordReturn(row) {
+  const isOverdue = normalizeStatus(row?.status) === 'OVERDUE';
+  const title = isOverdue ? 'Create Fine Settlement' : 'Complete Return';
+  const message = isOverdue
+    ? `This borrow is overdue. Create the fine settlement for "${row?.material_title || 'this material'}" so payment can be completed before the return is finalized?`
+    : `Complete the return for "${row?.material_title || 'this material'}"?`;
+
   openModal(
     'Confirmation',
-    {
-      title: 'Record Return',
-      message: `Record return for "${row?.material_title || 'this material'}"?`,
-    },
+    { title, message },
     (confirmed) => {
       if (!confirmed) return;
 
@@ -110,24 +132,80 @@ function recordReturn(row) {
         () => createReturn({ borrow: row?.id }),
         (res) => {
           if (!res?.success) {
-            toasted(false, 'Failed to record return', res?.error || 'Unknown error');
+            toasted(false, 'Failed to process return', res?.error || 'Unknown error');
             return;
           }
 
-          emitEntityMutation('returns', { action: 'created', id: res?.data?.id });
-          emitEntityMutation('borrows', { action: 'updated', id: row?.id, status: 'RETURNED' });
-          loadPage();
-
           const fineAmount = amount(res?.data?.fine_amount);
+          emitEntityMutation('returns', { action: 'created', id: res?.data?.id });
+
           if (fineAmount > 0) {
-            toasted(true, `Return recorded. Fine due: ETB ${fineAmount.toFixed(2)}`);
+            toasted(true, `Fine settlement created. ETB ${fineAmount.toFixed(2)} must be paid before the return closes.`);
+            openPayments(res?.data?.id);
           } else {
+            emitEntityMutation('borrows', { action: 'updated', id: row?.id, status: 'RETURNED' });
             toasted(true, 'Return recorded successfully');
           }
+
+          loadPage();
         }
       );
     }
   );
+}
+
+function startPayment(row) {
+  paymentReq.send(
+    () => initializeFinePayment({ return_id: row?.id, return_url: getReturnUrl() }),
+    (res) => {
+      if (!res?.success) {
+        toasted(false, 'Unable to start payment', res?.error || 'Unknown error');
+        return;
+      }
+
+      const checkoutUrl = res?.data?.checkout_url;
+      if (!checkoutUrl) {
+        toasted(false, 'Payment provider did not return a checkout link.');
+        return;
+      }
+
+      emitEntityMutation('payments', { action: 'initialized', tx_ref: res?.data?.payment?.transaction_reference });
+      window.location.href = checkoutUrl;
+    }
+  );
+}
+
+function verifyPayment(txRef) {
+  if (!txRef) return;
+
+  verifyReq.send(
+    () => verifyFinePayment(txRef),
+    (res) => {
+      if (!res?.success) {
+        toasted(false, 'Payment verification failed', res?.error || 'Unknown error');
+        return;
+      }
+
+      const status = normalizeStatus(res?.data?.payment?.status);
+      emitEntityMutation('payments', { action: 'verified', tx_ref: txRef, status });
+      emitEntityMutation('returns', { action: 'payment-updated', tx_ref: txRef, status });
+      loadPage();
+
+      if (status === 'COMPLETED') {
+        toasted(true, 'Payment verified successfully and return finalized');
+      } else {
+        toasted(false, 'Payment was not completed', `Current status: ${status || 'FAILED'}`);
+      }
+    }
+  );
+}
+
+function actionLabel(row) {
+  const settlement = settlementByBorrowId.value[row?.id];
+  if (settlement) {
+    return normalizeStatus(settlement?.payment_status) === 'COMPLETED' ? 'Settled' : 'Await payment';
+  }
+  return normalizeStatus(row?.status) === 'OVERDUE' ? 'Create fine' : 'Return';
 }
 
 onMounted(() => {
@@ -145,14 +223,14 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="p-4 sm:p-7 space-y-6">
+  <div class="space-y-6 p-4 sm:p-7">
     <section class="rounded-[28px] border border-slate-200 bg-[radial-gradient(circle_at_top_left,_rgba(14,165,233,0.22),_transparent_42%),linear-gradient(135deg,_#0f172a,_#1d4ed8_58%,_#93c5fd)] p-6 text-white shadow-xl">
       <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div class="max-w-2xl">
           <p class="text-xs font-semibold uppercase tracking-[0.32em] text-sky-100/80">Circulation Desk</p>
-          <h1 class="mt-3 text-3xl font-bold tracking-tight">Manage returns with live fine visibility.</h1>
+          <h1 class="mt-3 text-3xl font-bold tracking-tight">Process returns without losing the payment workflow.</h1>
           <p class="mt-3 text-sm text-slate-100/85">
-            Record returned materials, monitor overdue borrows, and immediately see which items generated fines.
+            Regular returns can close immediately. Overdue borrows create a fine settlement first, and the return only finishes after payment verification.
           </p>
         </div>
 
@@ -170,8 +248,8 @@ onBeforeUnmount(() => {
       <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-xs uppercase tracking-[0.22em] text-slate-400">Awaiting Return</p>
-            <p class="mt-2 text-3xl font-bold text-slate-900">{{ stats.activeReturns }}</p>
+            <p class="text-xs uppercase tracking-[0.22em] text-slate-400">Awaiting Check-in</p>
+            <p class="mt-2 text-3xl font-bold text-slate-900">{{ stats.awaitingCheckIn }}</p>
           </div>
           <div class="rounded-2xl bg-blue-50 p-3 text-blue-700">
             <BaseIcon :path="mdiKeyboardReturn" size="22" />
@@ -194,11 +272,11 @@ onBeforeUnmount(() => {
       <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-xs uppercase tracking-[0.22em] text-slate-400">Returned Today</p>
-            <p class="mt-2 text-3xl font-bold text-emerald-600">{{ stats.completedToday }}</p>
+            <p class="text-xs uppercase tracking-[0.22em] text-slate-400">Pending Settlements</p>
+            <p class="mt-2 text-3xl font-bold text-rose-600">{{ stats.unpaidSettlements }}</p>
           </div>
-          <div class="rounded-2xl bg-emerald-50 p-3 text-emerald-600">
-            <BaseIcon :path="mdiCheckCircleOutline" size="22" />
+          <div class="rounded-2xl bg-rose-50 p-3 text-rose-600">
+            <BaseIcon :path="mdiCashMultiple" size="22" />
           </div>
         </div>
       </div>
@@ -206,11 +284,11 @@ onBeforeUnmount(() => {
       <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-xs uppercase tracking-[0.22em] text-slate-400">Unpaid Fines</p>
-            <p class="mt-2 text-3xl font-bold text-rose-600">ETB {{ stats.pendingFineTotal.toFixed(2) }}</p>
+            <p class="text-xs uppercase tracking-[0.22em] text-slate-400">Outstanding Fine Total</p>
+            <p class="mt-2 text-3xl font-bold text-emerald-600">ETB {{ stats.pendingFineTotal.toFixed(2) }}</p>
           </div>
-          <div class="rounded-2xl bg-rose-50 p-3 text-rose-600">
-            <BaseIcon :path="mdiCashMultiple" size="22" />
+          <div class="rounded-2xl bg-emerald-50 p-3 text-emerald-600">
+            <BaseIcon :path="mdiCheckCircleOutline" size="22" />
           </div>
         </div>
       </div>
@@ -219,8 +297,8 @@ onBeforeUnmount(() => {
     <section class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
       <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h2 class="text-xl font-semibold text-slate-900">Pending returns</h2>
-          <p class="text-sm text-slate-500">Search and record the next returned item without reloading the page.</p>
+          <h2 class="text-xl font-semibold text-slate-900">Return queue</h2>
+          <p class="text-sm text-slate-500">Overdue rows create settlement records instead of instantly closing the return.</p>
         </div>
 
         <div class="relative w-full max-w-xl">
@@ -228,7 +306,7 @@ onBeforeUnmount(() => {
           <input
             v-model="searchQuery"
             type="text"
-            placeholder="Search by material, member, ID, or status..."
+            placeholder="Search by material, member, library, or status..."
             class="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm text-slate-700 outline-none transition focus:border-blue-300 focus:bg-white focus:ring-2 focus:ring-blue-100"
           />
         </div>
@@ -240,27 +318,39 @@ onBeforeUnmount(() => {
           :rows="filteredBorrows"
           :show-pagination="false"
           :headers="{
-            head: ['Material', 'Author', 'Member', 'Member ID', 'Due Date','fine_amount', 'Status', 'Actions'],
-            row: ['material_title', 'material_author', 'member_name', 'member_id', 'due_date', 'estimated_fine_amount', 'status'],
+            head: ['Material', 'Member', 'Library', 'Due Date', 'Borrow Status', 'Settlement', 'Actions'],
+            row: ['material_title', 'member_name', 'library_name', 'due_date', 'status', 'settlement_status'],
           }"
           :cells="{
+            library_name: (val) => val || '-',
             due_date: (val) => secondDateFormatWithTime(val) || '-',
-            estimated_fine_amount: (val) => `ETB ${val?.toFixed(2) || '0.00'}`,
+            settlement_status: (_, row) => settlementByBorrowId[row?.id]?.settlement_status || 'NOT STARTED',
           }"
         >
           <template #actions="{ row }">
-            <button
-              class="inline-flex items-center gap-1 rounded-full bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-              :disabled="createReq.pending.value"
-              @click="recordReturn(row)"
-            >
-              <BaseIcon :path="mdiKeyboardReturn" size="14" />
-              Return
-            </button>
+            <div class="flex flex-wrap items-center justify-end gap-2">
+              <template v-if="settlementByBorrowId[row?.id]">
+                <button
+                  class="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
+                  @click="openPayments(settlementByBorrowId[row?.id]?.id)"
+                >
+                  {{ actionLabel(row) }}
+                </button>
+              </template>
+              <button
+                v-else
+                class="inline-flex items-center gap-1 rounded-full bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                :disabled="createReq.pending.value"
+                @click="recordReturn(row)"
+              >
+                <BaseIcon :path="mdiKeyboardReturn" size="14" />
+                {{ actionLabel(row) }}
+              </button>
+            </div>
           </template>
           <template #placeholder>
             <div class="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-sm text-slate-500">
-              No active borrows are waiting to be returned.
+              No active borrows are waiting to be processed.
             </div>
           </template>
         </Table>
@@ -268,58 +358,50 @@ onBeforeUnmount(() => {
     </section>
 
     <section class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div class="flex items-center justify-between gap-3">
-        <div>
-          <h2 class="text-xl font-semibold text-slate-900">Recent return activity</h2>
-          <p class="text-sm text-slate-500">Fine totals and payment state are shown for each completed return.</p>
-        </div>
+      <div class="flex flex-col gap-2">
+        <h2 class="text-xl font-semibold text-slate-900">Outstanding fine settlements</h2>
+        <p class="text-sm text-slate-500">These returns stay incomplete until the overdue payment is verified.</p>
       </div>
 
-      <div class="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <article
-          v-for="row in recentReturns"
-          :key="row?.id || row?.uuid"
-          class="rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm"
+      <div class="mt-6">
+        <Table
+          :pending="returnReq.pending.value || paymentReq.pending.value || verifyReq.pending.value"
+          :rows="pendingSettlementRows"
+          :show-pagination="false"
+          :headers="{
+            head: ['Material', 'Member', 'Return Created', 'Fine Amount', 'Payment Status', 'Actions'],
+            row: ['material_title', 'member_name', 'return_date', 'fine_amount', 'payment_status'],
+          }"
+          :cells="{
+            return_date: (val) => secondDateFormatWithTime(val) || '-',
+            fine_amount: (val) => `ETB ${amount(val).toFixed(2)}`,
+          }"
         >
-          <div class="flex items-start justify-between gap-3">
-            <div>
-              <h3 class="text-sm font-semibold text-slate-900">{{ row?.material_title || 'Material' }}</h3>
-              <p class="mt-1 text-xs text-slate-500">{{ row?.member_name || 'Member' }}</p>
+          <template #actions="{ row }">
+            <div class="flex flex-wrap items-center justify-end gap-2">
+              <button
+                v-if="row?.payment_reference && row?.payment_status === 'PENDING'"
+                class="rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 transition hover:bg-amber-100"
+                @click="verifyPayment(row?.payment_reference)"
+              >
+                Verify
+              </button>
+              <button
+                class="rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                :disabled="paymentReq.pending.value"
+                @click="startPayment(row)"
+              >
+                Pay now
+              </button>
             </div>
-            <span
-              class="rounded-full px-2.5 py-1 text-[11px] font-semibold"
-              :class="
-                row?.payment_status === 'COMPLETED'
-                  ? 'bg-emerald-100 text-emerald-700'
-                  : amount(row?.fine_amount) > 0
-                    ? 'bg-amber-100 text-amber-700'
-                    : 'bg-slate-200 text-slate-700'
-              "
-            >
-              {{ amount(row?.fine_amount) > 0 ? row?.payment_status || 'UNPAID' : 'NO FINE' }}
-            </span>
-          </div>
-
-          <div class="mt-4 space-y-2 text-sm">
-            <div class="flex items-center justify-between text-slate-500">
-              <span>Returned</span>
-              <span class="font-medium text-slate-800">{{ secondDateFormatWithTime(row?.return_date) || '-' }}</span>
+          </template>
+          <template #placeholder>
+            <div class="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-sm text-slate-500">
+              No overdue settlements are waiting for payment.
             </div>
-            <div class="flex items-center justify-between text-slate-500">
-              <span>Fine</span>
-              <span class="font-semibold text-slate-900">ETB {{ amount(row?.fine_amount).toFixed(2) }}</span>
-            </div>
-          </div>
-        </article>
-
-        <div
-          v-if="!recentReturns.length && !returnReq.pending.value"
-          class="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-sm text-slate-500 md:col-span-2 xl:col-span-4"
-        >
-          No returns recorded yet.
-        </div>
+          </template>
+        </Table>
       </div>
     </section>
   </div>
 </template>
-

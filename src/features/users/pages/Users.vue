@@ -42,6 +42,8 @@ const roleOptions = [
   { value: 'ADMIN', label: 'Admin', icon: mdiShieldAccount, color: 'purple' },
   { value: 'SUPER ADMIN', label: 'Super Admin', icon: mdiShieldAccountVariant, color: 'red' },
   { value: 'TECHNICAL STAFF', label: 'Technical Staff', icon: mdiNaturePeople, color: 'green' },
+  { value: 'STACK STAFF', label: 'Stack Staff', icon: mdiAccountCheck, color: 'emerald' },
+  { value: 'FRONT DESK STAFF', label: 'Front Desk Staff', icon: mdiAccountCheck, color: 'teal' },
   { value: 'DEPARTMENT HEAD', label: 'Department Head', icon: mdiBagPersonalPlus, color: 'orange' }
 ];
 
@@ -306,6 +308,7 @@ function verifyUserCode(phone, code) {
           'ID Number',
           'Email',
           'Phone',
+          'Library',
           'Role',
           'Status',
           'Actions'
@@ -315,6 +318,7 @@ function verifyUserCode(phone, code) {
           'id_number',
           'email',
           'phone',
+          'library_name',
           'role',
           'status',
           'actions'
@@ -325,6 +329,7 @@ function verifyUserCode(phone, code) {
         id_number: (_, row) => row?.id_number || row?.memberId || row?.userId || '-',
         email: (_, row) => row?.email || '-',
         phone: (_, row) => row?.phone || row?.mobilePhone || '-',
+        library_name: (_, row) => row?.library_name || '-',
         role: (_, row) => row?.role || row?.roleName || '-',
         status: (_, row) => row?.status || row?.userStatus || '-'
       }" 

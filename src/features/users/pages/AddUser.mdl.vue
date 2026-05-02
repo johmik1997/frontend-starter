@@ -12,14 +12,16 @@ import { useUsers } from '../store/userStore';
 import { allRequest, toasted } from '@/utils/utils';
 import { useForm } from '@/components/new_form_builder/useForm';
 import { getAllRole } from '../../roles/Api/RoleApi';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { emitEntityMutation } from '@/utils/entitySync';
+import { getAllLibrary } from '@/features/library/api/libraryApi';
 
 const { submit } = useForm('addform');
 
 const user = useUsers();
 const req = useApiRequest();
 const rolereq = useApiRequest();
+const libraryReq = useApiRequest();
 const role = ref('');
 
 // Fetch roles
@@ -28,11 +30,15 @@ rolereq.send(() =>
     roles: getAllRole({ page: 1, limit: 500 }),
   })
 );
+libraryReq.send(() => getAllLibrary({ page: 1, size: 200 }));
+
+const libraryOptions = computed(() => libraryReq.response.value?.libraries || libraryReq.response.value?.results || libraryReq.response.value || []);
+const libraryRequired = computed(() => role.value !== 'MEMBER' && role.value !== 'SUPER ADMIN');
 
 // Submit handler
 function create({ values }) {
   if (values.role !== 'MEMBER') {
-    delete values.userType;
+    delete values.user_type;
     delete values.department;
   }
 
@@ -76,6 +82,18 @@ function create({ values }) {
         
         <Input name="phone" label="Mobile Phone" validation="required|phone" 
           :attributes="{ placeholder: 'Enter Mobile Phone' }" />
+
+        <Select
+          :obj="true"
+          name="library"
+          label="Library"
+          :validation="libraryRequired ? 'required' : ''"
+          :options="libraryOptions.map((library) => ({
+            label: library?.name,
+            value: library?.id,
+          }))"
+          :attributes="{ placeholder: libraryRequired ? 'Select Library' : 'Select Library (optional)', required: libraryRequired }"
+        />
        
              <Select v-model="role" name="role" label="Role" validation="required"
           :options="['MEMBER', 'STACK STAFF','TECHNICAL STAFF','FRONT DESK STAFF','ADMIN','SUPER ADMIN']"   

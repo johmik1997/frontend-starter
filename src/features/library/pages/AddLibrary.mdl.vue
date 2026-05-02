@@ -1,13 +1,11 @@
 <script setup>
-import { onMounted } from 'vue';
 import Button from '@/components/Button.vue';
 import Input from '@/components/new_form_elements/Input.vue';
-import Select from '@/components/new_form_elements/Select.vue';
 import Form from '@/components/new_form_builder/Form.vue';
 import NewFormParent from '../../roles/components/NewFormParent.vue';
 import { closeModal } from '@customizer/modal-x';
 import { useApiRequest } from '@/composables/useApiRequest';
-import { CreateLibrary, getAllAdminUsers } from '../api/libraryApi';
+import { CreateLibrary } from '../api/libraryApi';
 import { useLibrary } from '../store/libraryStore';
 import { toasted } from '@/utils/utils';
 import { useForm } from '@/components/new_form_builder/useForm';
@@ -15,13 +13,7 @@ import { emitEntityMutation } from '@/utils/entitySync';
 
 const libraryStore = useLibrary();
 const req = useApiRequest();
-const adminReq = useApiRequest();
 const { submit } = useForm('addform');
-
-// Fetch admins when component loads to fill the dropdown
-onMounted(() => {
-  adminReq.send(() => getAllAdminUsers());
-});
 
 // Submit handler
 function handleCreate({ values }) {
@@ -57,24 +49,6 @@ function handleCreate({ values }) {
         
         <Input name="phone" label="Contact Phone" validation="required|phone"
           :attributes="{ placeholder: 'Enter Phone Number' }" />
-          
-  <Select
-  :obj="true"
-  name="staff_id"
-  label="Assign Admin"
-  validation="required"
-  :options="(adminReq.response.value || []).map(user => ({
-    label: user.name,   // Display name only
-    value: user.staff_id      // Send id to backend
-  }))"
-  :attributes="{ 
-    placeholder: 'Select Admin User', 
-    required: true 
-  }"
-/>
-        <Select name="libraryStatus" label="Initial Status" validation="required"
-          :options="['ACTIVE', 'PENDING']"
-          :attributes="{ placeholder: 'Select Status' }" />
 
         <div class="col-span-full mt-6">
           <Button type="secondary" :pending="req.pending.value" @click.prevent="submit(handleCreate)" class="w-full">

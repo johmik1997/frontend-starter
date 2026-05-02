@@ -5,6 +5,12 @@ export default [
     component: () => import('@/features/library/pages/Library.vue'), 
     meta: { requiresAuth: true, roles: ['MEMBER', 'ADMIN', 'SUPER ADMIN'] } 
   },
+  {
+    path: '/library-policy',
+    name: 'LibraryPolicy',
+    component: () => import('@/features/library/pages/LibraryPolicy.vue'),
+    meta: { requiresAuth: true, roles: ['ADMIN', 'SUPER ADMIN'] }
+  },
   { 
     path: '/libraryForm', 
     name: 'Library Form', 
