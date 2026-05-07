@@ -1,3 +1,4 @@
+
 <script setup>
 import { RouterLink, RouterView } from 'vue-router'
 import Chatbot from '@/components/Chatbot.vue'

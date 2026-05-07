@@ -1,17 +1,335 @@
+<template>
+  <div class="materials-container">
+    <!-- Hero Banner -->
+    <section class="dashboard-hero">
+      <div class="hero-content">
+        <div class="hero-text">
+          <h1 class="hero-title">
+            <BaseIcon :path="mdiBook" size="28" class="hero-icon" />
+            Library Materials
+          </h1>
+          <p class="hero-subtitle">Manage physical and digital materials in your collection</p>
+        </div>
+
+        <div class="hero-actions">
+          <div class="type-toggle">
+            <button
+              class="toggle-btn"
+              :class="activeType === 'physical' ? 'toggle-active' : 'toggle-inactive'"
+              @click="activeType = 'physical'"
+            >
+              Physical
+            </button>
+            <button
+              class="toggle-btn"
+              :class="activeType === 'digital' ? 'toggle-active' : 'toggle-inactive'"
+              @click="activeType = 'digital'"
+            >
+              Digital
+            </button>
+          </div>
+
+          <button @click="openCreateModal" class="btn-primary">
+            <span>{{ addButtonLabel }}</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+      <div class="stat-card tone-blue">
+        <div class="stat-card-content">
+          <div class="stat-info">
+            <p class="stat-label">Total Materials</p>
+            <p class="stat-value">{{ headerStats.total }}</p>
+            <p class="stat-description">{{ activeType }} materials in library</p>
+          </div>
+          <div class="stat-icon-wrapper icon-tone-blue">
+            <BaseIcon :path="mdiBookshelf" size="24" />
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card tone-green">
+        <div class="stat-card-content">
+          <div class="stat-info">
+            <p class="stat-label">Available</p>
+            <p class="stat-value">{{ headerStats.available }}</p>
+            <p class="stat-description">Ready for borrowing</p>
+          </div>
+          <div class="stat-icon-wrapper icon-tone-green">
+            <BaseIcon :path="mdiCheckCircle" size="24" />
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card tone-amber">
+        <div class="stat-card-content">
+          <div class="stat-info">
+            <p class="stat-label">Currently Borrowed</p>
+            <p class="stat-value">{{ headerStats.borrowed }}</p>
+            <p class="stat-description">Materials in circulation</p>
+          </div>
+          <div class="stat-icon-wrapper icon-tone-amber">
+            <BaseIcon :path="mdiClockOutline" size="24" />
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card tone-violet">
+        <div class="stat-card-content">
+          <div class="stat-info">
+            <p class="stat-label">Categories</p>
+            <p class="stat-value">{{ headerStats.categories }}</p>
+            <p class="stat-description">Unique material categories</p>
+          </div>
+          <div class="stat-icon-wrapper icon-tone-violet">
+            <BaseIcon :path="mdiViewDashboard" size="24" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search & Filter Panel -->
+    <div class="dashboard-panel">
+      <header class="panel-header">
+        <div class="panel-header-content">
+          <h2 class="panel-title">Search & Filters</h2>
+          <p class="panel-subtitle">Find materials by title, author, category, or condition</p>
+        </div>
+      </header>
+      <div class="panel-body">
+        <div class="filters-grid">
+          <div class="search-wrapper">
+            <BaseIcon :path="mdiMagnify" size="18" class="search-icon" />
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="Search by title, author, category, or ISBN..."
+              class="search-input"
+            />
+            <button v-if="searchQuery" @click="clearSearch" class="clear-btn">
+              <BaseIcon :path="mdiClose" size="16" />
+            </button>
+          </div>
+
+          <div class="filter-selects">
+            <select v-model="selectedCategory" class="filter-select">
+              <option value="">All Categories</option>
+              <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+            </select>
+
+            <select v-if="!isDigital" v-model="selectedCondition" class="filter-select">
+              <option value="">All Conditions</option>
+              <option v-for="cond in conditions" :key="cond" :value="cond">{{ cond }}</option>
+            </select>
+          </div>
+
+          <div class="view-toggle">
+            <button
+              class="view-btn"
+              :class="viewMode === 'grid' ? 'view-active' : 'view-inactive'"
+              @click="viewMode = 'grid'"
+            >
+              <BaseIcon :path="mdiViewDashboard" size="18" />
+              Grid
+            </button>
+            <button
+              class="view-btn"
+              :class="viewMode === 'table' ? 'view-active' : 'view-inactive'"
+              @click="viewMode = 'table'"
+            >
+              <BaseIcon :path="mdiFormatListBulleted" size="18" />
+              Table
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Grid View -->
+    <div v-if="viewMode === 'grid'" class="materials-grid">
+      <div
+        v-for="row in filteredRows"
+        :key="row.id"
+        class="material-card"
+      >
+        <div class="material-card-image" @click="openDetail(row)">
+          <img
+            :src="row?.cover_image || row?.image || row?.thumbnail || defaultCover"
+            :alt="row?.title || 'Material cover'"
+            @error="onImageError"
+          />
+          <div class="material-card-badges">
+            <span class="badge-type">{{ activeType }}</span>
+            <span v-if="!isDigital" class="badge-stock" :class="stockTone(row)">
+              {{ getStock(row) > 0 ? `${getStock(row)} in stock` : 'Unavailable' }}
+            </span>
+            <span v-else class="badge-stock badge-digital">
+              {{ row?.format || 'Digital' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="material-card-content">
+          <p class="material-library">{{ row?.library_name || 'Library collection' }}</p>
+          <button class="material-title" @click="openDetail(row)">
+            {{ row?.title || 'Untitled' }}
+          </button>
+          <p class="material-author">{{ row?.author || '-' }}</p>
+
+          <div class="material-stats">
+            <div class="stat-item">
+              <p class="stat-label">Category</p>
+              <p class="stat-value">{{ row?.category || row?.genre || '-' }}</p>
+            </div>
+            <div class="stat-item">
+              <p class="stat-label">Rating</p>
+              <p class="stat-value rating">
+                <BaseIcon :path="mdiStar" size="12" />
+                {{ getRating(row) || 'N/A' }}
+              </p>
+            </div>
+            <div class="stat-item">
+              <p class="stat-label">{{ isDigital ? 'Format' : 'Condition' }}</p>
+              <p class="stat-value">{{ isDigital ? (row?.format || 'Digital') : (row?.condition || 'Good') }}</p>
+            </div>
+            <div class="stat-item">
+              <p class="stat-label">{{ isDigital ? 'Size' : 'Stock' }}</p>
+              <p class="stat-value">{{ isDigital ? (row?.file_size || '-') : getStock(row) }}</p>
+            </div>
+          </div>
+
+          <div class="material-actions">
+            <button class="action-btn-details" @click="openDetail(row)">
+              Details
+            </button>
+            <template v-if="canManageMaterial">
+              <button class="action-btn-edit" @click="router.push('/edit_material/' + row.id + '?type=' + activeType)">
+                Edit
+              </button>
+              <button class="action-btn-delete" @click="remove(row.id)">
+                Delete
+              </button>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="!pagination.pending.value && filteredRows.length === 0" class="empty-state">
+        No materials found for the selected filters.
+      </div>
+    </div>
+
+    <!-- Table View -->
+    <div v-else class="table-view">
+      <div class="dashboard-panel">
+        <header class="panel-header">
+          <div class="panel-header-content">
+            <h2 class="panel-title">Materials List</h2>
+            <p class="panel-subtitle">Complete catalog with all details</p>
+          </div>
+        </header>
+        <div class="panel-body no-padding">
+          <Table
+            :headers="{
+              head: ['Title', 'Author', 'Category', 'ISBN', 'Stock', 'Price', 'Condition', 'Actions'],
+              row: ['title', 'author', 'category', 'isbn', 'stock', 'price', 'condition']
+            }"
+            :cells="{
+              category: (_,row)=> row?.category || row?.genre || '-',
+              isbn: (_,row)=> row?.isbn || 'N/A',
+              stock: (_,row)=> `${getStock(row)}`,
+              price: (_,row)=> row?.price ? `$${row.price}` : 'Free',
+              condition: (_,row)=> row?.condition || 'Good'
+            }"
+            :rows="filteredRows"
+            :pending="pagination.pending.value"
+            :pagination="pagination.meta.value"
+            @next-page="pagination.next"
+            @prev-page="pagination.previous"
+            @page-change="pagination.goToPage"
+            @page-size-change="pagination.setPerPage"
+          >
+            <template #actions="{ row }">
+              <div class="table-actions">
+                <button class="table-btn-view" @click="openDetail(row)">
+                  <BaseIcon :path="mdiEyeOutline" size="18"/>
+                </button>
+                <template v-if="canManageMaterial">
+                  <button class="table-btn-edit" @click="router.push('/edit_material/' + row.id + '?type=' + activeType)">
+                    <BaseIcon :path="mdiPencil" size="18"/>
+                  </button>
+                  <button class="table-btn-delete" @click="remove(row.id)">
+                    <BaseIcon :path="mdiDeleteAlert" size="18"/>
+                  </button>
+                </template>
+              </div>
+            </template>
+          </Table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination for Grid View -->
+    <div v-if="viewMode === 'grid'" class="pagination-wrapper">
+      <div class="dashboard-panel">
+        <div class="panel-body">
+          <div class="pagination-content">
+            <div class="pagination-info">
+              Page {{ pagination.meta.value.page || 1 }} of {{ pagination.meta.value.totalPages || 1 }}
+              <span class="pagination-total">({{ pagination.meta.value.totalElements || 0 }} total)</span>
+            </div>
+
+            <div class="pagination-controls">
+              <select :value="pagination.meta.value.size" class="per-page-select" @change="pagination.setPerPage(Number($event.target.value))">
+                <option :value="5">5 / page</option>
+                <option :value="10">10 / page</option>
+                <option :value="20">20 / page</option>
+                <option :value="50">50 / page</option>
+              </select>
+
+              <button class="page-btn" :disabled="(pagination.meta.value.page || 1) <= 1" @click="pagination.previous">
+                Previous
+              </button>
+              <button class="page-btn" :disabled="(pagination.meta.value.page || 1) >= (pagination.meta.value.totalPages || 1)" @click="pagination.next">
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import Table from '@/components/Table.vue'
 import { useMaterials } from '../store/materialStore'
 import { useApiRequest } from '@/composables/useApiRequest'
-import { getAllMaterials, getMaterialById, removeMaterialById } from '../api/materialApi'
+import { getAllMaterials, removeMaterialById } from '../api/materialApi'
 import { normalizeRoleValue } from '@/utils/authNavigation'
 import { toasted } from '@/utils/utils'
 import { openModal } from '@customizer/modal-x'
 import BaseIcon from '@/components/base/BaseIcon.vue'
-import { mdiPencil, mdiDeleteAlert, mdiBook, mdiMagnify, mdiClose, mdiEyeOutline, mdiStar } from '@mdi/js'
+import { 
+  mdiPencil, 
+  mdiDeleteAlert, 
+  mdiBook, 
+  mdiMagnify, 
+  mdiClose, 
+  mdiEyeOutline, 
+  mdiStar,
+  mdiBookshelf,
+  mdiCheckCircle,
+  mdiClockOutline,
+  mdiViewDashboard,
+  mdiFormatListBulleted
+} from '@mdi/js'
 import { usePaginations } from '@/composables/usePaginationTemp'
-import BorrowHeader from '@/features/borrow/components/BorrowHeader.vue'
 import defaultCover from '@/assets/default-coverpage.png'
 import { emitEntityMutation, subscribeEntityMutation } from '@/utils/entitySync'
 
@@ -23,20 +341,13 @@ const searchQuery = ref('')
 const selectedCategory = ref('')
 const selectedCondition = ref('')
 
-// pagination (same as library)
 const pagination = usePaginations({
   store: materialStore,
   cb: (query) => getAllMaterials(query, activeType.value),
 })
 
 const removeReq = useApiRequest()
-const detailModalReq = useApiRequest()
-const selectedMaterial = ref(null)
-const detailModalVisible = ref(false)
 let unsubscribeEntitySync = () => {}
-const toggleClass = (type) => activeType.value === type
-  ? 'bg-primary text-white shadow-sm'
-  : 'bg-transparent text-gray-700 hover:bg-gray-100'
 
 const addButtonLabel = computed(() =>
   activeType.value === 'digital' ? 'Add Digital Material' : 'Add Physical Material'
@@ -99,6 +410,16 @@ const headerStats = computed(() => {
   }
 })
 
+const isDigital = computed(() => activeType.value === 'digital')
+
+const userRole = computed(() => {
+  const stored = JSON.parse(localStorage.getItem('userDetail') || '{}')
+  const user = stored?.user || stored || {}
+  return normalizeRoleValue(user?.roleName || user?.role || user?.userRole)
+})
+
+const canManageMaterial = computed(() => !['MEMBER', 'STACK STAFF'].includes(userRole.value))
+
 watch(activeType, () => {
   materialStore.setCreateType(activeType.value)
   searchQuery.value = ''
@@ -125,85 +446,6 @@ function getMaterialId(row) {
   return row?.id || row?.uuid || row?.materialUuid
 }
 
-function extractRow(payload) {
-  if (!payload) return null
-  if (Array.isArray(payload)) return payload[0] || null
-  if (Array.isArray(payload?.content)) return payload.content[0] || null
-  if (Array.isArray(payload?.data)) return payload.data[0] || null
-  if (Array.isArray(payload?.results)) return payload.results[0] || null
-  return payload
-}
-
-const detailModalMaterial = computed(() => extractRow(detailModalReq.response.value) || selectedMaterial.value)
-
-const isDigital = computed(() => activeType.value === 'digital');
-
-const userRole = computed(() => {
-  const stored = JSON.parse(localStorage.getItem('userDetail') || '{}');
-  const user = stored?.user || stored || {};
-  return normalizeRoleValue(user?.roleName || user?.role || user?.userRole);
-});
-
-const canManageMaterial = computed(() => !['MEMBER', 'STACK STAFF'].includes(userRole.value));
-
-const detailModalStats = computed(() => {
-  const stats = [
-    {
-      label: 'Type',
-      value: activeType.value,
-    },
-    {
-      label: 'Library',
-      value: detailModalMaterial.value?.library_name || 'Catalog',
-    },
-  ];
-
-  if (!isDigital.value) {
-    stats.unshift(
-      {
-        label: 'Available copies',
-        value: Number(detailModalMaterial.value?.available_copies || detailModalMaterial.value?.copy_number || 0),
-      },
-      {
-        label: 'Total copies',
-        value: Number(detailModalMaterial.value?.total_copies || detailModalMaterial.value?.available_copies || detailModalMaterial.value?.copy_number || 0),
-      }
-    );
-  }
-
-  return stats;
-});
-
-function openDetail(row) {
-  const id = getMaterialId(row)
-  if (!id) return
-
-  const stored = JSON.parse(localStorage.getItem('userDetail') || '{}')
-  const user = stored?.user || stored
-  const role = normalizeRoleValue(user?.roleName || user?.role || user?.userRole)
-
-  if (role === 'MEMBER') {
-    router.push({
-      path: `/material/${id}`,
-      query: { type: activeType.value },
-    })
-    return
-  }
-
-  selectedMaterial.value = row
-  detailModalVisible.value = true
-  detailModalReq.send(
-    () => getMaterialById(id, activeType.value),
-    (res) => {
-      if (!res?.success) {
-        toasted(false, 'Failed to load material details')
-        detailModalVisible.value = false
-      }
-    },
-    true
-  )
-}
-
 function getStock(row) {
   return Number(row?.available_copies ?? row?.copy_number ?? 0)
 }
@@ -214,10 +456,10 @@ function getRating(row) {
 }
 
 function stockTone(row) {
-  const stock = getStock(row);
-  if (stock > 3) return 'bg-emerald-100 text-emerald-700';
-  if (stock > 0) return 'bg-amber-100 text-amber-700';
-  return 'bg-rose-100 text-rose-700';
+  const stock = getStock(row)
+  if (stock > 3) return 'bg-emerald-100 text-emerald-700'
+  if (stock > 0) return 'bg-amber-100 text-amber-700'
+  return 'bg-rose-100 text-rose-700'
 }
 
 function onImageError(event) {
@@ -227,6 +469,16 @@ function onImageError(event) {
 function openCreateModal() {
   materialStore.setCreateType(activeType.value)
   openModal('AddMaterial')
+}
+
+function openDetail(row) {
+  const id = getMaterialId(row)
+  if (id) {
+    router.push({
+      path: `/material/${id}`,
+      query: { type: activeType.value },
+    })
+  }
 }
 
 function remove(id) {
@@ -256,391 +508,898 @@ function remove(id) {
 }
 </script>
 
-<template>
-  <div class="p-4 sm:p-7">
-    <div class="mb-6">
-      <BorrowHeader :stats="headerStats" v-model:viewMode="viewMode" />
-    </div>
+<style scoped>
+/* Copy all the styles from the previous version - keep everything except modal styles */
+/* Container */
+.materials-container {
+  min-height: 100vh;
+  padding: 1rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  transition: background 0.3s ease;
+}
 
-   <div class="mb-6 bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-  <div class="flex flex-col lg:flex-row justify-between lg:items-center gap-4">
-    <div>
-      <h1 class="text-2xl font-bold flex items-center gap-2">
-        <BaseIcon :path="mdiBook" size="28" />
-        Library Materials
-      </h1>
-      <p class="text-sm text-gray-500 mt-1">Manage physical and digital materials in one place</p>
-    </div>
+.dark .materials-container {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+}
 
-    <div class="flex items-center gap-3 w-full lg:w-auto">
-      <div class="p-1 rounded-lg bg-gray-100 flex">
-        <button
-          class="px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
-          :class="toggleClass('physical')"
-          @click="activeType = 'physical'"
-        >
-          Physical
-        </button>
-        <button
-          class="px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
-          :class="toggleClass('digital')"
-          @click="activeType = 'digital'"
-        >
-          Digital
-        </button>
-      </div>
+@media (min-width: 640px) {
+  .materials-container {
+    padding: 1.5rem;
+  }
+}
 
-      <button
-        @click="openCreateModal"
-        class="bg-primary text-white px-6 py-2.5 rounded-lg flex items-center gap-2 hover:bg-primary/90 transition-colors shadow-sm"
-      >
-        <span>{{ addButtonLabel }}</span>
-      </button>
-    </div>
-  </div>
+/* Hero Banner */
+.dashboard-hero {
+  border-radius: 1.5rem;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(239, 68, 68, 0.1));
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.1);
+}
 
-  <div class="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
-    <div class="md:col-span-3 relative">
-      <BaseIcon 
-        :path="mdiMagnify" 
-        size="18" 
-        class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" 
-      />
-      <input
-        v-model="searchQuery"
-        type="text"
-        placeholder="Search by title, author, category, or ISBN..."
-        class="w-full pl-10 pr-10 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400"
-      />
-    </div>
+.dark .dashboard-hero {
+  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.3);
+}
 
-    <div class="md:col-span-1">
-      <select
-        v-model="selectedCategory"
-        class="w-full px-3 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-400"
-      >
-        <option value="">All Categories</option>
-        <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
-      </select>
-    </div>
-  </div>
-</div>
+@media (min-width: 768px) {
+  .dashboard-hero {
+    padding: 2rem;
+  }
+}
 
-    <div v-if="viewMode === 'grid'" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-      <div
-        v-for="row in filteredRows"
-        :key="row.id"
-        class="group overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-xl"
-      >
-        <div class="relative h-52 overflow-hidden bg-slate-100">
-          <img
-            :src="row?.cover_image || row?.image || row?.thumbnail || defaultCover"
-            :alt="row?.title || 'Material cover'"
-            class="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-            @error="onImageError"
-          />
-          <div class="absolute inset-x-0 top-0 flex items-start justify-between p-4">
-            <span class="rounded-full bg-slate-950/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white">
-              {{ activeType }}
-            </span>
-            <span v-if="!isDigital" class="rounded-full px-3 py-1 text-[11px] font-semibold" :class="stockTone(row)">
-              {{ getStock(row) > 0 ? `${getStock(row)} in stock` : 'Unavailable' }}
-            </span>
-            <span v-else class="rounded-full bg-slate-700/80 px-3 py-1 text-[11px] font-semibold text-white">
-              {{ row?.format || 'Digital' }}
-            </span>
-          </div>
-        </div>
-        <div class="space-y-4 p-5">
-          <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">{{ row?.library_name || 'Library collection' }}</p>
-            <button class="mt-2 line-clamp-2 text-left text-lg font-semibold text-slate-900 transition hover:text-primary" @click="openDetail(row)">
-            {{ row?.title || 'Untitled' }}
-            </button>
-            <p class="mt-1 line-clamp-1 text-sm text-slate-500">{{ row?.author || '-' }}</p>
-          </div>
-          <div class="grid grid-cols-2 gap-3 text-xs">
-            <div class="rounded-2xl bg-slate-50 p-3">
-              <p class="text-slate-500">Category</p>
-              <p class="mt-1 font-medium text-slate-800 line-clamp-1">{{ row?.category || row?.genre || '-' }}</p>
-            </div>
-            <div class="rounded-2xl bg-slate-50 p-3">
-              <p class="text-slate-500">Rating</p>
-              <p class="mt-1 font-medium text-slate-800 inline-flex items-center gap-1">
-                <BaseIcon :path="mdiStar" size="14" class="text-amber-500" />
-                {{ getRating(row) || 'N/A' }}
-              </p>
-            </div>
-            <div class="rounded-2xl bg-slate-50 p-3">
-              <p class="text-slate-500">Condition</p>
-              <p class="mt-1 font-medium text-slate-800">{{ row?.condition || (activeType.value === 'digital' ? row?.format || 'DIGITAL' : 'Good') }}</p>
-            </div>
-            <div class="rounded-2xl bg-slate-50 p-3">
-              <p class="text-slate-500">{{ isDigital ? 'Format' : 'Stock' }}</p>
-              <p class="mt-1 font-medium text-slate-800">{{ isDigital ? (row?.format || 'Digital') : getStock(row) }}</p>
-            </div>
-          </div>
-          <div class="flex flex-col gap-2 sm:flex-row">
-            <button
-              class="flex-1 rounded-2xl bg-slate-100 px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-900 hover:text-white"
-              @click="openDetail(row)"
-            >
-              Details
-            </button>
-            <template v-if="canManageMaterial">
-              <button
-                class="flex-1 rounded-2xl bg-blue-50 px-3 py-2.5 text-sm font-medium text-blue-700 transition hover:bg-blue-600 hover:text-white"
-                @click="$router.push('/edit_material/' + row.id + '?type=' + activeType)"
-              >
-                Edit
-              </button>
-              <button
-                class="flex-1 rounded-2xl bg-rose-50 px-3 py-2.5 text-sm font-medium text-rose-700 transition hover:bg-rose-600 hover:text-white"
-                @click="remove(row.id)"
-              >
-                Delete
-              </button>
-            </template>
-          </div>
-        </div>
-      </div>
-      <div
-        v-if="!pagination.pending.value && filteredRows.length === 0"
-        class="col-span-full bg-amber-50 border border-amber-200 rounded-xl p-6 text-center text-amber-800 text-sm"
-      >
-        No materials found for the selected filters.
-      </div>
-    </div>
+.hero-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
 
-    <div v-if="viewMode === 'grid'" class="mt-4 bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div class="text-sm text-gray-600">
-          Page {{ pagination.meta.value.page || 1 }} of {{ pagination.meta.value.totalPages || 1 }}
-          <span class="text-gray-400">
-            ({{ pagination.meta.value.totalElements || 0 }} total)
-          </span>
-        </div>
+@media (min-width: 1024px) {
+  .hero-content {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
 
-        <div class="flex items-center gap-2">
-          <select
-            :value="pagination.meta.value.size"
-            class="px-2 py-1.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-200"
-            @change="pagination.setPerPage(Number($event.target.value))"
-          >
-            <option :value="5">5 / page</option>
-            <option :value="10">10 / page</option>
-            <option :value="20">20 / page</option>
-            <option :value="50">50 / page</option>
-          </select>
+.hero-text {
+  flex: 1;
+}
 
-          <button
-            class="px-3 py-1.5 rounded-lg border text-sm font-medium"
-            :class="(pagination.meta.value.page || 1) <= 1 ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'"
-            :disabled="(pagination.meta.value.page || 1) <= 1"
-            @click="pagination.previous"
-          >
-            Previous
-          </button>
-          <button
-            class="px-3 py-1.5 rounded-lg border text-sm font-medium"
-            :class="(pagination.meta.value.page || 1) >= (pagination.meta.value.totalPages || 1) ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'"
-            :disabled="(pagination.meta.value.page || 1) >= (pagination.meta.value.totalPages || 1)"
-            @click="pagination.next"
-          >
-            Next
-          </button>
-        </div>
-      </div>
-    </div>
+.hero-icon {
+  display: inline-block;
+  margin-right: 0.5rem;
+}
 
-    <div v-else class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-      <Table
-        :headers="{
-          head: [
-            'Title',
-            'Author',
-            'Category',
-            'ISBN',
-            'Stock',
-            'Price',
-            'Condition',
-            'Actions'
-          ],
-          row: [
-            'title',
-            'author',
-            'category',
-            'isbn',
-            'stock',
-            'price',
-            'condition'
-          ]
-        }"
-        :cells="{
-          category: (_,row)=> row?.category || row?.genre || '-',
-          isbn: (_,row)=> row?.isbn || 'N/A',
-          stock: (_,row)=> `${getStock(row)}`,
-          price: (_,row)=> row?.price ? `$${row.price}` : 'Free',
-          condition: (_,row)=> row?.condition || 'Good'
-        }"
-        :rows="filteredRows"
-        :pending="pagination.pending.value"
-        :pagination="pagination.meta.value"
-        @next-page="pagination.next"
-        @prev-page="pagination.previous"
-        @page-change="pagination.goToPage"
-        @page-size-change="pagination.setPerPage"
-      >
-        <template #actions="{ row }">
-          <div class="flex gap-2 justify-center">
-            <button
-              class="bg-gray-50 text-gray-700 hover:bg-gray-700 hover:text-white p-2 rounded"
-              @click="openDetail(row)"
-            >
-              <BaseIcon :path="mdiEyeOutline" size="18"/>
-            </button>
-              <template v-if="canManageMaterial">
-              <button
-                class="bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white p-2 rounded"
-                @click="$router.push('/edit_material/' + row.id + '?type=' + activeType)"
-              >
-                <BaseIcon :path="mdiPencil" size="18"/>
-              </button>
-              <button
-                class="bg-red-50 text-red-600 hover:bg-red-600 hover:text-white p-2 rounded"
-                @click="remove(row.id)"
-              >
-                <BaseIcon :path="mdiDeleteAlert" size="18"/>
-              </button>
-            </template>
-          </div>
-        </template>
-      </Table>
-    </div>
+.hero-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
 
-    <div
-      v-if="detailModalVisible"
-      class="fixed inset-0 z-50 overflow-auto bg-slate-950/60 p-4 backdrop-blur-sm"
-      @click.self="detailModalVisible = false"
-    >
-      <div class="mx-auto w-full max-w-6xl overflow-hidden rounded-[30px] bg-white shadow-2xl ring-1 ring-slate-900/10">
-        <div class="flex flex-col gap-4 border-b border-slate-200 bg-slate-50 p-5 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 class="text-xl font-semibold text-slate-900">Material quick view</h2>
-            <p class="text-sm text-slate-600">Preview material information without leaving this page.</p>
-          </div>
-          <button
-            class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-100"
-            @click="detailModalVisible = false"
-          >
-            <BaseIcon :path="mdiClose" size="20" />
-          </button>
-        </div>
+.dark .hero-title {
+  background: linear-gradient(135deg, #fbbf24, #f87171);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
 
-        <div class="space-y-6 p-5">
-          <div v-if="detailModalReq.pending.value" class="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
-            Loading material details...
-          </div>
+@media (min-width: 640px) {
+  .hero-title {
+    font-size: 2rem;
+  }
+}
 
-          <div v-else-if="!detailModalMaterial" class="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-800">
-            Material detail is not available.
-          </div>
+.hero-subtitle {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: #475569;
+}
 
-          <template v-else>
-            <section class="overflow-hidden rounded-[30px] border border-slate-200 bg-[radial-gradient(circle_at_top_left,_rgba(14,165,233,0.24),_transparent_28%),linear-gradient(150deg,_#0f172a,_#111827_46%,_#1d4ed8)] shadow-xl">
-              <div class="grid grid-cols-1 gap-0 lg:grid-cols-[320px_1fr]">
-                <div class="border-b border-white/10 bg-black/10 p-6 lg:border-b-0 lg:border-r">
-                  <div class="aspect-[3/4] overflow-hidden rounded-[28px] bg-slate-900/30 shadow-2xl">
-                    <img
-                      :src="detailModalMaterial?.cover_image || detailModalMaterial?.image || detailModalMaterial?.thumbnail || defaultCover"
-                      :alt="detailModalMaterial?.title || 'Material cover'"
-                      class="h-full w-full object-cover"
-                      @error="onImageError"
-                    />
-                  </div>
-                </div>
+.dark .hero-subtitle {
+  color: #94a3b8;
+}
 
-                <div class="p-6 text-white">
-                  <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                    <div class="max-w-3xl">
-                      <div class="flex flex-wrap gap-2">
-                        <span class="rounded-full bg-white/12 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-sky-100">
-                          {{ activeType }}
-                        </span>
-                        <span
-                          class="rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em]"
-                          :class="Number(detailModalMaterial?.available_copies || detailModalMaterial?.copy_number || 0) > 0 ? 'bg-emerald-400/15 text-emerald-100' : 'bg-rose-400/15 text-rose-100'"
-                        >
-                          {{ Number(detailModalMaterial?.available_copies || detailModalMaterial?.copy_number || 0) > 0 ? 'Available now' : 'Waitlist only' }}
-                        </span>
-                        <span v-if="detailModalMaterial?.library_name" class="rounded-full bg-white/12 px-3 py-1 text-xs font-semibold text-slate-100">
-                          {{ detailModalMaterial?.library_name }}
-                        </span>
-                      </div>
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
 
-                      <h1 class="mt-4 text-3xl font-bold tracking-tight">{{ detailModalMaterial?.title || 'Untitled' }}</h1>
-                      <p class="mt-3 flex items-center gap-2 text-sm text-slate-200/90">
-                        <BaseIcon :path="mdiAccount" size="16" />
-                        {{ detailModalMaterial?.author || '-' }}
-                      </p>
-                    </div>
-                  </div>
+/* Type Toggle */
+.type-toggle {
+  padding: 0.25rem;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(203, 213, 225, 0.5);
+  display: flex;
+}
 
-                  <div class="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                    <div
-                      v-for="card in detailModalStats"
-                      :key="card.label"
-                      class="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur"
-                    >
-                      <p class="text-xs uppercase tracking-[0.22em] text-slate-200/70">{{ card.label }}</p>
-                      <p class="mt-2 text-2xl font-bold">{{ card.value }}</p>
-                    </div>
-                  </div>
+.dark .type-toggle {
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(51, 65, 85, 0.5);
+}
 
-                  <div class="mt-6 grid grid-cols-1 gap-3 text-sm text-slate-100/90 md:grid-cols-2 xl:grid-cols-3">
-                    <div class="rounded-2xl border border-white/10 bg-white/8 p-4">
-                      <p class="flex items-center gap-2 text-slate-200/70"><BaseIcon :path="mdiTag" size="16" /> Category</p>
-                      <p class="mt-2 font-semibold">{{ detailModalMaterial?.category || detailModalMaterial?.genre || '-' }}</p>
-                    </div>
-                    <div class="rounded-2xl border border-white/10 bg-white/8 p-4">
-                      <p class="flex items-center gap-2 text-slate-200/70"><BaseIcon :path="mdiSchoolOutline" size="16" /> Department</p>
-                      <p class="mt-2 font-semibold">{{ detailModalMaterial?.department || '-' }}</p>
-                    </div>
-                    <div class="rounded-2xl border border-white/10 bg-white/8 p-4">
-                      <p class="flex items-center gap-2 text-slate-200/70"><BaseIcon :path="mdiTranslate" size="16" /> Language</p>
-                      <p class="mt-2 font-semibold">{{ detailModalMaterial?.language || '-' }}</p>
-                    </div>
-                    <div class="rounded-2xl border border-white/10 bg-white/8 p-4">
-                      <p class="flex items-center gap-2 text-slate-200/70"><BaseIcon :path="mdiBarcode" size="16" /> ISBN</p>
-                      <p class="mt-2 font-semibold">{{ detailModalMaterial?.isbn || 'N/A' }}</p>
-                    </div>
-                    <div v-if="!isDigital" class="rounded-2xl border border-white/10 bg-white/8 p-4">
-                      <p class="flex items-center gap-2 text-slate-200/70"><BaseIcon :path="mdiPackageVariantClosed" size="16" /> Stock</p>
-                      <p class="mt-2 font-semibold">{{ Number(detailModalMaterial?.available_copies || detailModalMaterial?.copy_number || 0) }}/{{ Number(detailModalMaterial?.total_copies || detailModalMaterial?.available_copies || detailModalMaterial?.copy_number || 0) }}</p>
-                    </div>
-                    <div class="rounded-2xl border border-white/10 bg-white/8 p-4">
-                      <p class="flex items-center gap-2 text-slate-200/70"><BaseIcon :path="mdiCalendarClock" size="16" /> Published</p>
-                      <p class="mt-2 font-semibold">{{ detailModalMaterial?.published_date || '-' }}</p>
-                    </div>
-                    <div class="rounded-2xl border border-white/10 bg-white/8 p-4">
-                      <p class="flex items-center gap-2 text-slate-200/70"><BaseIcon :path="mdiBookOpenPageVariant" size="16" /> Genre</p>
-                      <p class="mt-2 font-semibold">{{ detailModalMaterial?.genre || '-' }}</p>
-                    </div>
-                    <div class="rounded-2xl border border-white/10 bg-white/8 p-4">
-                      <p class="flex items-center gap-2 text-slate-200/70"><BaseIcon :path="mdiMapMarkerOutline" size="16" /> Shelf / Location</p>
-                      <p class="mt-2 font-semibold">{{ detailModalMaterial?.location || detailModalMaterial?.library_name || '-' }}</p>
-                    </div>
-                    <div class="rounded-2xl border border-white/10 bg-white/8 p-4">
-                      <p class="flex items-center gap-2 text-slate-200/70"><BaseIcon :path="mdiCommentTextOutline" size="16" /> Condition / Format</p>
-                      <p class="mt-2 font-semibold">{{ activeType === 'physical' ? detailModalMaterial?.condition || 'GOOD' : detailModalMaterial?.format || 'DIGITAL' }}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-          </template>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
+.toggle-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.toggle-active {
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  color: white;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+
+.toggle-inactive {
+  background: transparent;
+  color: #475569;
+}
+
+.dark .toggle-inactive {
+  color: #94a3b8;
+}
+
+.toggle-inactive:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: white;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px -5px rgba(245, 158, 11, 0.4);
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.stat-card {
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(203, 213, 225, 0.5);
+  padding: 1.25rem;
+  transition: all 0.2s ease;
+}
+
+.dark .stat-card {
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(51, 65, 85, 0.5);
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(245, 158, 11, 0.3);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card-content {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.stat-info {
+  flex: 1;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+}
+
+.dark .stat-label {
+  color: #94a3b8;
+}
+
+.stat-value {
+  margin-top: 0.5rem;
+  font-size: 1.875rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.dark .stat-value {
+  color: #f1f5f9;
+}
+
+@media (min-width: 640px) {
+  .stat-value {
+    font-size: 2.25rem;
+  }
+}
+
+.stat-description {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  line-height: 1.25rem;
+}
+
+.stat-icon-wrapper {
+  display: flex;
+  height: 3rem;
+  width: 3rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 1rem;
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(203, 213, 225, 0.5);
+  transition: all 0.2s ease;
+}
+
+.dark .stat-icon-wrapper {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(51, 65, 85, 0.5);
+}
+
+.stat-card:hover .stat-icon-wrapper {
+  transform: scale(1.05);
+}
+
+.stat-card.tone-blue .stat-icon-wrapper { color: #3b82f6; border-color: rgba(59, 130, 246, 0.2); }
+.stat-card.tone-green .stat-icon-wrapper { color: #10b981; border-color: rgba(16, 185, 129, 0.2); }
+.stat-card.tone-amber .stat-icon-wrapper { color: #f59e0b; border-color: rgba(245, 158, 11, 0.2); }
+.stat-card.tone-violet .stat-icon-wrapper { color: #8b5cf6; border-color: rgba(139, 92, 246, 0.2); }
+
+.icon-tone-blue { color: #3b82f6; }
+.icon-tone-green { color: #10b981; }
+.icon-tone-amber { color: #f59e0b; }
+.icon-tone-violet { color: #8b5cf6; }
+
+/* Dashboard Panel */
+.dashboard-panel {
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(203, 213, 225, 0.5);
+  overflow: hidden;
+  transition: all 0.2s ease;
+  margin-bottom: 1.5rem;
+}
+
+.dark .dashboard-panel {
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(51, 65, 85, 0.5);
+}
+
+.dashboard-panel:hover {
+  border-color: rgba(245, 158, 11, 0.3);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.panel-header {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(203, 213, 225, 0.5);
+}
+
+.dark .panel-header {
+  border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+}
+
+.panel-header-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.panel-title {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #0f172a;
+}
+
+.dark .panel-title {
+  color: #f1f5f9;
+}
+
+@media (min-width: 640px) {
+  .panel-title {
+    font-size: 1.125rem;
+  }
+}
+
+.panel-subtitle {
+  font-size: 0.75rem;
+  color: #64748b;
+  line-height: 1.25rem;
+}
+
+.dark .panel-subtitle {
+  color: #94a3b8;
+}
+
+.panel-body {
+  padding: 1.25rem;
+}
+
+.panel-body.no-padding {
+  padding: 0;
+}
+
+@media (min-width: 640px) {
+  .panel-body {
+    padding: 1.5rem;
+  }
+}
+
+/* Filters */
+.filters-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .filters-grid {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+.search-wrapper {
+  flex: 2;
+  position: relative;
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.625rem 2rem 0.625rem 2.25rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(203, 213, 225, 0.5);
+  background: rgba(255, 255, 255, 0.5);
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.dark .search-input {
+  background: rgba(30, 41, 59, 0.6);
+  border-color: rgba(51, 65, 85, 0.5);
+  color: #f1f5f9;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.1);
+}
+
+.clear-btn {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
+.clear-btn:hover {
+  color: #f59e0b;
+}
+
+.filter-selects {
+  flex: 1;
+  display: flex;
+  gap: 0.75rem;
+}
+
+.filter-select {
+  flex: 1;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(203, 213, 225, 0.5);
+  background: rgba(255, 255, 255, 0.5);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.dark .filter-select {
+  background: rgba(30, 41, 59, 0.6);
+  border-color: rgba(51, 65, 85, 0.5);
+  color: #f1f5f9;
+}
+
+.view-toggle {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.25rem;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 0.75rem;
+  border: 1px solid rgba(203, 213, 225, 0.5);
+}
+
+.dark .view-toggle {
+  background: rgba(30, 41, 59, 0.6);
+  border-color: rgba(51, 65, 85, 0.5);
+}
+
+.view-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+}
+
+.view-active {
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  color: white;
+}
+
+.view-inactive {
+  color: #64748b;
+}
+
+.dark .view-inactive {
+  color: #94a3b8;
+}
+
+.view-inactive:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* Materials Grid */
+.materials-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .materials-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .materials-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.material-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(4px);
+  border-radius: 1.5rem;
+  border: 1px solid rgba(203, 213, 225, 0.5);
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.dark .material-card {
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(51, 65, 85, 0.5);
+}
+
+.material-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(245, 158, 11, 0.3);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.material-card-image {
+  position: relative;
+  height: 14rem;
+  overflow: hidden;
+  background: #f1f5f9;
+  cursor: pointer;
+}
+
+.dark .material-card-image {
+  background: #1e293b;
+}
+
+.material-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.material-card:hover .material-card-image img {
+  transform: scale(1.05);
+}
+
+.material-card-badges {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  right: 1rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.badge-type {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(4px);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: white;
+}
+
+.badge-stock {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.bg-emerald-100 {
+  background: rgba(16, 185, 129, 0.9);
+  color: white;
+}
+
+.bg-amber-100 {
+  background: rgba(245, 158, 11, 0.9);
+  color: white;
+}
+
+.bg-rose-100 {
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+}
+
+.badge-digital {
+  background: rgba(139, 92, 246, 0.9);
+  color: white;
+}
+
+.material-card-content {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.material-library {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: #94a3b8;
+}
+
+.material-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.4;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.dark .material-title {
+  color: #f1f5f9;
+}
+
+.material-title:hover {
+  color: #f59e0b;
+}
+
+.material-author {
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.dark .material-author {
+  color: #94a3b8;
+}
+
+.material-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.stat-item {
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.dark .stat-item {
+  background: rgba(15, 23, 42, 0.3);
+  border-color: rgba(51, 65, 85, 0.3);
+}
+
+.stat-label {
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #94a3b8;
+  margin-bottom: 0.25rem;
+}
+
+.stat-value {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.dark .stat-value {
+  color: #f1f5f9;
+}
+
+.stat-value.rating {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: #f59e0b;
+}
+
+.material-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.action-btn-details,
+.action-btn-edit,
+.action-btn-delete {
+  flex: 1;
+  padding: 0.625rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: none;
+}
+
+.action-btn-details {
+  background: rgba(0, 0, 0, 0.05);
+  color: #475569;
+}
+
+.dark .action-btn-details {
+  background: rgba(15, 23, 42, 0.5);
+  color: #94a3b8;
+}
+
+.action-btn-details:hover {
+  background: #0f172a;
+  color: white;
+}
+
+.action-btn-edit {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.action-btn-edit:hover {
+  background: #3b82f6;
+  color: white;
+}
+
+.action-btn-delete {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.action-btn-delete:hover {
+  background: #ef4444;
+  color: white;
+}
+
+/* Table View */
+.table-view {
+  margin-bottom: 1.5rem;
+}
+
+.table-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.table-btn-view,
+.table-btn-edit,
+.table-btn-delete {
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: none;
+}
+
+.table-btn-view {
+  background: rgba(0, 0, 0, 0.05);
+  color: #64748b;
+}
+
+.table-btn-view:hover {
+  background: #0f172a;
+  color: white;
+}
+
+.table-btn-edit {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.table-btn-edit:hover {
+  background: #3b82f6;
+  color: white;
+}
+
+.table-btn-delete {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.table-btn-delete:hover {
+  background: #ef4444;
+  color: white;
+}
+
+/* Pagination */
+.pagination-wrapper {
+  margin-top: 1.5rem;
+}
+
+.pagination-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: center;
+}
+
+@media (min-width: 640px) {
+  .pagination-content {
+    flex-direction: row;
+  }
+}
+
+.pagination-info {
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.dark .pagination-info {
+  color: #94a3b8;
+}
+
+.pagination-total {
+  color: #94a3b8;
+}
+
+.pagination-controls {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.per-page-select {
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(203, 213, 225, 0.5);
+  background: rgba(255, 255, 255, 0.5);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.dark .per-page-select {
+  background: rgba(30, 41, 59, 0.6);
+  border-color: rgba(51, 65, 85, 0.5);
+  color: #f1f5f9;
+}
+
+.page-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(203, 213, 225, 0.5);
+  background: rgba(255, 255, 255, 0.5);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dark .page-btn {
+  background: rgba(30, 41, 59, 0.6);
+  border-color: rgba(51, 65, 85, 0.5);
+  color: #f1f5f9;
+}
+
+.page-btn:hover:not(:disabled) {
+  background: #f59e0b;
+  border-color: #f59e0b;
+  color: white;
+}
+
+.page-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.empty-state {
+  grid-column: 1 / -1;
+  border-radius: 1rem;
+  border: 1px dashed rgba(203, 213, 225, 0.5);
+  background: rgba(245, 158, 11, 0.05);
+  padding: 2rem;
+  text-align: center;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.dark .empty-state {
+  border: 1px dashed rgba(51, 65, 85, 0.5);
+  background: rgba(245, 158, 11, 0.02);
+  color: #94a3b8;
+}
+</style>

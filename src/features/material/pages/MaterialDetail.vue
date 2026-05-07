@@ -1,3 +1,276 @@
+<template>
+  <div class="material-detail-container">
+    <!-- Back Button -->
+    <button class="back-button" @click="goBack">
+      <BaseIcon :path="mdiArrowLeft" size="20" />
+      <span>Back to Materials</span>
+    </button>
+
+    <!-- Loading State -->
+    <div v-if="detailReq.pending.value" class="loading-state">
+      <div class="loading-spinner"></div>
+      <p>Loading material details...</p>
+    </div>
+
+    <!-- Error State -->
+    <div v-else-if="!material" class="error-state">
+      <BaseIcon :path="mdiAlertCircle" size="48" />
+      <h3>Material Not Found</h3>
+      <p>The material you're looking for doesn't exist or has been removed.</p>
+    </div>
+
+    <!-- Material Content -->
+    <template v-else>
+      <!-- Hero Section -->
+      <div class="hero-section">
+        <div class="hero-grid">
+          <!-- Image Column -->
+          <div class="hero-image">
+            <div class="image-wrapper">
+              <img
+                :src="imageSrc"
+                :alt="material?.title || 'Material cover'"
+                @error="onImageError"
+              />
+            </div>
+          </div>
+
+          <!-- Info Column -->
+          <div class="hero-info">
+            <div class="badges">
+              <span class="badge-type">{{ activeType }}</span>
+              <span v-if="isPhysicalMaterial" class="badge-status" :class="material?.available_copies > 0 ? 'status-available' : 'status-unavailable'">
+                {{ material?.available_copies > 0 ? 'Available now' : 'Waitlist only' }}
+              </span>
+              <span v-else class="badge-status status-digital">Digital access</span>
+              <span v-if="material?.library_name" class="badge-library">{{ material?.library_name }}</span>
+            </div>
+
+            <h1 class="title">{{ material?.title || 'Untitled' }}</h1>
+            <p class="author">
+              <BaseIcon :path="mdiAccount" size="18" />
+              {{ material?.author || '-' }}
+            </p>
+
+            <!-- Action Buttons - Show for all users (members can also bookmark/favorite) -->
+            <div class="action-buttons">
+              <button class="btn-favorite" @click="toggleFavorite">
+                <BaseIcon :path="favoriteRecordId ? mdiHeart : mdiHeartOutline" size="20" />
+                {{ favoriteRecordId ? 'Favorited' : 'Favorite' }}
+              </button>
+              <button class="btn-bookmark" @click="toggleBookmark">
+                <BaseIcon :path="bookmarkRecordId ? mdiBookmark : mdiBookmarkOutline" size="20" />
+                {{ bookmarkRecordId ? 'Bookmarked' : 'Bookmark' }}
+              </button>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="stats-cards">
+              <div v-for="card in statsCards" :key="card.label" class="stat-card">
+                <p class="stat-label">{{ card.label }}</p>
+                <p class="stat-value">{{ card.value }}</p>
+              </div>
+            </div>
+
+            <!-- Action Buttons for Borrow/Read - Hide for members -->
+            <div v-if="!currentUserIsMember && ((!isPhysicalMaterial && canShowDigitalActions) || (isPhysicalMaterial && !currentUserIsMember))" class="primary-actions">
+              <template v-if="isPhysicalMaterial">
+                <button class="btn-primary" :disabled="!canBorrow" @click="goToBorrow">
+                  Borrow now
+                </button>
+                <button class="btn-secondary" :disabled="!canReserve" @click="goToReserve">
+                  <BaseIcon :path="mdiLockClock" size="16" />
+                  Join reservation queue
+                </button>
+              </template>
+              <template v-else>
+                <button class="btn-primary" :disabled="!isPdfMaterial" @click="goToReadMaterial">
+                  <BaseIcon :path="mdiFilePdfBox" size="16" />
+                  Read PDF
+                </button>
+                <button class="btn-secondary" :disabled="!hasDigitalFile" @click="openDigitalFile">
+                  <BaseIcon :path="mdiOpenInNew" size="16" />
+                  Open file
+                </button>
+              </template>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Details Grid -->
+      <div class="details-grid">
+        <!-- Left Column -->
+        <div class="details-left">
+          <!-- Summary Section -->
+          <div class="detail-card">
+            <div class="card-header">
+              <h3>Summary</h3>
+              <p>Auto-generated description for this material</p>
+            </div>
+            <div class="summary-content">
+              <p>{{ summaryText }}</p>
+            </div>
+          </div>
+
+          <!-- Reader Review Form - Only show for members -->
+          <div v-if="currentUserIsMember" class="detail-card">
+            <div class="card-header">
+              <h3>Write a Review</h3>
+              <p>Share your thoughts about this material</p>
+            </div>
+
+            <div class="rating-input">
+              <button
+                v-for="value in [1, 2, 3, 4, 5]"
+                :key="value"
+                class="star-btn"
+                @click="setRating(value)"
+              >
+                <BaseIcon 
+                  :path="reviewForm.rating >= value ? mdiStar : mdiStarOutline" 
+                  size="28" 
+                  class="star" 
+                  :class="{ 'star-filled': reviewForm.rating >= value }"
+                />
+              </button>
+            </div>
+
+            <textarea
+              v-model="reviewForm.comment"
+              rows="4"
+              class="review-textarea"
+              placeholder="Share what makes this material useful, memorable, or difficult..."
+            />
+
+            <button 
+              class="btn-submit" 
+              :disabled="reviewReq.pending.value" 
+              @click="saveReview"
+            >
+              <span v-if="reviewReq.pending.value" class="button-spinner"></span>
+              <span v-else>{{ feedbackRecordId ? 'Update Review' : 'Submit Review' }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="details-right">
+          <!-- Specifications -->
+          <div class="detail-card">
+            <div class="card-header">
+              <h3>Specifications</h3>
+              <p>Technical details and metadata</p>
+            </div>
+
+            <div class="specs-grid">
+              <div class="spec-item">
+                <BaseIcon :path="mdiTag" size="16" />
+                <div>
+                  <p class="spec-label">Category</p>
+                  <p class="spec-value">{{ material?.category || '-' }}</p>
+                </div>
+              </div>
+              <div class="spec-item">
+                <BaseIcon :path="mdiSchoolOutline" size="16" />
+                <div>
+                  <p class="spec-label">Department</p>
+                  <p class="spec-value">{{ material?.department || '-' }}</p>
+                </div>
+              </div>
+              <div class="spec-item">
+                <BaseIcon :path="mdiTranslate" size="16" />
+                <div>
+                  <p class="spec-label">Language</p>
+                  <p class="spec-value">{{ material?.language || '-' }}</p>
+                </div>
+              </div>
+              <div class="spec-item">
+                <BaseIcon :path="mdiBarcode" size="16" />
+                <div>
+                  <p class="spec-label">ISBN</p>
+                  <p class="spec-value">{{ material?.isbn || 'N/A' }}</p>
+                </div>
+              </div>
+              <div v-if="isPhysicalMaterial" class="spec-item">
+                <BaseIcon :path="mdiPackageVariantClosed" size="16" />
+                <div>
+                  <p class="spec-label">Stock</p>
+                  <p class="spec-value">{{ material?.available_copies }}/{{ material?.total_copies }}</p>
+                </div>
+              </div>
+              <div v-else class="spec-item">
+                <BaseIcon :path="mdiFilePdfBox" size="16" />
+                <div>
+                  <p class="spec-label">Format</p>
+                  <p class="spec-value">{{ material?.format || 'PDF' }}</p>
+                </div>
+              </div>
+              <div class="spec-item">
+                <BaseIcon :path="mdiCalendarClock" size="16" />
+                <div>
+                  <p class="spec-label">Published</p>
+                  <p class="spec-value">{{ material?.published_date || '-' }}</p>
+                </div>
+              </div>
+              <div class="spec-item">
+                <BaseIcon :path="mdiBookOpenPageVariant" size="16" />
+                <div>
+                  <p class="spec-label">Genre</p>
+                  <p class="spec-value">{{ material?.genre || '-' }}</p>
+                </div>
+              </div>
+              <div class="spec-item">
+                <BaseIcon :path="mdiMapMarkerOutline" size="16" />
+                <div>
+                  <p class="spec-label">Location</p>
+                  <p class="spec-value">{{ material?.location || material?.library_name || '-' }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Community Comments -->
+          <div class="detail-card">
+            <div class="card-header">
+              <h3>Community Comments</h3>
+              <p>What other readers think</p>
+            </div>
+
+            <div class="comments-list">
+              <div v-for="row in feedbackRows" :key="row?.id" class="comment-item">
+                <div class="comment-header">
+                  <div>
+                    <p class="comment-author">{{ row?.user_name || 'Reader' }}</p>
+                    <div class="comment-rating">
+                      <BaseIcon
+                        v-for="value in [1, 2, 3, 4, 5]"
+                        :key="`${row?.id}-${value}`"
+                        :path="Number(row?.rating || 0) >= value ? mdiStar : mdiStarOutline"
+                        size="14"
+                        class="star-icon"
+                        :class="{ 'star-icon-filled': Number(row?.rating || 0) >= value }"
+                      />
+                    </div>
+                  </div>
+                  <span class="comment-date">{{ row?.updated_at?.slice?.(0, 10) || '' }}</span>
+                </div>
+                <p class="comment-text">{{ row?.comment || 'This reader left a rating without a written note.' }}</p>
+              </div>
+
+              <div v-if="!feedbackRows.length && !allFeedbackReq.pending.value" class="empty-comments">
+                <BaseIcon :path="mdiCommentTextOutline" size="32" />
+                <p>No comments yet</p>
+                <span>Be the first to share your thoughts</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+  </div>
+</template>
+
 <script setup>
 import { computed, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -21,6 +294,7 @@ import { toasted } from '@/utils/utils';
 import BaseIcon from '@/components/base/BaseIcon.vue';
 import {
   mdiAccount,
+  mdiAlertCircle,
   mdiArrowLeft,
   mdiBarcode,
   mdiBookOpenPageVariant,
@@ -143,22 +417,18 @@ const statsCards = computed(() => [
   {
     label: 'Average rating',
     value: Number(interactionStats.value?.average_rating || 0).toFixed(1),
-    tone: 'bg-amber-50 text-amber-700',
   },
   {
     label: 'Favorites',
     value: normalizeNumber(interactionStats.value?.favorites_count),
-    tone: 'bg-rose-50 text-rose-700',
   },
   {
     label: 'Bookmarks',
     value: normalizeNumber(interactionStats.value?.bookmarks_count),
-    tone: 'bg-sky-50 text-sky-700',
   },
   {
     label: 'Comments',
     value: normalizeNumber(interactionStats.value?.comments_count),
-    tone: 'bg-emerald-50 text-emerald-700',
   },
 ]);
 
@@ -356,6 +626,11 @@ function setRating(value) {
 }
 
 function saveReview() {
+  if (!currentUserIsMember.value) {
+    toasted(false, 'Please log in as a member to leave a review.');
+    return;
+  }
+  
   if (!materialIdentity.value) return;
   if (!reviewForm.rating) {
     toasted(false, 'Please select a rating first.');
@@ -385,278 +660,763 @@ function saveReview() {
 }
 </script>
 
-<template>
-  <div class="space-y-6 p-4 sm:p-7">
-    <button class="inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-slate-900" @click="goBack">
-      <BaseIcon :path="mdiArrowLeft" size="18" />
-      Back to Materials
-    </button>
+<style scoped>
+/* All styles remain the same as before */
+/* Container */
+.material-detail-container {
+  min-height: 100vh;
+  padding: 1rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  transition: background 0.3s ease;
+}
 
-    <div v-if="detailReq.pending.value" class="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
-      Loading material details...
-    </div>
+.dark .material-detail-container {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+}
 
-    <div v-else-if="!material" class="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-800">
-      Material detail is not available.
-    </div>
+@media (min-width: 768px) {
+  .material-detail-container {
+    padding: 1.5rem;
+  }
+}
 
-    <template v-else>
-      <section class="overflow-hidden rounded-[30px] border border-slate-200 bg-[radial-gradient(circle_at_top_left,_rgba(14,165,233,0.24),_transparent_28%),linear-gradient(150deg,_#0f172a,_#111827_46%,_#1d4ed8)] shadow-xl">
-        <div class="grid grid-cols-1 gap-0 lg:grid-cols-[320px_1fr]">
-          <div class="border-b border-white/10 bg-black/10 p-6 lg:border-b-0 lg:border-r">
-            <div class="aspect-[3/4] overflow-hidden rounded-[28px] bg-slate-900/30 shadow-2xl">
-              <img
-                :src="imageSrc"
-                :alt="material?.title || 'Material cover'"
-                class="h-full w-full object-cover"
-                @error="onImageError"
-              />
-            </div>
-          </div>
+@media (min-width: 1024px) {
+  .material-detail-container {
+    padding: 2rem;
+  }
+}
 
-          <div class="p-6 text-white">
-            <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div class="max-w-3xl">
-                <div class="flex flex-wrap gap-2">
-                  <span class="rounded-full bg-white/12 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-sky-100">
-                    {{ activeType }}
-                  </span>
-                  <span
-                    v-if="isPhysicalMaterial"
-                    class="rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em]"
-                    :class="material?.available_copies > 0 ? 'bg-emerald-400/15 text-emerald-100' : 'bg-rose-400/15 text-rose-100'"
-                  >
-                    {{ material?.available_copies > 0 ? 'Available now' : 'Waitlist only' }}
-                  </span>
-                  <span
-                    v-else
-                    class="rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] bg-slate-700/15 text-slate-100"
-                  >
-                    Digital access
-                  </span>
-                  <span v-if="material?.library_name" class="rounded-full bg-white/12 px-3 py-1 text-xs font-semibold text-slate-100">
-                    {{ material?.library_name }}
-                  </span>
-                </div>
+/* Back Button */
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(203, 213, 225, 0.5);
+  color: #475569;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
 
-                <h1 class="mt-4 text-3xl font-bold tracking-tight">{{ material?.title || 'Untitled' }}</h1>
-                <p class="mt-3 flex items-center gap-2 text-sm text-slate-200/90">
-                  <BaseIcon :path="mdiAccount" size="16" />
-                  {{ material?.author || '-' }}
-                </p>
-              </div>
+.dark .back-button {
+  background: rgba(30, 41, 59, 0.6);
+  border-color: rgba(51, 65, 85, 0.5);
+  color: #94a3b8;
+}
 
-              <div class="flex flex-wrap gap-2">
-                <button
-                  class="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/16"
-                  @click="toggleFavorite"
-                >
-                  <BaseIcon :path="favoriteRecordId ? mdiHeart : mdiHeartOutline" size="18" />
-                  {{ favoriteRecordId ? 'Favorited' : 'Favorite' }}
-                </button>
-                <button
-                  class="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/16"
-                  @click="toggleBookmark"
-                >
-                  <BaseIcon :path="bookmarkRecordId ? mdiBookmark : mdiBookmarkOutline" size="18" />
-                  {{ bookmarkRecordId ? 'Bookmarked' : 'Bookmark' }}
-                </button>
-              </div>
-            </div>
+.back-button:hover {
+  transform: translateX(-4px);
+  border-color: #f59e0b;
+  color: #f59e0b;
+}
 
-            <div class="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <div
-                v-for="card in statsCards"
-                :key="card.label"
-                class="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur"
-              >
-                <p class="text-xs uppercase tracking-[0.22em] text-slate-200/70">{{ card.label }}</p>
-                <p class="mt-2 text-2xl font-bold">{{ card.value }}</p>
-              </div>
-            </div>
+/* Loading State */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 1rem;
+}
 
-            <div class="mt-6 grid grid-cols-1 gap-3 text-sm text-slate-100/90 md:grid-cols-2 xl:grid-cols-3">
-              <div class="rounded-2xl border border-white/10 bg-white/8 p-4">
-                <p class="flex items-center gap-2 text-slate-200/70"><BaseIcon :path="mdiTag" size="16" /> Category</p>
-                <p class="mt-2 font-semibold">{{ material?.category || '-' }}</p>
-              </div>
-              <div class="rounded-2xl border border-white/10 bg-white/8 p-4">
-                <p class="flex items-center gap-2 text-slate-200/70"><BaseIcon :path="mdiSchoolOutline" size="16" /> Department</p>
-                <p class="mt-2 font-semibold">{{ material?.department || '-' }}</p>
-              </div>
-              <div class="rounded-2xl border border-white/10 bg-white/8 p-4">
-                <p class="flex items-center gap-2 text-slate-200/70"><BaseIcon :path="mdiTranslate" size="16" /> Language</p>
-                <p class="mt-2 font-semibold">{{ material?.language || '-' }}</p>
-              </div>
-              <div class="rounded-2xl border border-white/10 bg-white/8 p-4">
-                <p class="flex items-center gap-2 text-slate-200/70"><BaseIcon :path="mdiBarcode" size="16" /> ISBN</p>
-                <p class="mt-2 font-semibold">{{ material?.isbn || 'N/A' }}</p>
-              </div>
-              <div v-if="isPhysicalMaterial" class="rounded-2xl border border-white/10 bg-white/8 p-4">
-                <p class="flex items-center gap-2 text-slate-200/70"><BaseIcon :path="mdiPackageVariantClosed" size="16" /> Stock</p>
-                <p class="mt-2 font-semibold">{{ material?.available_copies }}/{{ material?.total_copies }}</p>
-              </div>
-              <div v-else class="rounded-2xl border border-white/10 bg-white/8 p-4">
-                <p class="flex items-center gap-2 text-slate-200/70"><BaseIcon :path="mdiFilePdfBox" size="16" /> Digital file</p>
-                <p class="mt-2 font-semibold">{{ material?.format || 'PDF' }}</p>
-              </div>
-              <div class="rounded-2xl border border-white/10 bg-white/8 p-4">
-                <p class="flex items-center gap-2 text-slate-200/70"><BaseIcon :path="mdiCalendarClock" size="16" /> Published</p>
-                <p class="mt-2 font-semibold">{{ material?.published_date || '-' }}</p>
-              </div>
-              <div class="rounded-2xl border border-white/10 bg-white/8 p-4">
-                <p class="flex items-center gap-2 text-slate-200/70"><BaseIcon :path="mdiBookOpenPageVariant" size="16" /> Genre</p>
-                <p class="mt-2 font-semibold">{{ material?.genre || '-' }}</p>
-              </div>
-              <div class="rounded-2xl border border-white/10 bg-white/8 p-4">
-                <p class="flex items-center gap-2 text-slate-200/70"><BaseIcon :path="mdiMapMarkerOutline" size="16" /> Shelf / Location</p>
-                <p class="mt-2 font-semibold">{{ material?.location || material?.library_name || '-' }}</p>
-              </div>
-              <div class="rounded-2xl border border-white/10 bg-white/8 p-4">
-                <p class="flex items-center gap-2 text-slate-200/70"><BaseIcon :path="mdiCommentTextOutline" size="16" /> Condition / Format</p>
-                <p class="mt-2 font-semibold">{{ isPhysicalMaterial ? material?.condition || 'GOOD' : material?.format || 'DIGITAL' }}</p>
-              </div>
-            </div>
+.loading-spinner {
+  width: 3rem;
+  height: 3rem;
+  border: 3px solid rgba(245, 158, 11, 0.2);
+  border-top-color: #f59e0b;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
 
-            <div class="mt-6 flex flex-col gap-3 sm:flex-row" v-if="(!isPhysicalMaterial && canShowDigitalActions) || (isPhysicalMaterial && !currentUserIsMember)">
-              <template v-if="isPhysicalMaterial">
-                <button
-                  class="inline-flex flex-1 items-center justify-center rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
-                  :disabled="!canBorrow"
-                  @click="goToBorrow"
-                >
-                  Borrow now
-                </button>
-                <button
-                  class="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl border border-white/20 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
-                  :disabled="!canReserve"
-                  @click="goToReserve"
-                >
-                  <BaseIcon :path="mdiLockClock" size="16" />
-                  Join reservation queue
-                </button>
-              </template>
+.loading-state p {
+  color: #64748b;
+  font-size: 0.875rem;
+}
 
-              <template v-else>
-                <button
-                  class="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
-                  :disabled="!isPdfMaterial"
-                  @click="goToReadMaterial"
-                >
-                  <BaseIcon :path="mdiFilePdfBox" size="16" />
-                  Read PDF
-                </button>
-                <button
-                  class="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl border border-white/20 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
-                  :disabled="!hasDigitalFile"
-                  @click="openDigitalFile"
-                >
-                  <BaseIcon :path="mdiOpenInNew" size="16" />
-                  Open file
-                </button>
-              </template>
-            </div>
-          </div>
-        </div>
-      </section>
+.dark .loading-state p {
+  color: #94a3b8;
+}
 
-      <section class="grid grid-cols-1 gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-        <div class="space-y-6">
-          <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 class="text-xl font-semibold text-slate-900">Reader sentiment</h2>
-                <p class="text-sm text-slate-500">Collect ratings and comments directly on the material profile.</p>
-              </div>
-            </div>
+/* Error State */
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  text-align: center;
+  gap: 1rem;
+}
 
-            <div class="mt-5 flex items-center gap-2">
-              <button
-                v-for="value in [1, 2, 3, 4, 5]"
-                :key="value"
-                class="rounded-full p-2 transition hover:bg-amber-50"
-                @click="setRating(value)"
-              >
-                <BaseIcon :path="reviewForm.rating >= value ? mdiStar : mdiStarOutline" size="24" class="text-amber-500" />
-              </button>
-            </div>
+.error-state h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #0f172a;
+}
 
-            <textarea
-              v-model="reviewForm.comment"
-              rows="5"
-              class="mt-4 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
-              placeholder="Share what makes this material useful, memorable, or difficult."
-            />
+.dark .error-state h3 {
+  color: #f1f5f9;
+}
 
-            <div class="mt-4 flex flex-col gap-3 sm:flex-row">
-              <button
-                class="inline-flex flex-1 items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-                :disabled="reviewReq.pending.value"
-                @click="saveReview"
-              >
-                {{ reviewReq.pending.value ? 'Saving review...' : feedbackRecordId ? 'Update review' : 'Submit review' }}
-              </button>
-            </div>
-          </div>
+.error-state p {
+  color: #64748b;
+  font-size: 0.875rem;
+}
 
-          <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div class="flex flex-col gap-2">
-              <h2 class="text-xl font-semibold text-slate-900">Community comments</h2>
-              <p class="text-sm text-slate-500">Latest reader notes for this material.</p>
-            </div>
+.dark .error-state p {
+  color: #94a3b8;
+}
 
-            <div class="mt-5 space-y-3">
-              <article
-                v-for="row in feedbackRows"
-                :key="row?.id"
-                class="rounded-2xl border border-slate-200 bg-slate-50 p-4"
-              >
-                <div class="flex items-start justify-between gap-3">
-                  <div>
-                    <h3 class="text-sm font-semibold text-slate-900">{{ row?.user_name || 'Reader' }}</h3>
-                    <div class="mt-2 flex items-center gap-1">
-                      <BaseIcon
-                        v-for="value in [1, 2, 3, 4, 5]"
-                        :key="`${row?.id}-${value}`"
-                        :path="Number(row?.rating || 0) >= value ? mdiStar : mdiStarOutline"
-                        size="15"
-                        class="text-amber-500"
-                      />
-                    </div>
-                  </div>
-                  <span class="text-xs text-slate-400">{{ row?.updated_at?.slice?.(0, 10) || '' }}</span>
-                </div>
+/* Hero Section */
+.hero-section {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(203, 213, 225, 0.5);
+  border-radius: 1.5rem;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+  transition: all 0.2s ease;
+}
 
-                <p class="mt-3 text-sm leading-6 text-slate-600">
-                  {{ row?.comment || 'This reader left a rating without a written note.' }}
-                </p>
-              </article>
+.dark .hero-section {
+  background: rgba(30, 41, 59, 0.6);
+  border-color: rgba(51, 65, 85, 0.5);
+}
 
-              <div
-                v-if="!feedbackRows.length && !allFeedbackReq.pending.value"
-                class="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-sm text-slate-500"
-              >
-                No comments yet for this material.
-              </div>
-            </div>
-          </div>
-        </div>
+.hero-section:hover {
+  border-color: rgba(245, 158, 11, 0.3);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
 
-        <div class="space-y-6">
-          <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 class="text-xl font-semibold text-slate-900">Summary</h2>
-                <p class="text-sm text-slate-500">This summary is generated automatically for the current material.</p>
-              </div>
-            </div>
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
 
-            <div class="mt-4 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm leading-6 text-slate-700">
-              {{ summaryText }}
-            </div>
-          </div>
-        </div>
-      </section>
-    </template>
-  </div>
-</template>
+@media (min-width: 768px) {
+  .hero-grid {
+    grid-template-columns: 280px 1fr;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero-grid {
+    grid-template-columns: 320px 1fr;
+  }
+}
+
+/* Hero Image */
+.hero-image {
+  padding: 1.5rem;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.02));
+}
+
+.dark .hero-image {
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.1));
+}
+
+.image-wrapper {
+  aspect-ratio: 3/4;
+  border-radius: 1rem;
+  overflow: hidden;
+  background: #f1f5f9;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.dark .image-wrapper {
+  background: #1e293b;
+}
+
+.image-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.image-wrapper:hover img {
+  transform: scale(1.05);
+}
+
+/* Hero Info */
+.hero-info {
+  padding: 1.5rem 1.5rem 1.5rem 0;
+}
+
+@media (max-width: 768px) {
+  .hero-info {
+    padding: 0 1.5rem 1.5rem 1.5rem;
+  }
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.badge-type {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: white;
+}
+
+.badge-status {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.status-available {
+  background: rgba(16, 185, 129, 0.9);
+  color: white;
+}
+
+.status-unavailable {
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+}
+
+.status-digital {
+  background: rgba(139, 92, 246, 0.9);
+  color: white;
+}
+
+.badge-library {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  background: rgba(0, 0, 0, 0.05);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.dark .badge-library {
+  background: rgba(15, 23, 42, 0.5);
+  color: #94a3b8;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 0.5rem;
+}
+
+.dark .title {
+  color: #f1f5f9;
+}
+
+@media (min-width: 640px) {
+  .title {
+    font-size: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .title {
+    font-size: 2.5rem;
+  }
+}
+
+.author {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-bottom: 1rem;
+}
+
+.dark .author {
+  color: #94a3b8;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.btn-favorite,
+.btn-bookmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.05);
+  color: #475569;
+  border: none;
+}
+
+.dark .btn-favorite,
+.dark .btn-bookmark {
+  background: rgba(15, 23, 42, 0.5);
+  color: #94a3b8;
+}
+
+.btn-favorite:hover,
+.btn-bookmark:hover {
+  transform: translateY(-2px);
+  background: #f59e0b;
+  color: white;
+}
+
+.stats-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .stats-cards {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.stat-card {
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.dark .stat-card {
+  background: rgba(15, 23, 42, 0.3);
+  border-color: rgba(51, 65, 85, 0.3);
+}
+
+.stat-label {
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #94a3b8;
+  margin-bottom: 0.25rem;
+}
+
+.stat-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.dark .stat-value {
+  color: #f1f5f9;
+}
+
+.primary-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.btn-primary {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px -5px rgba(245, 158, 11, 0.4);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  background: rgba(0, 0, 0, 0.05);
+  color: #475569;
+  border: 1px solid rgba(203, 213, 225, 0.5);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dark .btn-secondary {
+  background: rgba(15, 23, 42, 0.5);
+  color: #94a3b8;
+  border-color: rgba(51, 65, 85, 0.5);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #f59e0b;
+  border-color: #f59e0b;
+  color: white;
+}
+
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Details Grid */
+.details-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .details-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Detail Cards */
+.detail-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(203, 213, 225, 0.5);
+  border-radius: 1.5rem;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  margin-bottom: 1.5rem;
+}
+
+.dark .detail-card {
+  background: rgba(30, 41, 59, 0.6);
+  border-color: rgba(51, 65, 85, 0.5);
+}
+
+.detail-card:hover {
+  border-color: rgba(245, 158, 11, 0.3);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(203, 213, 225, 0.5);
+}
+
+.dark .card-header {
+  border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+}
+
+.card-header h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 0.25rem;
+}
+
+.dark .card-header h3 {
+  color: #f1f5f9;
+}
+
+@media (min-width: 640px) {
+  .card-header h3 {
+    font-size: 1.125rem;
+  }
+}
+
+.card-header p {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.dark .card-header p {
+  color: #94a3b8;
+}
+
+/* Summary Content */
+.summary-content {
+  padding: 1.25rem;
+}
+
+.summary-content p {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: #475569;
+}
+
+.dark .summary-content p {
+  color: #cbd5e1;
+}
+
+/* Rating Input */
+.rating-input {
+  padding: 1.25rem;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  border-bottom: 1px solid rgba(203, 213, 225, 0.5);
+}
+
+.star-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.star-btn:hover {
+  transform: scale(1.1);
+}
+
+.star {
+  color: #cbd5e1;
+  transition: color 0.2s ease;
+}
+
+.star-filled {
+  color: #fbbf24;
+}
+
+.star-btn:hover .star:not(.star-filled) {
+  color: #fde68a;
+}
+
+/* Review Textarea */
+.review-textarea {
+  margin: 1.25rem;
+  width: calc(100% - 2.5rem);
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(203, 213, 225, 0.5);
+  background: rgba(255, 255, 255, 0.5);
+  font-size: 0.875rem;
+  color: #0f172a;
+  resize: vertical;
+}
+
+.dark .review-textarea {
+  background: rgba(15, 23, 42, 0.5);
+  border-color: rgba(51, 65, 85, 0.5);
+  color: #f1f5f9;
+}
+
+.review-textarea:focus {
+  outline: none;
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.1);
+}
+
+/* Submit Button */
+.btn-submit {
+  margin: 0 1.25rem 1.25rem 1.25rem;
+  width: calc(100% - 2.5rem);
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-submit:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px -5px rgba(245, 158, 11, 0.4);
+}
+
+.btn-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.button-spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  display: inline-block;
+  animation: spin 0.8s linear infinite;
+}
+
+/* Specifications Grid */
+.specs-grid {
+  padding: 1.25rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .specs-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.spec-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(203, 213, 225, 0.3);
+  color: #64748b;
+}
+
+.dark .spec-item {
+  background: rgba(15, 23, 42, 0.3);
+  border-color: rgba(51, 65, 85, 0.3);
+  color: #94a3b8;
+}
+
+.spec-label {
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #94a3b8;
+}
+
+.spec-value {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.dark .spec-value {
+  color: #f1f5f9;
+}
+
+/* Comments List */
+.comments-list {
+  padding: 1.25rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.comments-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.comments-list::-webkit-scrollbar-track {
+  background: rgba(203, 213, 225, 0.3);
+  border-radius: 3px;
+}
+
+.comments-list::-webkit-scrollbar-thumb {
+  background: rgba(245, 158, 11, 0.5);
+  border-radius: 3px;
+}
+
+.comment-item {
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(203, 213, 225, 0.3);
+  margin-bottom: 0.75rem;
+}
+
+.dark .comment-item {
+  background: rgba(15, 23, 42, 0.3);
+  border-color: rgba(51, 65, 85, 0.3);
+}
+
+.comment-item:last-child {
+  margin-bottom: 0;
+}
+
+.comment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.comment-author {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 0.25rem;
+}
+
+.dark .comment-author {
+  color: #f1f5f9;
+}
+
+.comment-rating {
+  display: flex;
+  gap: 0.125rem;
+}
+
+.star-icon {
+  color: #cbd5e1;
+}
+
+.star-icon-filled {
+  color: #fbbf24;
+}
+
+.comment-date {
+  font-size: 0.6875rem;
+  color: #94a3b8;
+}
+
+.comment-text {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: #475569;
+}
+
+.dark .comment-text {
+  color: #cbd5e1;
+}
+
+.empty-comments {
+  text-align: center;
+  padding: 2rem;
+  color: #94a3b8;
+}
+
+.empty-comments p {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.empty-comments span {
+  font-size: 0.75rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+</style>
