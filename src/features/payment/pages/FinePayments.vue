@@ -66,8 +66,19 @@ const stats = computed(() => ({
   settledCount: completedRows.value.length,
 }));
 
+const selectedReturnId = computed(() => {
+  const id = route.query?.returnId;
+  return id ? String(id) : null;
+});
+
+const autoPaymentStartedForReturn = ref(null);
+
 function getReturnUrl() {
-  return `${window.location.origin}/fine-payments`;
+  const url = new URL(`${window.location.origin}/fine-payments`);
+  if (selectedReturnId.value) {
+    url.searchParams.set('returnId', selectedReturnId.value);
+  }
+  return url.toString();
 }
 
 function startPayment(row) {
@@ -95,12 +106,21 @@ function startPayment(row) {
   );
 }
 
-function clearVerificationQuery() {
-  if (!route.query?.tx_ref) return;
-
+function clearPaymentQuery() {
   const nextQuery = { ...route.query };
   delete nextQuery.tx_ref;
-  router.replace({ path: route.path, query: nextQuery });
+  delete nextQuery.returnId;
+
+  if (Object.keys(nextQuery).length === 0) {
+    router.replace({ path: route.path });
+  } else {
+    router.replace({ path: route.path, query: nextQuery });
+  }
+}
+
+function clearVerificationQuery() {
+  if (!route.query?.tx_ref) return;
+  clearPaymentQuery();
 }
 
 function verifyPayment(txRef) {
@@ -130,12 +150,40 @@ function verifyPayment(txRef) {
   );
 }
 
+function maybeStartPaymentForSelectedReturn() {
+  if (!selectedReturnId.value || autoPaymentStartedForReturn.value === selectedReturnId.value) {
+    return;
+  }
+
+  const selectedRow = allReturns.value.find((row) => String(row?.id) === selectedReturnId.value);
+  if (!selectedRow) {
+    return;
+  }
+
+  const shouldPay = amount(selectedRow?.fine_amount) > 0 && normalizeStatus(selectedRow?.payment_status) !== 'COMPLETED';
+  if (!shouldPay) {
+    autoPaymentStartedForReturn.value = selectedReturnId.value;
+    return;
+  }
+
+  autoPaymentStartedForReturn.value = selectedReturnId.value;
+  startPayment(selectedRow);
+}
+
 watch(
   () => route.query?.tx_ref,
   (txRef) => {
     if (txRef) {
       verifyPayment(txRef);
     }
+  },
+  { immediate: true }
+);
+
+watch(
+  () => [selectedReturnId.value, returnReq.response.value],
+  () => {
+    maybeStartPaymentForSelectedReturn();
   },
   { immediate: true }
 );

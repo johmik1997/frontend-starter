@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import BaseIcon from '@/components/base/BaseIcon.vue';
 import { useApiRequest } from '@/composables/useApiRequest';
 import { getAllLibrary } from '../api/libraryApi';
@@ -25,7 +25,7 @@ let unsubscribeEntitySync = () => {};
 
 const defaultForm = () => ({
   id: null,
-  library: '',
+  library: null,
   name: '',
   is_active: true,
   borrow_duration_days: 7,
@@ -58,15 +58,14 @@ function normalizeNumber(value, fallback = 0) {
 const policies = computed(() => rowsFromPayload(policiesReq.response.value));
 const libraries = computed(() => rowsFromPayload(librariesReq.response.value, 'libraries'));
 
-const stats = computed(() => {
-  const activePolicy = policies.value.find((row) => row?.is_active) || null;
-  return {
-    totalPolicies: policies.value.length,
-    activeRate: normalizeNumber(activePolicy?.overdue_daily_rate),
-    activeBorrowWindow: normalizeNumber(activePolicy?.borrow_duration_days),
-    activeBorrowLimit: normalizeNumber(activePolicy?.max_active_borrows),
-  };
-});
+const activePolicy = computed(() => policies.value.find((row) => row?.is_active) || null);
+
+const stats = computed(() => ({
+  totalPolicies: policies.value.length,
+  activeRate: normalizeNumber(activePolicy.value?.overdue_daily_rate),
+  activeBorrowWindow: normalizeNumber(activePolicy.value?.borrow_duration_days),
+  activeBorrowLimit: normalizeNumber(activePolicy.value?.max_active_borrows),
+}));
 
 const isEditing = computed(() => Boolean(form.id));
 
@@ -77,7 +76,7 @@ function resetForm() {
 function hydrateForm(row) {
   Object.assign(form, {
     id: row?.id || null,
-    library: row?.library || '',
+    library: row?.library ?? null,
     name: row?.name || '',
     is_active: Boolean(row?.is_active),
     borrow_duration_days: normalizeNumber(row?.borrow_duration_days, 7),
@@ -95,6 +94,12 @@ function hydrateForm(row) {
 function loadPage() {
   policiesReq.send(() => getAllLibraryPolicies({ page: 1, size: 100 }));
   librariesReq.send(() => getAllLibrary({ page: 1, size: 200 }));
+}
+
+function hydrateActivePolicy() {
+  if (!activePolicy.value) return;
+  if (form.id) return;
+  hydrateForm(activePolicy.value);
 }
 
 function buildPayload() {
@@ -141,6 +146,14 @@ onMounted(() => {
     }
   });
 });
+
+watch(
+  () => policiesReq.response.value,
+  () => {
+    hydrateActivePolicy();
+  },
+  { immediate: true }
+);
 
 onBeforeUnmount(() => {
   unsubscribeEntitySync?.();
